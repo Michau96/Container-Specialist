@@ -1,0 +1,6 @@
+{
+  "name": "Donicowy Specjalista",
+  "description": "Ekspercki poradnik i planer uprawy warzyw, owoców, ziół i roślin ozdobnych w donicach na balkonie ze schematami podłoża, kalkulatorem donic i zaleceniami nawożenia.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
