@@ -85,7 +85,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
         </div>
 
         {/* Total Badge */}
-        <div className="flex items-center gap-2 self-start sm:self-auto bg-white/80 dark:bg-stone-850 px-3.5 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700/70 shadow-2xs">
+        <div className="flex items-center gap-2 self-start sm:self-auto bg-white/80 dark:bg-stone-800 px-3.5 py-1.5 rounded-xl border border-amber-300 dark:border-amber-700/70 shadow-2xs">
           <div className="text-right">
             <div className="text-[10px] text-stone-500 font-semibold uppercase tracking-wider">
               {scenario === 'full'
@@ -143,7 +143,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
                 scenario === 'full'
                   ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-400 dark:border-amber-700 text-amber-950 dark:text-amber-100 ring-1 ring-amber-400'
-                  : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                  : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
               }`}
             >
               <div>
@@ -161,7 +161,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
                 scenario === 'have_pot'
                   ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-400 dark:border-amber-700 text-amber-950 dark:text-amber-100 ring-1 ring-amber-400'
-                  : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                  : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
               }`}
             >
               <div>
@@ -179,7 +179,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               className={`p-2.5 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
                 scenario === 'seeds_only'
                   ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-400 dark:border-amber-700 text-amber-950 dark:text-amber-100 ring-1 ring-amber-400'
-                  : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
+                  : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800'
               }`}
             >
               <div>
@@ -221,7 +221,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
 
           {showDetails && (
             <div className="space-y-2 pt-1">
-              <div className="divide-y divide-stone-100 dark:divide-stone-800 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden bg-stone-50/50 dark:bg-stone-850/50">
+              <div className="divide-y divide-stone-100 dark:divide-stone-800 border border-stone-200 dark:border-stone-800 rounded-xl overflow-hidden bg-stone-50/50 dark:bg-stone-800/50">
                 {activeItems.map((item) => (
                   <div
                     key={item.id}

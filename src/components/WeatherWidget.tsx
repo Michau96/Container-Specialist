@@ -35,7 +35,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
   return (
     <div
       id="weather-widget"
-      className="bg-white/95 dark:bg-stone-900/95 backdrop-blur-xs rounded-2xl p-4 sm:p-5 border border-stone-200/80 dark:border-stone-800 shadow-xs relative overflow-hidden transition-colors"
+      className="bg-gradient-to-r from-emerald-50/40 to-sky-50/40 dark:from-emerald-950/10 dark:to-sky-950/10 bg-white/95 dark:bg-stone-900/95 backdrop-blur-xs rounded-[1.5rem] p-5 sm:p-6 border border-emerald-100/50 dark:border-stone-800 shadow-sm relative overflow-hidden transition-colors"
     >
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-stone-300 dark:bg-stone-700" />
@@ -102,7 +102,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
         </div>
 
         {/* Right: Balcony Container Watering Advisor */}
-        <div className="md:max-w-md w-full p-3.5 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-700">
+        <div className="md:max-w-md w-full p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700">
           <div className="flex items-center justify-between mb-1">
             <span className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
               <Droplets className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />

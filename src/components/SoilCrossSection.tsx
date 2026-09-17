@@ -28,7 +28,7 @@ export const SoilCrossSection: React.FC<Props> = ({
   const substrateLiters = potVolumeLiters ? ((substrateCm / totalHeight) * potVolumeLiters).toFixed(1) : null;
 
   return (
-    <div className="bg-stone-50 dark:bg-stone-850 rounded-2xl p-4 sm:p-5 border border-stone-200 dark:border-stone-750 transition-colors">
+    <div className="bg-stone-50 dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border border-stone-200 dark:border-stone-700 transition-colors">
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-amber-700 text-white flex items-center justify-center">
@@ -115,7 +115,7 @@ export const SoilCrossSection: React.FC<Props> = ({
             {/* 4. Dno: Warstwa drenażowa */}
             <div
               style={{ minHeight: '44px' }}
-              className="bg-stone-300 dark:bg-stone-750 border-t border-stone-400 dark:border-stone-700 p-2.5 flex items-center justify-between text-stone-800 dark:text-stone-200"
+              className="bg-stone-300 dark:bg-stone-700 border-t border-stone-400 dark:border-stone-700 p-2.5 flex items-center justify-between text-stone-800 dark:text-stone-200"
             >
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-800 shrink-0" />
@@ -125,7 +125,7 @@ export const SoilCrossSection: React.FC<Props> = ({
                 </div>
               </div>
               <div className="text-right">
-                <span className="font-bold text-[10px] bg-white/80 dark:bg-stone-850 px-2 py-0.5 rounded text-stone-900 dark:text-stone-100">
+                <span className="font-bold text-[10px] bg-white/80 dark:bg-stone-800 px-2 py-0.5 rounded text-stone-900 dark:text-stone-100">
                   {drainageCm} cm
                 </span>
                 {drainageLiters && (

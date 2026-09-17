@@ -66,6 +66,13 @@ export function getFloorCategory(floor: number): FloorCategory {
   return 'wysokie (7+)';
 }
 
+export function getFloorCategoryLabel(floor: number): string {
+  if (floor === 0) return 'Parter';
+  if (floor <= 3) return 'Niskie piętro (1-3)';
+  if (floor <= 6) return 'Średnie piętro (4-6)';
+  return 'Wysokie piętro (7+)';
+}
+
 export interface UserBalconySpec {
   region: PolandRegionKey;
   floor: number;

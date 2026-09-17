@@ -54,7 +54,7 @@ export const FertilizerAndSprayCard: React.FC<Props> = ({
           </div>
 
           <div className="space-y-3 text-xs">
-            <div className="bg-stone-50 dark:bg-stone-850 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+            <div className="bg-stone-50 dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
               <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-1">
                 Zalecany nawóz główny:
               </div>
@@ -62,11 +62,11 @@ export const FertilizerAndSprayCard: React.FC<Props> = ({
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-stone-50 dark:bg-stone-850 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
+              <div className="bg-stone-50 dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
                 <div className="text-[10px] uppercase font-bold text-stone-500 dark:text-stone-400 mb-0.5">Częstotliwość</div>
                 <div className="text-stone-800 dark:text-stone-200 font-semibold text-[11px] leading-tight">{fert.frequency}</div>
               </div>
-              <div className="bg-stone-50 dark:bg-stone-850 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
+              <div className="bg-stone-50 dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
                 <div className="text-[10px] uppercase font-bold text-stone-500 dark:text-stone-400 mb-0.5">Proporcja NPK</div>
                 <div className="text-stone-800 dark:text-stone-200 font-semibold text-[11px] leading-tight">{fert.npk_focus}</div>
               </div>
@@ -142,7 +142,7 @@ export const FertilizerAndSprayCard: React.FC<Props> = ({
                   ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
                   : isPreventive
                   ? 'bg-sky-50/70 dark:bg-sky-950/40 border-sky-300 dark:border-sky-800 text-sky-950 dark:text-sky-200'
-                  : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-200'
+                  : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-200'
               }`}
             >
               {isRedundant ? (

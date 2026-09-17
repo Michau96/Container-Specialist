@@ -426,7 +426,26 @@ export async function fetchRecommendations(userSpec: UserBalconySpec): Promise<P
     throw new Error(`Failed to fetch recommendations: ${res.statusText}`);
   }
   const data = await res.json();
-  return data.recommendations;
+  const recommendations: Plant[] = data.recommendations || [];
+  
+  // Backwards compatibility for plants with missing 'soil' property
+  return recommendations.map(plant => {
+    if (!plant.soil) {
+      const phArray = (plant as any).soil_ph;
+      const phString = Array.isArray(phArray) ? phArray.join(', ') : (phArray || '6.0 - 6.8');
+      
+      return {
+        ...plant,
+        soil: {
+          type: 'Ziemia uniwersalna z perlitem',
+          ph: phString,
+          structure: 'Przepuszczalna, lekka',
+          fertilizer: 'Biohumus',
+        }
+      };
+    }
+    return plant;
+  });
 }
 
 export async function fetchCalendar(
@@ -462,7 +481,7 @@ export function getCurrentPeriodId(): string {
   return `${String(month).padStart(2, '0')}_${half}`;
 }
 
-const MY_CROPS_STORAGE_KEY = 'balkonowy_ogrod_my_crops_v1';
+const MY_CROPS_STORAGE_KEY = 'balkonowy_ogrod_my_crops_v2';
 
 export function loadSavedMyCrops(): import('../types').MyCropItem[] {
   try {
@@ -476,76 +495,8 @@ export function loadSavedMyCrops(): import('../types').MyCropItem[] {
   } catch (e) {
     console.warn('Failed to read saved my crops:', e);
   }
-  // Default starter crops to immediately give the user a rich initial experience
-  const d35 = new Date();
-  d35.setDate(d35.getDate() - 35);
-  const d20 = new Date();
-  d20.setDate(d20.getDate() - 20);
-  const d45 = new Date();
-  d45.setDate(d45.getDate() - 45);
 
-  return [
-    {
-      plantId: 'pomidor-karlowy',
-      addedAt: new Date().toISOString(),
-      stage: 'rosnie',
-      customPotName: 'Donica terakotowa 15L (głęboka)',
-      notes: 'Odmiana Maskotka, prowadzona na 2 pędy przy paliku bambusowym',
-      selectedVariety: 'Maskotka',
-      pot: {
-        potType: 'okragla',
-        volumeL: 15,
-        material: 'ceramika_terakota',
-        hasDrainage: true,
-        locationNote: 'Pod ścianą południową przy wejściu',
-      },
-      sowing: {
-        method: 'nasiona',
-        date: d35.toISOString().split('T')[0],
-        sowingLocation: 'balkon_bezposrednio',
-      },
-    },
-    {
-      plantId: 'bazylia-pospolita',
-      addedAt: new Date().toISOString(),
-      stage: 'rosnie',
-      customPotName: 'Skrzynka balkonowa 60cm z drenażem',
-      notes: 'Uszczykiwane wierzchołki co tydzień, zapach Genovese',
-      selectedVariety: 'Genovese',
-      pot: {
-        potType: 'skrzynka',
-        volumeL: 6,
-        material: 'plastik',
-        hasDrainage: true,
-        locationNote: 'Barierka wschodnia (poranne słońce)',
-      },
-      sowing: {
-        method: 'sadzonka',
-        date: d20.toISOString().split('T')[0],
-        sowingLocation: 'parapet_wewnetrzny',
-      },
-    },
-    {
-      plantId: 'truskawka-zwisajaca',
-      addedAt: new Date().toISOString(),
-      stage: 'kwitnie',
-      customPotName: 'Kosz wiszący 10L',
-      notes: 'Powtarza owocowanie do października, różowe kwiatki',
-      selectedVariety: 'Toscana',
-      pot: {
-        potType: 'wiszaca',
-        volumeL: 10,
-        material: 'plastik',
-        hasDrainage: true,
-        locationNote: 'Podwieszona pod zadaszeniem balkonu',
-      },
-      sowing: {
-        method: 'sadzonka',
-        date: d45.toISOString().split('T')[0],
-        sowingLocation: 'balkon_bezposrednio',
-      },
-    },
-  ];
+  return [];
 }
 
 export function saveMyCrops(crops: import('../types').MyCropItem[]): void {

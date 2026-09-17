@@ -6,7 +6,7 @@ import {
   Sprout,
   ArrowRight,
 } from 'lucide-react';
-import { UserBalconySpec, Plant, WeatherData, PlantGroup, MyCropItem } from './types';
+import { UserBalconySpec, Plant, WeatherData, PlantGroup, MyCropItem, getFloorCategoryLabel } from './types';
 import {
   loadSavedSpec,
   saveUserSpec,
@@ -292,7 +292,7 @@ export default function App() {
   }, [groupFilteredPlants, searchQuery, selectedCategory, sortOrder]);
 
   return (
-    <div className="min-h-screen bg-[#FBF9F4] dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 to-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors relative overflow-x-hidden"><div className="absolute top-0 right-0 -mr-32 -mt-32 w-[32rem] h-[32rem] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" /><div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[40rem] h-[40rem] bg-teal-100/20 dark:bg-teal-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
       {/* Top Header */}
       <Header
         activeTab={activeTab}
@@ -336,7 +336,7 @@ export default function App() {
         {activeTab === 'search_crops' && (
           <div className="space-y-6">
             {/* Navigation Quick Bar */}
-            <div className="bg-white dark:bg-stone-900 rounded-3xl p-4 sm:p-5 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
+            <div className="bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
                   <Search className="w-5 h-5" />
@@ -361,7 +361,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setActiveTab('calendar')}
-                  className="flex-1 sm:flex-none px-3.5 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1 cursor-pointer"
+                  className="flex-1 sm:flex-none px-3.5 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1 cursor-pointer"
                 >
                   <span>Pełny kalendarz</span>
                   <ArrowRight className="w-3.5 h-3.5 text-stone-500" />
@@ -370,7 +370,7 @@ export default function App() {
             </div>
 
             {/* Banner & Filter Bar */}
-            <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-xs">
+            <div className="bg-white dark:bg-stone-900 rounded-[2rem] p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-xs">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider mb-1">
@@ -389,7 +389,7 @@ export default function App() {
                   <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
                     Każda uprawa została przeliczona pod kątem Twojej ekspozycji (
                     <strong className="text-stone-800 dark:text-stone-200">{userSpec.orientation}</strong>), piętra (
-                    <strong className="text-stone-800 dark:text-stone-200">{userSpec.floor}. piętro</strong>),
+                    <strong className="text-stone-800 dark:text-stone-200">{getFloorCategoryLabel(userSpec.floor)}</strong>),
                     wielkości donic oraz strefy mrozowej regionu{' '}
                     <strong className="text-stone-800 dark:text-stone-200">
                       {POLAND_REGIONS[userSpec.region]?.name.split('(')[0]}
@@ -727,7 +727,7 @@ export default function App() {
 
             {/* Plants Grid */}
             {loadingPlants ? (
-              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
+              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800">
                 <div className="inline-block animate-spin w-8 h-8 border-4 border-stone-700 dark:border-stone-300 border-t-transparent rounded-full mb-2" />
                 <p className="text-xs text-stone-500 dark:text-stone-400">Przeliczanie bazy wiedzy o donicach...</p>
               </div>
@@ -751,7 +751,7 @@ export default function App() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 p-6">
+              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-6">
                 <Info className="w-8 h-8 text-stone-400 mx-auto mb-2" />
                 <h3 className="text-base font-semibold text-stone-800 dark:text-stone-200">
                   {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak pozycji w tej kategorii'}

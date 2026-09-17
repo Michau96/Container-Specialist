@@ -41,7 +41,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
   const isSelectedCurrent = selectedPhaseIndex === info.currentPhaseIndex;
 
   return (
-    <div className="bg-stone-50/80 dark:bg-stone-850/80 rounded-2xl border border-stone-200/80 dark:border-stone-800 p-4 sm:p-5 space-y-4">
+    <div className="bg-stone-50/80 dark:bg-stone-800/80 rounded-2xl border border-stone-200/80 dark:border-stone-700 p-4 sm:p-5 space-y-4">
       {/* 1. Header: Current Day & Countdown to Next Stage */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -127,7 +127,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
                       ? 'bg-emerald-50/70 dark:bg-emerald-950/40 border-emerald-400/80 text-stone-900 dark:text-stone-100'
                       : isPast
                       ? 'bg-stone-100/60 dark:bg-stone-800/40 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400'
-                      : 'bg-white dark:bg-stone-850 border-stone-200 dark:border-stone-800 text-stone-600 dark:text-stone-400 opacity-80 hover:opacity-100'
+                      : 'bg-white dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400 opacity-80 hover:opacity-100'
                   }`}
                 >
                   {/* Top indicators */}
@@ -200,7 +200,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
             </div>
 
             {/* "Czego się spodziewać" */}
-            <div className="p-3 bg-stone-50 dark:bg-stone-850 rounded-xl border border-stone-200/70 dark:border-stone-800">
+            <div className="p-3 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200/70 dark:border-stone-700">
               <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200 mb-1">
                 <Info className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Czego się spodziewać:</span>
@@ -224,7 +224,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
             {/* 3 Pillars of Care for this Phase */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
               {/* Watering */}
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-800 space-y-1">
+              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200/60 dark:border-stone-700 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400">
                   <Droplets className="w-3.5 h-3.5" />
                   <span>Podlewanie w tej fazie</span>
@@ -235,7 +235,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
               </div>
 
               {/* Fertilizing */}
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-800 space-y-1">
+              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200/60 dark:border-stone-700 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400">
                   <Zap className="w-3.5 h-3.5" />
                   <span>Nawożenie w tej fazie</span>
@@ -246,7 +246,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
               </div>
 
               {/* Pruning / Supports */}
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-800 space-y-1">
+              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200/60 dark:border-stone-700 space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
                   <Scissors className="w-3.5 h-3.5" />
                   <span>Pielęgnacja & Podpory</span>
@@ -262,7 +262,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
             {plant.spacing_guide && (
               <div className="pt-2 border-t border-stone-100 dark:border-stone-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 {/* Siew gniazdowy vs pojedynczy */}
-                <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-750 flex items-start gap-2">
+                <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 flex items-start gap-2">
                   <span className="text-base leading-none">🌱</span>
                   <div>
                     <span className="font-bold text-[11px] text-stone-800 dark:text-stone-200 block">

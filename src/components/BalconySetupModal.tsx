@@ -129,7 +129,7 @@ export const BalconySetupModal: React.FC<Props> = ({
         {/* Form Body */}
         <form onSubmit={handleSave} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-7">
           {/* 1. Region w Polsce / Województwo */}
-          <div className="space-y-3 bg-white dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
+          <div className="space-y-3 bg-white dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
                 <MapPin className="w-4 h-4 text-stone-600 dark:text-stone-400" />
@@ -163,7 +163,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     className={`px-2 py-1 text-[11px] rounded-lg font-medium transition whitespace-nowrap cursor-pointer ${
                       selectedMacroregion === macro
                         ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-semibold'
-                        : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 border border-transparent dark:border-stone-700'
                     }`}
                   >
                     {macro === 'all' ? 'Wszystkie' : macro}
@@ -185,13 +185,13 @@ export const BalconySetupModal: React.FC<Props> = ({
                     onClick={() => setSpec({ ...spec, region: regKey })}
                     className={`p-2.5 rounded-xl border text-left text-xs transition flex flex-col justify-between cursor-pointer ${
                       isSelected
-                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold ring-1.5 ring-stone-500/40 shadow-xs'
-                        : 'border-stone-200 dark:border-stone-750 bg-stone-50/60 dark:bg-stone-800/50 hover:bg-stone-100/70 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
+                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-200 text-stone-900 dark:text-stone-900 font-semibold ring-1.5 ring-stone-500/40 dark:ring-stone-400 shadow-xs'
+                        : 'border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800/80 hover:bg-stone-100/70 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-1">
                       <span className="font-bold text-xs text-stone-900 dark:text-stone-100">{reg.name}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-stone-900 dark:text-stone-100 shrink-0 mt-0.5" />}
+                      {isSelected && <Check className="w-3.5 h-3.5 text-stone-900 dark:text-stone-900 shrink-0 mt-0.5" />}
                     </div>
                     <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-1 flex items-center justify-between">
                       <span>Strefa {reg.zone}</span>
@@ -219,7 +219,7 @@ export const BalconySetupModal: React.FC<Props> = ({
           </div>
 
           {/* 2. Dokładna Orientacja / Wystawa */}
-          <div className="space-y-3 bg-white dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
+          <div className="space-y-3 bg-white dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
                 <Compass className="w-4 h-4 text-stone-600 dark:text-stone-400" />
@@ -248,7 +248,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   className={`px-2.5 py-1 text-[11px] rounded-lg font-medium transition shrink-0 cursor-pointer ${
                     orientFilter === cat.id
                       ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-2xs font-semibold'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700 border border-transparent dark:border-stone-700'
                   }`}
                 >
                   {cat.label}
@@ -268,14 +268,14 @@ export const BalconySetupModal: React.FC<Props> = ({
                     onClick={() => setSpec({ ...spec, orientation: item.key })}
                     className={`p-2.5 rounded-xl border text-left text-xs transition flex flex-col justify-between cursor-pointer ${
                       isSelected
-                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold ring-1.5 ring-stone-500/40 shadow-xs'
-                        : 'border-stone-200 dark:border-stone-750 bg-stone-50/40 dark:bg-stone-800/50 hover:bg-stone-100/70 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
+                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-200 text-stone-900 dark:text-stone-900 font-semibold ring-1.5 ring-stone-500/40 dark:ring-stone-400 shadow-xs'
+                        : 'border-stone-200 dark:border-stone-700 bg-stone-50/40 dark:bg-stone-800/80 hover:bg-stone-100/70 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300'
                     }`}
                   >
                     <div>
                       <div className="flex items-start justify-between gap-1">
                         <span className="font-bold text-xs text-stone-900 dark:text-stone-100">{item.label}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-stone-900 dark:text-stone-100 shrink-0 mt-0.5" />}
+                        {isSelected && <Check className="w-3.5 h-3.5 text-stone-900 dark:text-stone-900 shrink-0 mt-0.5" />}
                       </div>
                       <div className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-stone-200/70 dark:bg-stone-700 text-stone-800 dark:text-stone-200 text-[10px] font-semibold mt-1">
                         <Sun className="w-3 h-3 text-amber-500" />
@@ -310,7 +310,7 @@ export const BalconySetupModal: React.FC<Props> = ({
           </div>
 
           {/* 3. Piętro i wiatr */}
-          <div className="space-y-2.5 bg-white dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
+          <div className="space-y-2.5 bg-white dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
               <label className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
                 <Building className="w-4 h-4 text-stone-600 dark:text-stone-400" />
@@ -357,8 +357,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                     onClick={() => setSpec({ ...spec, floor: item.floor })}
                     className={`p-3 rounded-xl border text-left text-xs transition flex flex-col justify-between cursor-pointer ${
                       isSelected
-                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold ring-1.5 ring-stone-500/40 shadow-xs'
-                        : 'border-stone-200 dark:border-stone-750 bg-stone-50/50 dark:bg-stone-800/50 hover:bg-stone-100/70 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
+                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-200 text-stone-900 dark:text-stone-900 font-semibold ring-1.5 ring-stone-500/40 dark:ring-stone-400 shadow-xs'
+                        : 'border-stone-200 dark:border-stone-700 bg-stone-50/50 dark:bg-stone-800/50 hover:bg-stone-100/70 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
                     }`}
                   >
                     <div>
@@ -376,7 +376,7 @@ export const BalconySetupModal: React.FC<Props> = ({
           </div>
 
           {/* 4. Typ barierki i zadaszenie */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
             <div className="space-y-1.5">
               <label className="flex items-center gap-2 text-xs font-semibold text-stone-800 dark:text-stone-200">
                 <Shield className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
@@ -386,7 +386,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                 id="balcony-type-select"
                 value={spec.balcony_type}
                 onChange={(e) => setSpec({ ...spec, balcony_type: e.target.value as BalconyType })}
-                className="w-full text-xs p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-500"
+                className="w-full text-xs p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-500"
               >
                 <option value="open_rail">Ażurowa barierka metalowa (dużo światła u dołu)</option>
                 <option value="solid_wall">Pełny mur / beton (cień przy podłodze, osłona od wiatru)</option>
@@ -404,7 +404,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                 id="balcony-roofing-select"
                 value={spec.roofing}
                 onChange={(e) => setSpec({ ...spec, roofing: e.target.value as RoofingType })}
-                className="w-full text-xs p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-500"
+                className="w-full text-xs p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-stone-500"
               >
                 <option value="uncovered">Niezadaszony (łapie deszcz, ryzyko ulew)</option>
                 <option value="covered">Zadaszony (balkon powyżej / dach – 100% zależy od podlewania)</option>
@@ -413,7 +413,7 @@ export const BalconySetupModal: React.FC<Props> = ({
           </div>
 
           {/* 5. Dostępne donice */}
-          <div className="space-y-2 bg-white dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
+          <div className="space-y-2 bg-white dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
             <label className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
               <Maximize2 className="w-4 h-4 text-stone-700 dark:text-stone-300" />
               <span>4. Jakie donice i pojemniki posiadasz lub planujesz kupić?</span>
@@ -450,13 +450,13 @@ export const BalconySetupModal: React.FC<Props> = ({
                     onClick={() => togglePot(item.id as ContainerType)}
                     className={`p-3 rounded-xl border text-left text-xs transition flex items-start gap-2.5 cursor-pointer ${
                       isSelected
-                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-medium'
-                        : 'border-stone-200 dark:border-stone-750 bg-white dark:bg-stone-850 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
+                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-200 text-stone-900 dark:text-stone-900 font-medium'
+                        : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
                     }`}
                   >
                     <div
                       className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center shrink-0 border ${
-                        isSelected ? 'bg-stone-900 dark:bg-stone-100 border-stone-900 dark:border-stone-100 text-white dark:text-stone-900' : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800'
+                        isSelected ? 'bg-stone-900 dark:bg-stone-300 border-stone-900 dark:border-stone-300 text-white dark:text-stone-900' : 'border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-900'
                       }`}
                     >
                       {isSelected && <Check className="w-3 h-3" />}
@@ -472,7 +472,7 @@ export const BalconySetupModal: React.FC<Props> = ({
           </div>
 
           {/* 6. Czas na pielęgnację */}
-          <div className="space-y-2 bg-white dark:bg-stone-850 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
+          <div className="space-y-2 bg-white dark:bg-stone-900/50 p-4 rounded-2xl border border-stone-200/90 dark:border-stone-800 shadow-2xs">
             <label className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
               <Clock className="w-4 h-4 text-stone-600 dark:text-stone-400" />
               <span>5. Ile masz czasu na doglądanie i podlewanie?</span>
@@ -492,8 +492,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                     onClick={() => setSpec({ ...spec, care_time: item.id as CareTime })}
                     className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer ${
                       isSelected
-                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold'
-                        : 'border-stone-200 dark:border-stone-750 bg-white dark:bg-stone-850 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
+                        ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-200 text-stone-900 dark:text-stone-900 font-semibold'
+                        : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 hover:bg-stone-50 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300'
                     }`}
                   >
                     <div className="font-semibold">{item.label}</div>

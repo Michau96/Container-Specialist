@@ -20,6 +20,7 @@ interface Props {
   weather: WeatherData | null;
   userSpec: UserBalconySpec;
   cropsCount: number;
+  layout?: 'horizontal' | 'vertical';
 }
 
 export const DailyRecommendationCard: React.FC<Props> = ({
@@ -27,6 +28,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
   weather,
   userSpec,
   cropsCount,
+  layout = 'horizontal',
 }) => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
@@ -37,9 +39,9 @@ export const DailyRecommendationCard: React.FC<Props> = ({
   const { watering, fertilizing, pruning, spraying, specialAlerts } = recommendation;
 
   return (
-    <div className="bg-gradient-to-br from-stone-900 via-stone-850 to-stone-900 text-stone-100 rounded-3xl p-5 sm:p-7 shadow-md border border-stone-800">
+    <div className="bg-gradient-to-br from-emerald-950 via-teal-900 to-emerald-950 text-emerald-50 rounded-[2rem] p-5 sm:p-7 shadow-lg border border-emerald-800/80 shadow-emerald-900/20">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-stone-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-emerald-800/50">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">
             <Sparkles className="w-4 h-4" />
@@ -48,14 +50,14 @@ export const DailyRecommendationCard: React.FC<Props> = ({
           <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
             <span>O czym pamiętać dzisiaj w Twoich uprawach?</span>
           </h3>
-          <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-2xl leading-relaxed">
+          <p className="text-xs sm:text-sm text-emerald-200 mt-1 max-w-2xl leading-relaxed">
             Spersonalizowane zalecenia pielęgnacyjne przeliczone na podstawie aktualnej pogody w regionie,
             warunków na Twoim {userSpec.floor}. piętrze oraz {cropsCount} roślin w Twoich uprawach.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-center bg-stone-800/80 px-3 py-1.5 rounded-xl border border-stone-700/60 text-xs text-stone-300">
-          <Clock className="w-3.5 h-3.5 text-stone-400" />
+        <div className="flex items-center gap-2 self-start sm:self-center bg-emerald-900/60 px-3 py-1.5 rounded-xl border border-emerald-700/60 text-xs text-emerald-200">
+          <Clock className="w-3.5 h-3.5 text-emerald-300" />
           <span>Odświeżono: dzisiaj {recommendation.lastUpdated}</span>
         </div>
       </div>
@@ -76,11 +78,11 @@ export const DailyRecommendationCard: React.FC<Props> = ({
       )}
 
       {/* 4 Pillars of Daily Care Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+      <div className={layout === 'vertical' ? "flex flex-col gap-4 mt-5" : "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mt-5"}>
         {/* 1. Podlewanie */}
         <div
           id="daily-rec-watering"
-          className="bg-stone-800/60 hover:bg-stone-800/90 rounded-2xl p-4 sm:p-5 border border-stone-700/60 transition-all flex flex-col justify-between"
+          className="bg-emerald-900/40 hover:bg-emerald-900/70 rounded-[1.5rem] p-4 sm:p-5 border border-emerald-800/50 transition-all flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -103,7 +105,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                     ? 'bg-emerald-950 text-emerald-300 border-emerald-700/60'
                     : watering.status === 'wstrzymaj'
                     ? 'bg-amber-950 text-amber-300 border-amber-700/60'
-                    : 'bg-stone-800 text-stone-300 border-stone-700'
+                    : 'bg-stone-800 text-emerald-200 border-stone-700'
                 }`}
               >
                 {watering.isGoodDay ? (
@@ -121,13 +123,13 @@ export const DailyRecommendationCard: React.FC<Props> = ({
               </div>
             </div>
 
-            <h5 className="text-sm font-semibold text-stone-100 mt-2">{watering.title}</h5>
-            <p className="text-xs text-stone-300 mt-1 leading-relaxed">{watering.advice}</p>
+            <h5 className="text-sm font-semibold text-white mt-2">{watering.title}</h5>
+            <p className="text-xs text-emerald-200 mt-1 leading-relaxed">{watering.advice}</p>
 
             {watering.specifics.length > 0 && (
-              <ul className="mt-3 space-y-1 text-xs text-stone-300 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
+              <ul className="mt-3 space-y-1 text-xs text-emerald-200 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
                 {watering.specifics.map((spec, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-stone-300">
+                  <li key={i} className="flex items-start gap-1.5 text-[11px] text-emerald-200">
                     <span className="text-sky-400 font-bold">•</span>
                     <span>{spec}</span>
                   </li>
@@ -136,7 +138,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-stone-400 flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300 flex items-center justify-between">
             <span>
               Aktualna wilgotność: <strong>{weather?.humidity ?? 60}%</strong>
             </span>
@@ -149,7 +151,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
         {/* 2. Nawożenie */}
         <div
           id="daily-rec-fertilizing"
-          className="bg-stone-800/60 hover:bg-stone-800/90 rounded-2xl p-4 sm:p-5 border border-stone-700/60 transition-all flex flex-col justify-between"
+          className="bg-emerald-900/40 hover:bg-emerald-900/70 rounded-[1.5rem] p-4 sm:p-5 border border-emerald-800/50 transition-all flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -170,30 +172,30 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 border ${
                   fertilizing.isGoodDay
                     ? 'bg-emerald-950 text-emerald-300 border-emerald-700/60'
-                    : 'bg-stone-800 text-stone-300 border-stone-700'
+                    : 'bg-stone-800 text-emerald-200 border-stone-700'
                 }`}
               >
                 {fertilizing.isGoodDay ? (
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                 ) : (
-                  <XCircle className="w-3.5 h-3.5 text-stone-400" />
+                  <XCircle className="w-3.5 h-3.5 text-emerald-300" />
                 )}
                 <span>{fertilizing.isGoodDay ? 'Dobry dzień na nawóz' : 'Pomiń dzisiaj'}</span>
               </div>
             </div>
 
-            <h5 className="text-sm font-semibold text-stone-100 mt-2">{fertilizing.title}</h5>
-            <p className="text-xs text-stone-300 mt-1 leading-relaxed">{fertilizing.advice}</p>
+            <h5 className="text-sm font-semibold text-white mt-2">{fertilizing.title}</h5>
+            <p className="text-xs text-emerald-200 mt-1 leading-relaxed">{fertilizing.advice}</p>
 
-            <div className="mt-3 text-xs text-stone-300 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
+            <div className="mt-3 text-xs text-emerald-200 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
               <span className="text-amber-400 font-bold block mb-0.5 text-[11px] uppercase tracking-wider">
                 Wskazówka dawkowania:
               </span>
-              <p className="text-[11px] text-stone-300 leading-relaxed">{fertilizing.dosageTip}</p>
+              <p className="text-[11px] text-emerald-200 leading-relaxed">{fertilizing.dosageTip}</p>
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-stone-400 flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300 flex items-center justify-between">
             <span>
               Temperatura: <strong>{weather?.temperature ?? 19}°C</strong>
             </span>
@@ -204,7 +206,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
         {/* 3. Przycinanie */}
         <div
           id="daily-rec-pruning"
-          className="bg-stone-800/60 hover:bg-stone-800/90 rounded-2xl p-4 sm:p-5 border border-stone-700/60 transition-all flex flex-col justify-between"
+          className="bg-emerald-900/40 hover:bg-emerald-900/70 rounded-[1.5rem] p-4 sm:p-5 border border-emerald-800/50 transition-all flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -225,8 +227,8 @@ export const DailyRecommendationCard: React.FC<Props> = ({
               </span>
             </div>
 
-            <h5 className="text-sm font-semibold text-stone-100 mt-2">{pruning.title}</h5>
-            <p className="text-xs text-stone-300 mt-1 leading-relaxed">{pruning.advice}</p>
+            <h5 className="text-sm font-semibold text-white mt-2">{pruning.title}</h5>
+            <p className="text-xs text-emerald-200 mt-1 leading-relaxed">{pruning.advice}</p>
 
             <div className="mt-3 space-y-1.5">
               {pruning.plantTasks.map((t, idx) => (
@@ -237,14 +239,14 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                   <span className="text-base shrink-0">{t.icon}</span>
                   <div>
                     <strong className="text-stone-200 block text-[11px]">{t.plantName}:</strong>
-                    <span className="text-stone-300 text-[11px] leading-relaxed">{t.task}</span>
+                    <span className="text-emerald-200 text-[11px] leading-relaxed">{t.task}</span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-stone-400">
+          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300">
             Narzędzie: używaj zdezynfekowanego nożyka lub ostrych nożyczek
           </div>
         </div>
@@ -252,7 +254,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
         {/* 4. Opryski i ochrona */}
         <div
           id="daily-rec-spraying"
-          className="bg-stone-800/60 hover:bg-stone-800/90 rounded-2xl p-4 sm:p-5 border border-stone-700/60 transition-all flex flex-col justify-between"
+          className="bg-emerald-900/40 hover:bg-emerald-900/70 rounded-[1.5rem] p-4 sm:p-5 border border-emerald-800/50 transition-all flex flex-col justify-between"
         >
           <div>
             <div className="flex items-center justify-between gap-2 mb-2">
@@ -273,7 +275,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 border ${
                   spraying.isGoodDay
                     ? 'bg-emerald-950 text-emerald-300 border-emerald-700/60'
-                    : 'bg-stone-800 text-stone-300 border-stone-700'
+                    : 'bg-stone-800 text-emerald-200 border-stone-700'
                 }`}
               >
                 {spraying.isGoodDay ? (
@@ -285,22 +287,22 @@ export const DailyRecommendationCard: React.FC<Props> = ({
               </div>
             </div>
 
-            <h5 className="text-sm font-semibold text-stone-100 mt-2">{spraying.title}</h5>
-            <p className="text-xs text-stone-300 mt-1 leading-relaxed">{spraying.advice}</p>
+            <h5 className="text-sm font-semibold text-white mt-2">{spraying.title}</h5>
+            <p className="text-xs text-emerald-200 mt-1 leading-relaxed">{spraying.advice}</p>
 
             {spraying.recommendedOrganicSolution && (
-              <div className="mt-3 text-xs text-stone-300 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
+              <div className="mt-3 text-xs text-emerald-200 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
                 <span className="text-purple-400 font-bold block mb-0.5 text-[11px] uppercase tracking-wider">
                   Receptura ekologiczna:
                 </span>
-                <p className="text-[11px] text-stone-300 leading-relaxed">
+                <p className="text-[11px] text-emerald-200 leading-relaxed">
                   {spraying.recommendedOrganicSolution}
                 </p>
               </div>
             )}
           </div>
 
-          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-stone-400 flex items-center justify-between">
+          <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300 flex items-center justify-between">
             <span>
               Wiatr na piętrze: <strong>{Math.round(weather?.balcony_advice?.adjusted_wind_at_floor ?? (weather?.wind_speed ?? 12))} km/h</strong>
             </span>

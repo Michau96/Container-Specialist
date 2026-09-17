@@ -215,7 +215,7 @@ export const PlantDetailModal: React.FC<Props> = ({
         <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
           {/* Quick specs grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white dark:bg-stone-850 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
               <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
                 <Maximize2 className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
                 <span>Pojemność donicy</span>
@@ -226,7 +226,7 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="text-[11px] text-stone-500 dark:text-stone-400">głęb. {plant.pot.min_depth_cm} cm</div>
             </div>
 
-            <div className="bg-white dark:bg-stone-850 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
               <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
                 <Layers className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
                 <span>Odczyn pH</span>
@@ -235,7 +235,7 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="text-[11px] text-stone-500 dark:text-stone-400">lekko kwaśne/obojętne</div>
             </div>
 
-            <div className="bg-white dark:bg-stone-850 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
               <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
                 <Sun className="w-3.5 h-3.5 text-amber-500" />
                 <span>Nasłonecznienie</span>
@@ -246,7 +246,7 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">{plant.sun_preference.split('(')[0]}</div>
             </div>
 
-            <div className="bg-white dark:bg-stone-850 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
               <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
                 <Wind className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
                 <span>Trudność (1-10)</span>
@@ -259,7 +259,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           </div>
 
           {/* Streszczenie uprawy */}
-          <div className="bg-stone-100/90 dark:bg-stone-850 border border-stone-200 dark:border-stone-700 rounded-2xl p-4">
+          <div className="bg-stone-100/90 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2 mb-1.5">
               <Lightbulb className="w-4 h-4 text-amber-600" />
               <span>Streszczenie uprawy w donicy</span>
@@ -268,7 +268,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           </div>
 
           {/* OGÓLNE INFORMACJE O PODŁOŻU I ODNOŚNIK DO SCHEMATU DONICY (zgodnie z życzeniem usera) */}
-          <div id="plant-soil-general-section" className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
+          <div id="plant-soil-general-section" className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
             <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-150 dark:border-stone-700">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center justify-center font-bold">
@@ -343,7 +343,7 @@ export const PlantDetailModal: React.FC<Props> = ({
 
           {/* ROZSTAWA, GŁĘBOKOŚĆ I PODPORY */}
           {plant.spacing_guide && (
-            <div className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs">
+            <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs">
               <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-stone-100 dark:border-stone-700">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-stone-800 dark:bg-stone-700 text-white flex items-center justify-center">
@@ -487,7 +487,7 @@ export const PlantDetailModal: React.FC<Props> = ({
 
           {/* Analiza dopasowania do Twojego balkonu z rygorystyczną paletą Czerwony / Żółty / Zielony */}
           {suit && (
-            <div className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-4 space-y-3">
+            <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-4 space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
                 <span>Ocena warunków na Twoim balkonie ({suit.suitability_level})</span>
@@ -558,7 +558,7 @@ export const PlantDetailModal: React.FC<Props> = ({
 
           {/* SEKCJA: WARTOŚCI ODŻYWCZE, WITAMINY I MINERAŁY */}
           {plant.nutrition && (
-            <div id="plant-nutrition-section" className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3.5 shadow-2xs">
+            <div id="plant-nutrition-section" className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3.5 shadow-2xs">
               <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
                 <div className="flex items-center gap-2">
                   <div className="w-8 h-8 rounded-xl bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-200 flex items-center justify-center font-bold">
@@ -623,7 +623,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           )}
 
           {/* Sekcja: Top 5 Polecanych Odmian do Donic */}
-          <div className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-4 shadow-2xs">
+          <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 flex items-center justify-center font-bold">
@@ -688,7 +688,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           </div>
 
           {/* Sekcja: Dokładny Opis Uprawy (Krok po kroku) - Markdown rendered */}
-          <div className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3">
+          <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3">
             <div className="flex items-center gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
               <BookOpen className="w-4 h-4 text-stone-800 dark:text-stone-200" />
               <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
@@ -731,7 +731,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           </div>
 
           {/* Sekcja: Zweryfikowane Źródła Portali Ogrodniczych */}
-          <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-850 border border-stone-200 dark:border-stone-700 text-xs text-stone-600 dark:text-stone-400">
+          <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-600 dark:text-stone-400">
             <div className="flex items-center justify-between mb-2">
               <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
                 <Globe className="w-3.5 h-3.5 text-stone-700 dark:text-stone-300" />
@@ -800,7 +800,7 @@ export const PlantDetailModal: React.FC<Props> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-stone-100 dark:bg-stone-850 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-4 bg-stone-100 dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             {onRequestAddVariety ? (
               <>
@@ -820,7 +820,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                 {isMyCrop && onToggleMyCrop && (
                   <button
                     onClick={() => onToggleMyCrop(plant.id)}
-                    className="w-full sm:w-auto px-3.5 py-2.5 bg-stone-200 dark:bg-stone-750 hover:bg-red-100 hover:text-red-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full sm:w-auto px-3.5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-red-100 hover:text-red-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                     title="Usuń wszystkie donice tej rośliny z Moich upraw"
                   >
                     <span>Usuń z upraw</span>

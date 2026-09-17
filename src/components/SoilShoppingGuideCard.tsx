@@ -101,7 +101,7 @@ export const SoilShoppingGuideCard: React.FC<Props> = ({
                   className={`group px-3 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
                     isPrimary
                       ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-400 dark:border-amber-700 text-amber-950 dark:text-amber-100 shadow-2xs hover:bg-amber-100'
-                      : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-750 text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'
+                      : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800'
                   }`}
                   title="Kliknij, aby skopiować frazę"
                 >
@@ -154,7 +154,7 @@ export const SoilShoppingGuideCard: React.FC<Props> = ({
             {visibleProducers.map((producer) => (
               <div
                 key={producer.name}
-                className="p-3 bg-stone-50 dark:bg-stone-850/70 border border-stone-200 dark:border-stone-800 rounded-xl space-y-1.5 hover:border-amber-300 dark:hover:border-amber-700 transition"
+                className="p-3 bg-stone-50 dark:bg-stone-800/70 border border-stone-200 dark:border-stone-700 rounded-xl space-y-1.5 hover:border-amber-300 dark:hover:border-amber-700 transition"
               >
                 <div className="flex items-center justify-between gap-1">
                   <div className="font-bold text-stone-900 dark:text-stone-100 text-xs">

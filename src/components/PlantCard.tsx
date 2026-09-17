@@ -96,13 +96,13 @@ export const PlantCard: React.FC<Props> = ({
         };
       case 'grzyby':
         return {
-          cardBg: 'bg-gradient-to-b from-stone-100/70 via-stone-50/30 to-white dark:from-stone-850/40 dark:via-stone-900/60 dark:to-stone-900',
+          cardBg: 'bg-gradient-to-b from-stone-100/70 via-stone-50/30 to-white dark:from-stone-800/40 dark:via-stone-900/60 dark:to-stone-900',
           border: 'border-stone-300 dark:border-stone-700 hover:border-stone-400 dark:hover:border-stone-500',
           topBar: 'bg-stone-600 dark:bg-stone-500',
           badgeBg: 'bg-stone-200/80 dark:bg-stone-800 text-stone-900 dark:text-stone-200 border-stone-300 dark:border-stone-700',
           badgeIcon: '🍄',
           badgeLabel: 'Grzyb uprawny',
-          nutritionBox: 'bg-stone-100/60 dark:bg-stone-850/50 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-200',
+          nutritionBox: 'bg-stone-100/60 dark:bg-stone-800/50 border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-200',
           nutritionTitle: 'text-stone-800 dark:text-stone-300',
           nutritionTag: 'bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-300 border-stone-200 dark:border-stone-700',
           buttonHover: 'bg-stone-800 hover:bg-stone-900 dark:bg-stone-700 dark:hover:bg-stone-600',
@@ -149,7 +149,7 @@ export const PlantCard: React.FC<Props> = ({
   return (
     <div
       id={`plant-card-${plant.id}`}
-      className={`rounded-2xl border ${theme.border} ${theme.cardBg} shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group relative dark:bg-stone-900`}
+      className={`rounded-[1.5rem] border ${theme.border} ${theme.cardBg} shadow-sm backdrop-blur-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between overflow-hidden group relative dark:bg-stone-900`}
     >
       {/* Top Type Indicator Stripe */}
       <div className={`h-1.5 w-full ${theme.topBar}`} />
@@ -227,7 +227,7 @@ export const PlantCard: React.FC<Props> = ({
 
         {/* Key Requirements Grid */}
         <div className="grid grid-cols-2 gap-2 mt-3.5 text-xs">
-          <div className="bg-white/80 dark:bg-stone-850 p-2.5 rounded-xl border border-stone-200/70 dark:border-stone-700">
+          <div className="bg-white/80 dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
             <div className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 font-medium">
               <Maximize2 className="w-3 h-3 text-stone-600 dark:text-stone-400" />
               <span>Wymóg donicy</span>
@@ -237,7 +237,7 @@ export const PlantCard: React.FC<Props> = ({
             </div>
           </div>
 
-          <div className="bg-white/80 dark:bg-stone-850 p-2.5 rounded-xl border border-stone-200/70 dark:border-stone-700">
+          <div className="bg-white/80 dark:bg-stone-800 p-2.5 rounded-xl border border-stone-200 dark:border-stone-700">
             <div className="text-[11px] text-stone-500 dark:text-stone-400 flex items-center gap-1 font-medium">
               <Layers className="w-3 h-3 text-stone-600 dark:text-stone-400" />
               <span>Gleba i odczyn pH</span>
@@ -285,7 +285,7 @@ export const PlantCard: React.FC<Props> = ({
         )}
 
         {/* Streszczenie uprawy */}
-        <div className="mt-3 bg-white/70 dark:bg-stone-850 p-3 rounded-xl border border-stone-200/70 dark:border-stone-700 text-xs text-stone-700 dark:text-stone-300">
+        <div className="mt-3 bg-white/90 dark:bg-stone-800 p-3 rounded-xl border border-stone-200 dark:border-stone-700 text-xs text-stone-700 dark:text-stone-300">
           <span className="font-semibold text-stone-900 dark:text-stone-100 block mb-1 text-[11px] uppercase tracking-wider">
             Streszczenie uprawy:
           </span>
@@ -296,14 +296,14 @@ export const PlantCard: React.FC<Props> = ({
 
         {/* Bezpośrednie wytyczne pielęgnacyjne: Nawożenie i Oprysk */}
         <div className="mt-3 space-y-1.5 text-xs">
-          <div className="bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-700 rounded-xl p-2 flex items-start gap-2">
+          <div className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2 flex items-start gap-2">
             <span className="text-amber-700 dark:text-amber-400 font-bold shrink-0">💧 Nawóz:</span>
             <span className="text-stone-800 dark:text-stone-200 line-clamp-1 font-medium">
               {plant.fertilizer_guide ? plant.fertilizer_guide.what : plant.soil.fertilizer}
             </span>
           </div>
 
-          <div className="bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-700 rounded-xl p-2 flex items-start gap-2">
+          <div className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2 flex items-start gap-2">
             <span className="text-sky-700 dark:text-sky-400 font-bold shrink-0">🛡️ Oprysk:</span>
             <span className="text-stone-800 dark:text-stone-200 line-clamp-1 font-medium">
               {plant.spray_guide ? plant.spray_guide.apply_label : 'W razie potrzeby naturalne preparaty'}
@@ -311,7 +311,7 @@ export const PlantCard: React.FC<Props> = ({
           </div>
 
           {plant.spacing_guide && (
-            <div className="bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 space-y-1.5 text-[11px]">
+            <div className="bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-2.5 space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between">
                 <span className="text-stone-600 dark:text-stone-400 font-medium">📐 Siew i rozstawa:</span>
                 <span className="font-bold text-stone-900 dark:text-stone-100">

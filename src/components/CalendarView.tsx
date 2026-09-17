@@ -240,7 +240,7 @@ export const CalendarView: React.FC<Props> = ({
               </button>
             )}
 
-            <label className="flex items-center gap-2 text-xs font-medium text-stone-700 dark:text-stone-300 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-3 py-1.5 rounded-xl cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-750 transition">
+            <label className="flex items-center gap-2 text-xs font-medium text-stone-700 dark:text-stone-300 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-3 py-1.5 rounded-xl cursor-pointer hover:bg-stone-100 dark:hover:bg-stone-700 transition">
               <input
                 id="filter-suitability-checkbox"
                 type="checkbox"
@@ -488,7 +488,7 @@ export const CalendarView: React.FC<Props> = ({
                             </p>
                           </div>
 
-                          <div className="mt-3 pt-2.5 border-t border-stone-200/60 dark:border-stone-750 flex items-center justify-between text-[11px] text-stone-600 dark:text-stone-400">
+                          <div className="mt-3 pt-2.5 border-t border-stone-200/60 dark:border-stone-700 flex items-center justify-between text-[11px] text-stone-600 dark:text-stone-400">
                             <span>Donica: min. {item.pot_vol}L</span>
                             <span className="text-stone-900 dark:text-stone-100 font-semibold hover:underline">
                               Zobacz poradnik →

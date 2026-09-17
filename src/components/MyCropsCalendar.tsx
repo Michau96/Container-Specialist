@@ -221,7 +221,7 @@ export const MyCropsCalendar: React.FC<Props> = ({
                           ? 'bg-emerald-800 text-white border-emerald-800 dark:bg-emerald-700 shadow-xs'
                           : isCurrent
                           ? 'bg-amber-100/80 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 border-amber-300 dark:border-amber-800'
-                          : 'bg-stone-50 dark:bg-stone-850 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-800 hover:bg-stone-100 dark:hover:bg-stone-800'
+                          : 'bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-800'
                       }`}
                     >
                       <span className="text-[10px] font-bold block">{period.short}</span>
@@ -279,7 +279,7 @@ export const MyCropsCalendar: React.FC<Props> = ({
                           key={item.plant_id}
                           className={`p-4 rounded-2xl border transition flex flex-col justify-between ${
                             isCompleted
-                              ? 'bg-stone-50 dark:bg-stone-850/50 border-stone-200 dark:border-stone-800 opacity-70'
+                              ? 'bg-stone-50 dark:bg-stone-800/50 border-stone-200 dark:border-stone-700 opacity-70'
                               : 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 hover:border-emerald-400'
                           }`}
                         >
@@ -382,7 +382,7 @@ export const MyCropsCalendar: React.FC<Props> = ({
             {cropMilestones.map(({ plant, crop, sowHome, sowDirect, hardening, plantOut, care, harvest }) => (
               <div
                 key={plant.id}
-                className="p-4 sm:p-5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-850/40 space-y-3"
+                className="p-4 sm:p-5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-50/50 dark:bg-stone-800/40 space-y-3"
               >
                 <div className="flex items-start justify-between gap-2 pb-2 border-b border-stone-200/80 dark:border-stone-800">
                   <div>

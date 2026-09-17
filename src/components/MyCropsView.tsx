@@ -100,6 +100,20 @@ export const MyCropsView: React.FC<Props> = ({
     'pomidor-karlowy': true,
   });
 
+  const [selectedCropId, setSelectedCropId] = useState<string | null>(null);
+
+  // Sync selectedCropId with myCrops if it gets deleted or if it's the first load
+  React.useEffect(() => {
+    if (myCrops.length > 0) {
+      const allKeys = myCrops.map((c, i) => c.id || `${c.plantId}_${c.selectedVariety || i}`);
+      if (!selectedCropId || !allKeys.includes(selectedCropId)) {
+        setSelectedCropId(allKeys[0]);
+      }
+    } else {
+      setSelectedCropId(null);
+    }
+  }, [myCrops, selectedCropId]);
+
   const toggleTimeline = (cropKey: string) => {
     setExpandedTimelines((prev) => ({
       ...prev,
@@ -169,10 +183,83 @@ export const MyCropsView: React.FC<Props> = ({
     ) && !myCrops.some((c) => c.plantId === p.id)
   );
 
+  // Helper for crop key
+  const getCropKey = (crop: MyCropItem, index: number) => crop.id || `${crop.plantId}_${crop.selectedVariety || index}`;
+
+  // Group crops for the sidebar
+  const groupedCrops = myCrops.reduce((acc, crop, index) => {
+    const plant = allPlants.find((p) => p.id === crop.plantId);
+    const group = plant?.plant_group || 'inne';
+    if (!acc[group]) acc[group] = [];
+    acc[group].push({ crop, plant, cropKey: getCropKey(crop, index) });
+    return acc;
+  }, {} as Record<string, { crop: MyCropItem; plant?: Plant; cropKey: string }[]>);
+
+  const groupLabels: Record<string, string> = {
+    warzywa: 'Warzywa',
+    owoce: 'Owoce',
+    ziola: 'Zioła',
+    ozdobne: 'Ozdobne',
+    kielki: 'Kiełki',
+    grzyby: 'Grzyby',
+    inne: 'Inne',
+  };
+
   return (
-    <div className="space-y-8">
-      {/* 1. Header Banner of My Crops */}
-      <div className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-7 border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div className="flex flex-col xl:flex-row gap-6 items-start w-full">
+      {/* 1. Left Sidebar: Szybki wybór uprawy */}
+      {myCrops.length > 0 && (
+            <div className="order-2 xl:order-1 w-full xl:w-72 hidden md:block shrink-0 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-[2rem] p-4 xl:sticky xl:top-24 max-h-[80vh] overflow-y-auto shadow-xs">
+              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 mb-4 px-2">
+                Szybki wybór uprawy
+              </h3>
+              
+              <div className="space-y-4">
+                {Object.entries(groupedCrops).map(([group, items]) => (
+                  <div key={group} className="space-y-1.5">
+                    <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-stone-500 dark:text-stone-400 px-2 pb-1">
+                      {groupLabels[group] || group}
+                    </h4>
+                    {items.map(({ crop, plant, cropKey }) => {
+                      const isSelected = selectedCropId === cropKey;
+                      const varietyName = crop.selectedVariety || plant?.top_varieties?.[0]?.name || plant?.varieties?.[0] || 'Standardowa';
+                      const potCount = crop.potCount || crop.pot?.quantity || 1;
+                      return (
+                        <button
+                          key={cropKey}
+                          onClick={() => setSelectedCropId(cropKey)}
+                          className={`w-full text-left px-3 py-2.5 rounded-xl text-xs transition cursor-pointer flex flex-col gap-1 border ${
+                            isSelected
+                              ? 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-300 dark:border-emerald-700 shadow-2xs'
+                              : 'bg-transparent border-transparent hover:bg-stone-50 dark:hover:bg-stone-800'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className={`font-semibold ${isSelected ? 'text-emerald-900 dark:text-emerald-200' : 'text-stone-700 dark:text-stone-300'}`}>
+                              {plant?.name || 'Nieznana roślina'}
+                            </span>
+                            {potCount > 1 && (
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-200">
+                                {potCount}x
+                              </span>
+                            )}
+                          </div>
+                          <div className={`text-[10px] ${isSelected ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-500 dark:text-stone-400'}`}>
+                            {varietyName}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+                  )}
+      {/* 2. Main Content (Header + Details + Calendar) */}
+      <div className="order-1 xl:order-2 flex-1 min-w-0 w-full flex flex-col gap-8">
+        {/* 1. Header Banner of My Crops */}
+      <div className="bg-white dark:bg-stone-900 rounded-[2rem] p-5 sm:p-7 border border-stone-200 dark:border-stone-800 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider mb-1">
             <Sprout className="w-4 h-4" />
@@ -202,46 +289,38 @@ export const MyCropsView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 2. Dzienna rekomendacja z uwzględnieniem odmian i donic */}
-      <DailyRecommendationCard
-        recommendation={dailyRecommendation}
-        weather={weather}
-        userSpec={userSpec}
-        cropsCount={myCrops.length}
-      />
-
-      {/* 3. Kafelki Moich Upraw ze schematem faz i konfiguracją donicy */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h3 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
-              <span>Kafelki Moich upraw</span>
-              <span className="text-xs font-normal text-stone-500">
-                (z nazwą odmiany i liczbą jednakowych donic)
-              </span>
-            </h3>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              Każdy kafelek prezentuje precyzyjną odmianę, liczbę identycznych donic, schemat faz wzrostu oraz dedykowane zalecenia podlewania.
-            </p>
-          </div>
-
-          <button
-            onClick={onNavigateToSearch}
-            className="text-xs font-semibold text-emerald-800 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
-          >
-            <span>+ Dodaj kolejną roślinę z bazy</span>
-          </button>
-        </div>
-
-        {myCrops.length === 0 ? (
-          <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 p-6 space-y-4">
-            <Sprout className="w-12 h-12 text-stone-400 mx-auto" />
+              {/* 3. Kafelki Moich Upraw (Details only) */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2">
             <div>
-              <h4 className="text-lg font-bold text-stone-800 dark:text-stone-200">
-                Nie masz jeszcze żadnych roślin w Moich uprawach
+              <h3 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
+                <span>Kafelki Moich upraw</span>
+                <span className="text-xs font-normal text-stone-500">
+                  (z nazwą odmiany i liczbą jednakowych donic)
+                </span>
+              </h3>
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                Każdy kafelek prezentuje precyzyjną odmianę, liczbę identycznych donic, schemat faz wzrostu oraz dedykowane zalecenia podlewania.
+              </p>
+            </div>
+            <button
+              onClick={onNavigateToSearch}
+              className="text-xs font-semibold text-emerald-800 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <span>+ Dodaj kolejną roślinę z bazy</span>
+            </button>
+          </div>
+        {myCrops.length === 0 ? (
+          <div className="text-center py-20 bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-stone-900 rounded-[2rem] border border-emerald-100/50 dark:border-stone-800 p-8 space-y-6 shadow-sm">
+            <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <Sprout className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h4 className="text-2xl font-black text-stone-800 dark:text-stone-100 tracking-tight">
+                Zacznij swój balkonowy ogród! 🌱
               </h4>
-              <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-md mx-auto">
-                Dodaj pierwsze rośliny z katalogu rekomendacji lub wybierz poniższe popularne uprawy z wyborem odmiany:
+              <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
+                Twój balkon ma duży potencjał. Dodaj swoją pierwszą uprawę wybierając jedną z najłatwiejszych i najchętniej wybieranych roślin poniżej. Pomożemy Ci zadbać o nią krok po kroku.
               </p>
             </div>
 
@@ -251,7 +330,7 @@ export const MyCropsView: React.FC<Props> = ({
                   <button
                     key={p.id}
                     onClick={() => setVarietyPickerPlant(p)}
-                    className="px-3 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-stone-800 dark:text-stone-200 hover:text-emerald-900 dark:hover:text-emerald-300 rounded-xl border border-stone-200 dark:border-stone-700 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer"
+                    className="px-4 py-2.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-stone-700 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 rounded-2xl border border-stone-200/80 dark:border-stone-700 text-sm font-bold transition-all shadow-sm hover:shadow-md hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5 text-emerald-600" />
                     <span>{p.name}</span>
@@ -263,457 +342,127 @@ export const MyCropsView: React.FC<Props> = ({
             <div>
               <button
                 onClick={onNavigateToSearch}
-                className="mt-2 px-5 py-2.5 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl text-xs sm:text-sm font-semibold hover:bg-stone-800 dark:hover:bg-stone-200 transition cursor-pointer"
+                className="mt-6 px-6 py-3 bg-emerald-700 dark:bg-emerald-600 text-white dark:text-white rounded-2xl text-sm font-bold hover:bg-emerald-800 dark:hover:bg-emerald-700 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 cursor-pointer flex items-center gap-2 mx-auto"
               >
-                Przejdź do katalogu "Szukaj nowych upraw"
+                Przeglądaj pełny katalog roślin
               </button>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {myCrops.map((crop, index) => {
-              const plant = allPlants.find((p) => p.id === crop.plantId);
-              if (!plant) return null;
+            <div className="flex-1 min-w-0 w-full">
+              {myCrops.map((crop, index) => {
+                const cropKey = getCropKey(crop, index);
+                if (cropKey !== selectedCropId) return null;
+                const plant = allPlants.find((p) => p.id === crop.plantId);
+                if (!plant) return null;
 
-              const cropKey = crop.id || `${crop.plantId}_${crop.selectedVariety || index}`;
-              const isEditing = editingCropId === cropKey;
-              const currentStageObj = STAGES.find((s) => s.key === (crop.stage || 'rosnie'));
-              const timelineInfo = getCropTimelineInfo(plant, crop);
-              const isTimelineOpen = !!expandedTimelines[cropKey] || !!expandedTimelines[plant.id];
+                const varietyName = crop.selectedVariety || plant?.top_varieties?.[0]?.name || plant?.varieties?.[0] || 'Standardowa';
+                const potCount = crop.potCount || crop.pot?.quantity || 1;
+                const isEditing = editingCropId === cropKey;
 
-              const potCount = crop.potCount || crop.pot?.quantity || 1;
-              const varietyName = crop.selectedVariety || plant.top_varieties?.[0]?.name || plant.varieties?.[0] || 'Standardowa';
-              const reqs = getEffectivePlantRequirements(plant, varietyName);
-              const singleVolumeL = crop.pot?.volumeL || reqs.minVolumeL || 10;
-              const totalVolumeL = singleVolumeL * potCount;
-
-              return (
-                <div
-                  key={cropKey}
-                  id={`my-crop-card-${cropKey}`}
-                  className="bg-white dark:bg-stone-900 rounded-3xl p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-xs hover:shadow-md transition-all flex flex-col justify-between space-y-5 relative"
-                >
-                  {/* Card Header & Main Info */}
-                  <div className="space-y-4">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                      <div>
-                        {/* Badges */}
-                        <div className="flex items-center gap-2 flex-wrap mb-1.5">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
-                            {plant.category}
-                          </span>
-
-                          {/* Variety badge */}
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                            <Sparkles className="w-3 h-3 text-emerald-600" />
-                            <span>Odmiana: {varietyName}</span>
-                            {crop.varietyBadge && <span className="font-normal opacity-80">({crop.varietyBadge})</span>}
-                          </span>
-
-                          {/* Multiple Pots Badge */}
-                          {potCount > 1 ? (
-                            <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-950 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800">
-                              📦 {potCount}x jednakowe donice
-                            </span>
-                          ) : (
-                            <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400">
-                              1x donica
-                            </span>
-                          )}
-
-                          {plant.suitability && (
-                            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                              {plant.suitability.score}% dopasowania
-                            </span>
-                          )}
+                return (
+                  <div key={cropKey} className="bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-[2rem] p-5 sm:p-7 shadow-xs">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 overflow-hidden shrink-0 border border-stone-200 dark:border-stone-700 flex items-center justify-center text-3xl">
+                          <Sprout className="w-8 h-8 text-emerald-600" />
                         </div>
-
-                        {/* TILE TITLE WITH VARIETY AND POT QUANTITY EXPLICITLY IN HEADER */}
-                        <h4 className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2 flex-wrap">
-                          {potCount > 1 && (
-                            <span className="text-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-lg border border-emerald-300 dark:border-emerald-700">
-                              {potCount}x
-                            </span>
-                          )}
-                          <span>{plant.name}</span>
-                          <span className="text-stone-400 font-light">–</span>
-                          <span className="text-emerald-900 dark:text-emerald-200 font-bold bg-emerald-50/50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                            odmiana '{varietyName}'
-                          </span>
-                        </h4>
-
-                        {/* Variety botanical habit subtitle & Agronomic badges */}
-                        <div className="mt-1 flex items-center gap-2 flex-wrap text-xs">
-                          {reqs.habit && (
-                            <span className="text-stone-600 dark:text-stone-400 flex items-center gap-1">
-                              <span>🌱</span>
-                              <span>{reqs.habit}</span>
-                            </span>
-                          )}
-
-                          {/* Sowing method badge */}
-                          {plant.spacing_guide && (
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                                plant.spacing_guide.sowing_type === 'gniazdowo'
-                                  ? 'bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-800'
-                                  : 'bg-emerald-50 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800'
-                              }`}
-                            >
-                              {plant.spacing_guide.sowing_type === 'gniazdowo'
-                                ? 'Siew gniazdowo (po 2–3 nasiona)'
-                                : plant.spacing_guide.sowing_type === 'pojedynczo'
-                                ? 'Siew pojedynczo'
-                                : plant.spacing_guide.sowing_type === 'rzutowo'
-                                ? 'Siew rzutowy'
-                                : 'Rozsada / Grzybnia'}
-                            </span>
-                          )}
-
-                          {/* Bamboo Stake Requirement - TYLKO GDY NIEZBĘDNY */}
-                          {(reqs.requiresSupport || plant.spacing_guide?.requires_bamboo_stake) && (
-                            <span className="text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-700 flex items-center gap-1">
-                              <span>🎋</span>
-                              <span>Palik bambusowy: niezbędny do uprawy</span>
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Right controls: Configure Pot & Sowing Button, Delete */}
-                      <div className="flex items-center gap-2 self-start sm:self-auto">
-                        <button
-                          type="button"
-                          onClick={() => setConfiguringCropPlant({ plant, crop })}
-                          className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
-                          title="Zmień parametry donicy lub datę wysiewu"
-                        >
-                          <Settings2 className="w-3.5 h-3.5" />
-                          <span>Edytuj donicę / odmianę</span>
-                        </button>
-
-                        <button
-                          onClick={() => onRemoveCrop(crop.id || crop.plantId)}
-                          className="p-1.5 text-stone-400 hover:text-red-600 dark:hover:text-red-400 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
-                          title="Usuń tę uprawę"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Summary Bar: Current Pot (with Quantity Stepper), Sowing Date, and Active Phase */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      
-                      {/* Pot summary & Inline Quantity Control */}
-                      <div className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-800 flex flex-col justify-between">
                         <div>
-                          <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 mb-1">
-                            <span className="font-semibold flex items-center gap-1">
-                              <Ruler className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Donica i ilość ({potCount}x)</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => setConfiguringCropPlant({ plant, crop })}
-                              className="text-[10px] text-emerald-800 dark:text-emerald-400 font-bold hover:underline cursor-pointer"
-                            >
-                              Zmień 📐
-                            </button>
+                          <div className="flex items-center gap-2 mb-1">
+                            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">{plant.name}</h2>
+                            {potCount > 1 && (
+                              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-800">
+                                {potCount} sztuki
+                              </span>
+                            )}
                           </div>
-
-                          <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
-                            <span>🪴</span>
-                            <span>
-                              {potCount > 1 ? `${potCount}x ` : ''}
-                              {crop.pot
-                                ? `${singleVolumeL}L (${crop.pot.potType === 'okragla' ? 'Okrągła' : crop.pot.potType === 'skrzynka' ? 'Skrzynka' : crop.pot.potType === 'worek_growbag' ? 'Growbag' : crop.pot.potType === 'wiszaca' ? 'Wisząca' : 'Kwadratowa'})`
-                                : crop.customPotName || `${singleVolumeL}L donica`}
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
+                            <span className="font-semibold text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-lg">
+                              Odmiana: {varietyName}
                             </span>
-                          </div>
-
-                          {potCount > 1 && (
-                            <div className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 mt-0.5">
-                              Łącznie: {totalVolumeL} litrów podłoża
-                            </div>
-                          )}
-
-                          <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-1 flex items-center gap-1">
-                            {crop.pot?.hasDrainage ? (
-                              <span className="text-emerald-700 dark:text-emerald-400">✅ Odpływ aktywny</span>
-                            ) : crop.pot ? (
-                              <span className="text-red-600 dark:text-red-400 font-bold">⚠️ Brak drenażu!</span>
-                            ) : (
-                              <span>Wymóg odmiany '{varietyName}': min. {reqs.minVolumeL}L</span>
+                            {crop.customPotName && (
+                              <span className="font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                                📍 {crop.customPotName}
+                              </span>
                             )}
                           </div>
                         </div>
-
-                        {/* Quick Identical Pots Stepper */}
-                        <div className="mt-3 pt-2 border-t border-stone-200 dark:border-stone-750 flex items-center justify-between text-[11px]">
-                          <span className="text-stone-500 dark:text-stone-400 font-medium">Identyczne donice:</span>
-                          <div className="flex items-center gap-1.5 bg-white dark:bg-stone-900 p-0.5 rounded-xl border border-stone-200 dark:border-stone-700">
-                            <button
-                              type="button"
-                              onClick={() => handleQuantityChange(crop, -1)}
-                              disabled={potCount <= 1}
-                              className="w-6 h-6 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center font-bold text-stone-700 dark:text-stone-300 disabled:opacity-30 hover:bg-stone-200 cursor-pointer"
-                              title="Odejmij 1 identyczną donicę"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </button>
-                            <span className="w-7 text-center font-bold text-stone-900 dark:text-stone-100">
-                              {potCount}x
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleQuantityChange(crop, 1)}
-                              className="w-6 h-6 rounded-lg bg-emerald-800 hover:bg-emerald-900 flex items-center justify-center font-bold text-white cursor-pointer"
-                              title="Dodaj 1 identyczną donicę"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </button>
-                          </div>
-                        </div>
                       </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <button
+                          onClick={() => setConfiguringCropPlant({ plant, crop })}
+                          className="p-2 text-stone-500 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-stone-800 rounded-xl transition tooltip-trigger"
+                          title="Skonfiguruj donicę i siew"
+                        >
+                          <Settings2 className="w-5 h-5" />
+                        </button>
+                        <button
+                          onClick={() => isEditing ? saveEdit(crop) : startEdit(crop, cropKey)}
+                          className={`p-2 rounded-xl transition ${isEditing ? 'text-white bg-emerald-600 hover:bg-emerald-700' : 'text-stone-500 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-stone-800'}`}
+                          title={isEditing ? 'Zapisz notatki' : 'Edytuj notatki'}
+                        >
+                          {isEditing ? <Check className="w-5 h-5" /> : <Edit3 className="w-5 h-5" />}
+                        </button>
+                        <button
+                          onClick={() => onRemoveCrop(crop.id || crop.plantId)}
+                          className="p-2 text-stone-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-stone-800 rounded-xl transition"
+                          title="Usuń uprawę"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
+                      </div>
+                    </div>
 
-                      {/* Sowing / Start Period summary */}
-                      <div
-                        onClick={() => setConfiguringCropPlant({ plant, crop })}
-                        className="p-3.5 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200/80 dark:border-stone-800 cursor-pointer hover:border-emerald-500/50 transition group flex flex-col justify-between"
-                      >
+                    {isEditing && (
+                      <div className="mb-6 space-y-4 p-4 bg-stone-50 dark:bg-stone-800/50 rounded-2xl border border-stone-200 dark:border-stone-700">
                         <div>
-                          <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 mb-1">
-                            <span className="font-semibold flex items-center gap-1">
-                              <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Okres & Start siewu</span>
-                            </span>
-                            <span className="text-[10px] text-emerald-800 dark:text-emerald-400 font-bold group-hover:underline">
-                              Zmień datę 📅
-                            </span>
-                          </div>
-                          <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
-                            <span>{crop.sowing?.method === 'sadzonka' ? '🌿' : '🌱'}</span>
-                            <span>
-                              {crop.sowing?.date
-                                ? `${crop.sowing.date} (${crop.sowing.method === 'sadzonka' ? 'sadzonka' : 'z nasion'})`
-                                : 'Ustaw datę'}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-stone-500 dark:text-stone-400 mt-2">
-                          Wiek: <strong className="text-stone-800 dark:text-stone-200">{timelineInfo.daysSinceSowing} dni</strong> od startu
-                        </div>
-                      </div>
-
-                      {/* Current Phase & Countdown */}
-                      <div className="p-3.5 rounded-2xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between text-[11px] text-emerald-900 dark:text-emerald-300 mb-1">
-                            <span className="font-semibold flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                              <span>Aktualna faza</span>
-                            </span>
-                            <span className="text-[10px] font-bold">
-                              Faza {timelineInfo.currentPhase.order}/{timelineInfo.phases.length}
-                            </span>
-                          </div>
-                          <div className="text-xs font-bold text-emerald-950 dark:text-emerald-100 flex items-center gap-1.5 truncate">
-                            <span>{timelineInfo.currentPhase.icon}</span>
-                            <span className="truncate">{timelineInfo.currentPhase.name}</span>
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-emerald-900 dark:text-emerald-300 mt-2 font-medium">
-                          {timelineInfo.daysUntilNextPhase !== null ? (
-                            <span>
-                              Za <strong>{timelineInfo.daysUntilNextPhase} dni</strong>: {timelineInfo.phases[timelineInfo.currentPhaseIndex + 1]?.shortName}
-                            </span>
-                          ) : (
-                            <span>Zbiór plonów w toku! 🧺</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* PROMOTE ADDING AS A NEW CROP IF USER HAS DIFFERENT POTS */}
-                    <div className="p-3 rounded-2xl bg-stone-100/70 dark:bg-stone-850/80 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 text-xs text-stone-700 dark:text-stone-300">
-                        <CopyPlus className="w-4 h-4 text-emerald-600 shrink-0" />
-                        <span>
-                          Masz inną donicę (o innych wymiarach lub na innym stanowisku) dla <strong>{plant.name} ({varietyName})</strong>?
-                        </span>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onAddCropWithVariety(plant.id, varietyName, crop.varietyBadge || 'Odmiana donicowa', 1, true);
-                        }}
-                        className="px-3 py-1.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950 text-emerald-900 dark:text-emerald-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-emerald-300 dark:border-emerald-700 shadow-2xs cursor-pointer self-start sm:self-auto"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>+ Dodaj inną donicę jako osobną uprawę</span>
-                      </button>
-                    </div>
-
-                    {/* Button to toggle the full interactive growth phase schema */}
-                    <div className="flex items-center justify-between pt-1">
-                      <button
-                        type="button"
-                        onClick={() => toggleTimeline(cropKey)}
-                        className="text-xs font-bold text-emerald-800 dark:text-emerald-400 hover:text-emerald-950 flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <span>
-                          {isTimelineOpen
-                            ? 'Ukryj schemat faz i zalecenia'
-                            : 'Pokaż schemat faz – czego za ile się spodziewać (kiełkowanie, liście, owoce, zbiór)'}
-                        </span>
-                        {isTimelineOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                      </button>
-
-                      <span className="text-[11px] text-stone-500">
-                        Cykl: ~{timelineInfo.totalDaysToHarvest} dni do pierwszego zbioru
-                      </span>
-                    </div>
-
-                    {/* Integrated Growth Phase Timeline & Expectations */}
-                    {isTimelineOpen && (
-                      <CropGrowthPhaseTimeline
-                        plant={plant}
-                        crop={crop}
-                        onOpenPotSowingModal={() => setConfiguringCropPlant({ plant, crop })}
-                        compact={false}
-                      />
-                    )}
-
-                    {/* Growth Stage Selector (manual override) */}
-                    <div className="p-2.5 rounded-2xl bg-stone-50 dark:bg-stone-850/80 border border-stone-200/70 dark:border-stone-800">
-                      <div className="flex items-center justify-between text-[11px] mb-1.5">
-                        <span className="text-stone-500 dark:text-stone-400 font-medium">
-                          Ręczna korekta etapu (jeśli roślina rośnie szybciej/wolniej):
-                        </span>
-                        <span className="font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1">
-                          <span>{currentStageObj?.icon}</span>
-                          <span>{currentStageObj?.label}</span>
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap gap-1">
-                        {STAGES.map((s) => {
-                          const isSelected = (crop.stage || 'rosnie') === s.key;
-                          return (
-                            <button
-                              key={s.key}
-                              onClick={() => handleStageChange(crop, s.key)}
-                              className={`px-2 py-1 rounded-lg text-[10px] font-semibold transition cursor-pointer border ${
-                                isSelected
-                                  ? 'bg-emerald-800 text-white border-emerald-800 dark:bg-emerald-700 shadow-2xs'
-                                  : 'bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-400 border-stone-200/80 dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-750'
-                              }`}
-                            >
-                              <span>{s.icon}</span> {s.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Notes Edit Mode */}
-                    {isEditing ? (
-                      <div className="p-3 rounded-xl bg-stone-100 dark:bg-stone-800 space-y-2">
-                        <div>
-                          <label className="text-[10px] font-semibold text-stone-500 dark:text-stone-400 block mb-0.5">
-                            Twoja donica / lokalizacja:
+                          <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5 uppercase tracking-wider">
+                            Własna nazwa (np. "Barierka lewa")
                           </label>
                           <input
                             type="text"
                             value={editPotName}
                             onChange={(e) => setEditPotName(e.target.value)}
-                            placeholder="np. 2x Skrzynki 60cm na parapecie"
-                            className="w-full text-xs p-1.5 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-stone-100"
+                            className="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500"
+                            placeholder="Wpisz nazwę własną uprawy..."
                           />
                         </div>
                         <div>
-                          <label className="text-[10px] font-semibold text-stone-500 dark:text-stone-400 block mb-0.5">
-                            Twoje notatki:
+                          <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5 uppercase tracking-wider">
+                            Prywatne notatki
                           </label>
                           <textarea
-                            rows={2}
                             value={editNotes}
                             onChange={(e) => setEditNotes(e.target.value)}
-                            placeholder="np. Podlewana deszczówką, kwitnie obficie"
-                            className="w-full text-xs p-1.5 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-lg text-stone-900 dark:text-stone-100"
+                            className="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:border-emerald-500 dark:focus:border-emerald-500 min-h-[80px] resize-none"
+                            placeholder="Dodaj notatki (np. data wschodu, zaobserwowane szkodniki)..."
                           />
                         </div>
-                        <div className="flex justify-end gap-1.5">
-                          <button
-                            onClick={() => setEditingCropId(null)}
-                            className="px-2.5 py-1 text-[11px] text-stone-600 dark:text-stone-400 hover:bg-stone-200 rounded-md cursor-pointer"
-                          >
-                            Anuluj
-                          </button>
-                          <button
-                            onClick={() => saveEdit(crop)}
-                            className="px-3 py-1 bg-emerald-800 text-white text-[11px] font-semibold rounded-md hover:bg-emerald-900 flex items-center gap-1 cursor-pointer"
-                          >
-                            <Check className="w-3 h-3" />
-                            <span>Zapisz</span>
-                          </button>
-                        </div>
                       </div>
-                    ) : (
-                      crop.notes && (
-                        <div className="p-2 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200/60 dark:border-stone-800 flex items-center justify-between text-[11px] text-stone-600 dark:text-stone-400">
-                          <span className="italic">"{crop.notes}"</span>
-                          <button
-                            onClick={() => startEdit(crop, cropKey)}
-                            className="p-1 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
-                            title="Edytuj notatkę"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )
                     )}
-                  </div>
 
-                  {/* Footer Action Buttons */}
-                  <div className="pt-3 border-t border-stone-100 dark:border-stone-800 flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onSelectPlant(plant)}
-                        className="py-2 px-3 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 rounded-xl text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
-                      >
-                        <BookOpen className="w-3.5 h-3.5" />
-                        <span>Karta rośliny & Poradnik</span>
-                      </button>
+                    {!isEditing && crop.notes && (
+                      <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/50 rounded-2xl text-sm text-amber-900 dark:text-amber-200">
+                        <div className="font-bold flex items-center gap-1 mb-1 text-xs uppercase tracking-wider">
+                          <BookOpen className="w-3.5 h-3.5" /> Twoje notatki:
+                        </div>
+                        <p className="whitespace-pre-wrap leading-relaxed">{crop.notes}</p>
+                      </div>
+                    )}
 
-                      <button
-                        onClick={() => onOpenPotCalc(plant)}
-                        className="py-2 px-3 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-900 dark:text-emerald-200 rounded-xl text-xs font-semibold transition flex items-center gap-1 border border-emerald-200/80 dark:border-emerald-800 cursor-pointer"
-                      >
-                        <Ruler className="w-3.5 h-3.5" />
-                        <span>Kalkulator donicy</span>
-                      </button>
+                    <div className="mt-6 border-t border-stone-100 dark:border-stone-800 pt-6">
+                      <CropGrowthPhaseTimeline
+                        plant={plant}
+                        crop={crop}
+                        onOpenPotSowingModal={() => setConfiguringCropPlant({ plant, crop })}
+                      />
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setConfiguringCropPlant({ plant, crop })}
-                      className="py-2 px-3.5 bg-stone-900 dark:bg-stone-100 hover:bg-stone-800 dark:hover:bg-stone-200 text-white dark:text-stone-900 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Settings2 className="w-3.5 h-3.5" />
-                      <span>Konfiguruj donicę i termin siewu</span>
-                    </button>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
       {/* 4. Indywidualny Kalendarz Moich Upraw */}
       {myPlants.length > 0 && (
@@ -759,6 +508,20 @@ export const MyCropsView: React.FC<Props> = ({
           existingCropCountForPlant={myCrops.filter((c) => c.plantId === varietyPickerPlant.id).length}
         />
       )}
+      </div>
+
+      {/* 3. Right Sidebar: Daily Recommendations */}
+      <div className="order-3 w-full xl:w-80 shrink-0 xl:sticky xl:top-24 flex flex-col gap-6">
+      {/* 2. Dzienna rekomendacja z uwzględnieniem odmian i donic */}
+      <DailyRecommendationCard
+        recommendation={dailyRecommendation}
+        weather={weather}
+        userSpec={userSpec}
+        cropsCount={myCrops.length}
+      layout="vertical"
+      />
+
+            </div>
     </div>
   );
 };

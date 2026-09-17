@@ -111,22 +111,37 @@ export const PotCalculator: React.FC<Props> = ({
     let points: { x: number; y: number; label: string }[] = [];
 
     if (shape === 'rectangular') {
-      const usableLength = lengthCm - 10; // 5 cm marginesu z każdego brzegu
-      const spotsCount = Math.max(1, Math.floor(usableLength / spacingCm) + 1);
-      maxByGeometry = spotsCount;
-
+      const usableLength = Math.max(0, lengthCm - 10); // 5 cm marginesu
+      const usableWidth = Math.max(0, widthCm - 10);
+      
+      const spotsPerRow = Math.max(1, Math.floor(usableLength / spacingCm) + 1);
+      const rowsCount = Math.max(1, Math.floor(usableWidth / spacingCm) + 1);
+      
+      maxByGeometry = spotsPerRow * rowsCount;
       const finalCount = Math.max(1, Math.min(maxByVol, maxByGeometry));
 
       if (finalCount === 1) {
         points = [{ x: 50, y: 50, label: 'Roślina 1' }];
       } else {
-        const step = 80 / (finalCount - 1);
-        for (let i = 0; i < finalCount; i++) {
-          points.push({
-            x: 10 + i * step,
-            y: 50,
-            label: `Roślina ${i + 1}`,
-          });
+        let placed = 0;
+        const actualRows = Math.ceil(finalCount / spotsPerRow);
+        const yStep = actualRows > 1 ? 80 / (actualRows - 1) : 0;
+        
+        for (let r = 0; r < actualRows; r++) {
+          const rowSpots = Math.min(spotsPerRow, finalCount - placed);
+          const xStep = spotsPerRow > 1 ? 80 / (spotsPerRow - 1) : 0;
+          const xOffset = spotsPerRow > 1 ? 10 + ((spotsPerRow - rowSpots) * xStep) / 2 : 50;
+
+          for (let c = 0; c < rowSpots; c++) {
+            points.push({
+              x: rowSpots === 1 && spotsPerRow === 1 ? 50 : xOffset + c * xStep,
+              y: actualRows === 1 ? 50 : 10 + r * yStep,
+              label: `Roślina ${placed + 1}`,
+            });
+            placed++;
+            if (placed >= finalCount) break;
+          }
+          if (placed >= finalCount) break;
         }
       }
 
@@ -138,33 +153,54 @@ export const PotCalculator: React.FC<Props> = ({
         dimensionText: `${lengthCm} cm × ${widthCm} cm, wys. ${rectHeightCm} cm`,
       };
     } else {
+      const usableDiameter = Math.max(0, diameterCm - 10);
+      const area = Math.PI * Math.pow(usableDiameter / 2, 2);
+      const plantArea = Math.pow(spacingCm, 2);
+      
       if (diameterCm < 24 || minPlantVol > 8) {
         maxByGeometry = 1;
-        points = [{ x: 50, y: 50, label: 'Roślina 1' }];
-      } else if (diameterCm < 35) {
-        maxByGeometry = spacingCm <= 15 ? 3 : 2;
-        if (maxByGeometry === 2) {
-          points = [
-            { x: 35, y: 50, label: 'Roślina 1' },
-            { x: 65, y: 50, label: 'Roślina 2' },
-          ];
-        } else {
-          points = [
-            { x: 50, y: 32, label: 'Roślina 1' },
-            { x: 33, y: 65, label: 'Roślina 2' },
-            { x: 67, y: 65, label: 'Roślina 3' },
-          ];
-        }
       } else {
-        maxByGeometry = spacingCm <= 15 ? 4 : 3;
-        points = [
-          { x: 32, y: 35, label: 'Roślina 1' },
-          { x: 68, y: 35, label: 'Roślina 2' },
-          { x: 50, y: 70, label: 'Roślina 3' },
-        ];
+        const estimatedGeom = Math.floor((area / plantArea) * 0.85); // 85% packing efficiency
+        maxByGeometry = Math.max(1, estimatedGeom);
       }
 
       const finalCount = Math.max(1, Math.min(maxByVol, maxByGeometry));
+
+      if (finalCount === 1) {
+        points = [{ x: 50, y: 50, label: 'Roślina 1' }];
+      } else if (finalCount === 2) {
+        points = [
+          { x: 35, y: 50, label: 'Roślina 1' },
+          { x: 65, y: 50, label: 'Roślina 2' },
+        ];
+      } else if (finalCount === 3) {
+        points = [
+          { x: 50, y: 32, label: 'Roślina 1' },
+          { x: 33, y: 65, label: 'Roślina 2' },
+          { x: 67, y: 65, label: 'Roślina 3' },
+        ];
+      } else if (finalCount === 4) {
+        points = [
+          { x: 35, y: 35, label: 'Roślina 1' },
+          { x: 65, y: 35, label: 'Roślina 2' },
+          { x: 35, y: 65, label: 'Roślina 3' },
+          { x: 65, y: 65, label: 'Roślina 4' },
+        ];
+      } else {
+        // Pattern: 1 in center, remaining in circle around it
+        points.push({ x: 50, y: 50, label: 'Roślina 1' });
+        const remaining = finalCount - 1;
+        const radius = remaining < 6 ? 25 : 35;
+        const angleStep = (2 * Math.PI) / remaining;
+        for (let i = 0; i < remaining; i++) {
+          points.push({
+            x: 50 + radius * Math.cos(i * angleStep),
+            y: 50 + radius * Math.sin(i * angleStep),
+            label: `Roślina ${i + 2}`,
+          });
+        }
+      }
+
       return {
         recommendedCount: finalCount,
         maxByGeometry,
@@ -237,7 +273,7 @@ export const PotCalculator: React.FC<Props> = ({
         {/* Lewa kolumna: Formularz parametrów donicy (5 kolumn) */}
         <div className="lg:col-span-5 space-y-5">
           {/* 1. Wybór rośliny */}
-          <div className="bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200 dark:border-stone-750">
+          <div className="bg-stone-50 dark:bg-stone-800 p-4 rounded-2xl border border-stone-200 dark:border-stone-700">
             <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-1.5">
               Wybierz uprawianą roślinę:
             </label>
@@ -320,28 +356,28 @@ export const PotCalculator: React.FC<Props> = ({
               <button
                 type="button"
                 onClick={() => applyPreset('box60')}
-                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
+                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
                 Skrzynka 60×20×18 cm
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('pot30')}
-                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
+                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
                 Misa okrągła ⌀ 30 cm
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('large40')}
-                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
+                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
                 Kwadratowa 40×40 cm
               </button>
               <button
                 type="button"
                 onClick={() => applyPreset('bucket15')}
-                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
+                className="px-2.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
                 Głęboka donica ⌀ 28 cm
               </button>
@@ -360,7 +396,7 @@ export const PotCalculator: React.FC<Props> = ({
                 className={`p-3 rounded-2xl border text-left cursor-pointer transition flex items-center gap-3 ${
                   shape === 'rectangular'
                     ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold ring-2 ring-stone-500/20'
-                    : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-850 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+                    : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
                 }`}
               >
                 <Box className="w-5 h-5 text-stone-800 dark:text-stone-200 shrink-0" />
@@ -376,7 +412,7 @@ export const PotCalculator: React.FC<Props> = ({
                 className={`p-3 rounded-2xl border text-left cursor-pointer transition flex items-center gap-3 ${
                   shape === 'round'
                     ? 'border-stone-900 dark:border-stone-300 bg-stone-100 dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold ring-2 ring-stone-500/20'
-                    : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-850 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
+                    : 'border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800'
                 }`}
               >
                 <Circle className="w-5 h-5 text-stone-800 dark:text-stone-200 shrink-0" />
@@ -389,7 +425,7 @@ export const PotCalculator: React.FC<Props> = ({
           </div>
 
           {/* 3. Wymiary */}
-          <div className="bg-stone-50 dark:bg-stone-850 p-4 rounded-2xl border border-stone-200 dark:border-stone-750 space-y-3.5">
+          <div className="bg-stone-50 dark:bg-stone-800 p-4 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3.5">
             <div className="text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-wider">
               Wprowadź wymiary (w cm):
             </div>
@@ -641,7 +677,7 @@ export const PotCalculator: React.FC<Props> = ({
           </div>
 
           {/* 6. Liczba donic i metoda uprawy */}
-          <div className="p-3.5 bg-stone-50 dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3">
+          <div className="p-3.5 bg-stone-50 dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
                 Liczba donic (sztuki):
@@ -772,7 +808,7 @@ export const PotCalculator: React.FC<Props> = ({
 
           {/* Widok 1: Interaktywny szkic 2D planu siewu z góry */}
           {activeSchemaView === 'top_layout' ? (
-            <div className="bg-stone-100/90 dark:bg-stone-850 rounded-2xl p-4 sm:p-5 border border-stone-300 dark:border-stone-700 flex flex-col items-center">
+            <div className="bg-stone-100/90 dark:bg-stone-800 rounded-2xl p-4 sm:p-5 border border-stone-300 dark:border-stone-700 flex flex-col items-center">
               <div className="w-full flex items-center justify-between text-xs text-stone-600 dark:text-stone-400 mb-3">
                 <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1">
                   📐 Szkic rozmieszczenia ({capacityInfo.dimensionText})

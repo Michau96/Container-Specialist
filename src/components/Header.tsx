@@ -12,7 +12,7 @@ import {
   Moon,
   Search,
 } from 'lucide-react';
-import { UserBalconySpec, getFloorCategory } from '../types';
+import { UserBalconySpec, getFloorCategory, getFloorCategoryLabel } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
 
 export type ActiveNavTab = 'my_crops' | 'search_crops' | 'calendar' | 'calculator';
@@ -39,12 +39,7 @@ export const Header: React.FC<Props> = ({
   const regionInfo = POLAND_REGIONS[userSpec.region];
   const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec.orientation);
   const orientationDisplay = orientItem ? orientItem.label : userSpec.orientation;
-  const floorClass = getFloorCategory(userSpec.floor);
-
-  const floorDisplay =
-    userSpec.floor === 0
-      ? 'Parter'
-      : `${userSpec.floor}. piętro`;
+  const floorDisplay = getFloorCategoryLabel(userSpec.floor);
 
   return (
     <header className="sticky top-0 z-30 bg-[#FAF8F5]/90 dark:bg-stone-900/90 backdrop-blur-md border-b border-stone-200/80 dark:border-stone-800 transition-colors">
@@ -52,7 +47,7 @@ export const Header: React.FC<Props> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between py-3.5 gap-3">
           {/* Logo & Subtitle */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-800 dark:bg-emerald-700 flex items-center justify-center text-white shadow-xs">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 dark:from-emerald-700 dark:to-teal-900 flex items-center justify-center text-white shadow-xs">
               <Sprout className="w-6 h-6" />
             </div>
             <div>
@@ -76,7 +71,7 @@ export const Header: React.FC<Props> = ({
               id="balcony-summary-badge"
               onClick={onOpenSetup}
               title="Kliknij, aby zmienić specyfikację Twojego balkonu"
-              className="flex items-center gap-2.5 px-3 py-1.5 bg-white dark:bg-stone-850 rounded-xl border border-stone-200 dark:border-stone-700 shadow-2xs hover:border-emerald-700 dark:hover:border-emerald-500 hover:bg-stone-50/80 dark:hover:bg-stone-800 transition cursor-pointer text-xs text-stone-700 dark:text-stone-300"
+              className="flex items-center gap-2.5 px-3 py-1.5 bg-white dark:bg-stone-800 rounded-[1rem] border border-stone-200 dark:border-stone-700 shadow-2xs hover:border-emerald-700 dark:hover:border-emerald-500 hover:bg-stone-50/80 dark:hover:bg-stone-800 transition cursor-pointer text-xs text-stone-700 dark:text-stone-300"
             >
               <div className="flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
@@ -99,7 +94,7 @@ export const Header: React.FC<Props> = ({
             <button
               id="edit-balcony-settings-btn"
               onClick={onOpenSetup}
-              className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-700 dark:text-stone-200 hover:text-emerald-900 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+              className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-700 dark:text-stone-200 hover:text-emerald-900 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
               title="Zmień parametry balkonu"
             >
               <Settings className="w-4 h-4" />
@@ -111,7 +106,7 @@ export const Header: React.FC<Props> = ({
               id="dark-mode-toggle-btn"
               type="button"
               onClick={onToggleDarkMode}
-              className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-stone-700 dark:text-amber-300 border border-stone-200 dark:border-stone-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-stone-700 dark:text-amber-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
               aria-label={darkMode ? 'Włącz tryb jasny' : 'Włącz tryb ciemny'}
               title={darkMode ? 'Przełącz na tryb jasny' : 'Przełącz na tryb ciemny'}
             >
@@ -135,7 +130,7 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-my-crops"
             onClick={() => onTabChange('my_crops')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === 'my_crops'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -157,7 +152,7 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-search-crops"
             onClick={() => onTabChange('search_crops')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === 'search_crops'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -170,7 +165,7 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-calendar"
             onClick={() => onTabChange('calendar')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === 'calendar'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
@@ -183,7 +178,7 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-calculator"
             onClick={() => onTabChange('calculator')}
-            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
               activeTab === 'calculator'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
                 : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'

@@ -147,7 +147,7 @@ export const SelectVarietyModal: React.FC<Props> = ({
                     className={`p-3.5 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer relative ${
                       isSelected
                         ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-600 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-600/60 shadow-xs'
-                        : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-800 text-stone-800 dark:text-stone-200 hover:border-emerald-300 dark:hover:border-emerald-700'
+                        : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:border-emerald-300 dark:hover:border-emerald-700'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -186,7 +186,7 @@ export const SelectVarietyModal: React.FC<Props> = ({
                 className={`p-3.5 rounded-2xl border text-left transition flex flex-col justify-between cursor-pointer ${
                   isCustomVarietyMode
                     ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-600 ring-2 ring-emerald-600/60 shadow-xs'
-                    : 'bg-stone-50 dark:bg-stone-850 border-stone-200 dark:border-stone-800 hover:border-emerald-300'
+                    : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 hover:border-emerald-300'
                 }`}
               >
                 <div>
@@ -220,7 +220,7 @@ export const SelectVarietyModal: React.FC<Props> = ({
           </div>
 
           {/* VARIETY IMPACT DETAILS */}
-          <div className="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-850 border border-stone-200 dark:border-stone-800 space-y-2.5">
+          <div className="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 space-y-2.5">
             <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
               <span>Specyfika wybranej odmiany '{activeVarietyName}':</span>
@@ -326,7 +326,7 @@ export const SelectVarietyModal: React.FC<Props> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 sm:p-5 bg-stone-100 dark:bg-stone-850 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="p-4 sm:p-5 bg-stone-100 dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row items-center justify-between gap-3">
           <button
             type="button"
             onClick={onClose}
