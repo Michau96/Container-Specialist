@@ -128,7 +128,8 @@ export interface SpacingGuideInfo {
 }
 
 export type PotShape = 'round' | 'rectangular';
-export type PotMaterial = 'plastic' | 'terracotta' | 'wood' | 'fabric' | 'ceramic';
+export type LegacyPotMaterial = 'plastic' | 'terracotta' | 'wood' | 'fabric' | 'ceramic';
+export type PotMaterial = 'plastik' | 'ceramika_terakota' | 'tkanina' | 'drewno';
 export type SupportType = 'none' | 'stake' | 'trellis' | 'balcony_railing' | 'cage';
 
 export interface UserPotInput {
@@ -137,7 +138,7 @@ export interface UserPotInput {
   width_cm: number;
   length_cm: number;
   height_cm: number;
-  material: PotMaterial;
+  material: LegacyPotMaterial;
   supports: SupportType;
 }
 
@@ -168,6 +169,14 @@ export interface PlantVariety {
   name: string;
   badge: string;
   reason: string;
+  habit?: string; // np. 'Super karłowy zwarty (do 30 cm)', 'Kaskadowy zwisający', 'Krzaczasty'
+  min_pot_vol_l?: number;
+  recommended_spacing_cm?: number;
+  requires_support?: boolean;
+  watering_profile?: string;
+  soil_ph?: string;
+  soil_notes?: string;
+  sowing_notes?: string;
 }
 
 export interface PlantNutrition {
@@ -288,8 +297,6 @@ export type PotType =
   | 'samonawadniajaca'
   | 'wiszaca';
 
-export type PotMaterial = 'plastik' | 'ceramika_terakota' | 'tkanina' | 'drewno';
-
 export type SowingMethod = 'nasiona' | 'sadzonka';
 
 export interface PotConfig {
@@ -301,6 +308,7 @@ export interface PotConfig {
   material?: PotMaterial;
   hasDrainage?: boolean;
   locationNote?: string;
+  quantity?: number; // Ilość identycznych donic (np. 2x 30cm)
 }
 
 export interface SowingConfig {
@@ -351,12 +359,15 @@ export interface CropTimelineInfo {
 }
 
 export interface MyCropItem {
+  id?: string; // Unikalne ID wpisu uprawy
   plantId: string;
   addedAt: string;
   stage?: CropGrowthStage;
   customPotName?: string;
   notes?: string;
-  selectedVariety?: string;
+  selectedVariety?: string; // Wymuszony wybór odmiany/gatunku
+  varietyBadge?: string;
+  potCount?: number; // Ilość takich samych donic (np. 2x 30cm, domyślnie 1)
   completedTasks?: Record<string, boolean>; // e.g. "03_2_siew": true
   pot?: PotConfig;
   sowing?: SowingConfig;

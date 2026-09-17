@@ -5,10 +5,11 @@ import { spawn, ChildProcess } from 'child_process';
 import { createServer as createViteServer } from 'vite';
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 const PYTHON_PORT = 5001;
 
 let pythonProcess: ChildProcess | null = null;
+let pythonFailed = false;
 
 function startPythonBackend() {
   const scriptPath = path.join(process.cwd(), 'backend', 'app.py');
@@ -20,6 +21,12 @@ function startPythonBackend() {
       env: { ...process.env, PYTHON_PORT: String(PYTHON_PORT) },
     });
 
+    pythonProcess.on('error', (err) => {
+      console.error('[Node Server] Python process error (python3 might not be in container):', err.message);
+      pythonFailed = true;
+      pythonProcess = null;
+    });
+
     pythonProcess.stdout?.on('data', (data) => {
       console.log(`[Python] ${data.toString().trim()}`);
     });
@@ -29,11 +36,19 @@ function startPythonBackend() {
     });
 
     pythonProcess.on('close', (code) => {
-      console.log(`[Python] exited with code ${code}. Restarting in 2s...`);
-      setTimeout(startPythonBackend, 2000);
+      console.log(`[Python] exited with code ${code}.`);
+      pythonProcess = null;
+      if (!pythonFailed && code !== 0) {
+        // Attempt single restart after 5s if not failed via ENOENT
+        setTimeout(() => {
+          if (!pythonFailed) startPythonBackend();
+        }, 5000);
+      }
     });
   } catch (err) {
     console.error('[Node Server] Failed to spawn python process:', err);
+    pythonFailed = true;
+    pythonProcess = null;
   }
 }
 
@@ -52,6 +67,11 @@ process.on('SIGTERM', () => {
 
 // Middleware for parsing JSON
 app.use(express.json());
+
+// Health check endpoint
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', python: pythonProcess !== null });
+});
 
 // Proxy API requests to Python Backend
 app.all('/api/*', (req, res) => {

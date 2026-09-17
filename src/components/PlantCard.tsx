@@ -18,7 +18,9 @@ interface Props {
   onSelect: (plant: Plant) => void;
   onOpenPotCalc?: (plant: Plant) => void;
   isMyCrop?: boolean;
+  cropCount?: number;
   onToggleMyCrop?: (plantId: string) => void;
+  onRequestAddVariety?: (plant: Plant) => void;
 }
 
 export const PlantCard: React.FC<Props> = ({
@@ -26,7 +28,9 @@ export const PlantCard: React.FC<Props> = ({
   onSelect,
   onOpenPotCalc,
   isMyCrop = false,
+  cropCount = 0,
   onToggleMyCrop,
+  onRequestAddVariety,
 }) => {
   const suitability = plant.suitability;
   const score = suitability?.score ?? 75;
@@ -312,9 +316,9 @@ export const PlantCard: React.FC<Props> = ({
                 <span className="text-stone-600 dark:text-stone-400 font-medium">📐 Siew i rozstawa:</span>
                 <span className="font-bold text-stone-900 dark:text-stone-100">
                   {plant.spacing_guide.sowing_type === 'gniazdowo'
-                    ? 'Siew gniazdowy'
+                    ? 'Siew gniazdowy (gniazdowo)'
                     : plant.spacing_guide.sowing_type === 'pojedynczo'
-                    ? 'Siew pojedynczy'
+                    ? 'Siew pojedynczy (pojedynczo)'
                     : plant.spacing_guide.sowing_type === 'rzutowo'
                     ? 'Siew rzutowy'
                     : plant.spacing_guide.sowing_type === 'grzybnia'
@@ -323,18 +327,17 @@ export const PlantCard: React.FC<Props> = ({
                   • co {plant.spacing_guide.spacing_cm} cm
                 </span>
               </div>
-              <div className="flex items-center justify-between pt-1 border-t border-stone-200/80 dark:border-stone-700">
-                <span className="text-stone-600 dark:text-stone-400 font-medium">🎋 Palik bambusowy:</span>
-                {plant.spacing_guide.requires_bamboo_stake ? (
-                  <span className="font-bold text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-950/70 px-1.5 py-0.5 rounded border border-amber-300 dark:border-amber-700">
-                    Zwróć uwagę: niezbędny do uprawy
+              {plant.spacing_guide.requires_bamboo_stake && (
+                <div className="flex items-center justify-between pt-1 border-t border-stone-200/80 dark:border-stone-700">
+                  <span className="text-amber-900 dark:text-amber-300 font-medium flex items-center gap-1">
+                    <span>🎋</span>
+                    <span>Palik bambusowy:</span>
                   </span>
-                ) : (
-                  <span className="text-stone-500 dark:text-stone-400 font-medium">
-                    Zbędny (brak konieczności)
+                  <span className="font-extrabold text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-700 text-[10px] uppercase tracking-wide">
+                    Niezbędny do uprawy
                   </span>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -386,7 +389,32 @@ export const PlantCard: React.FC<Props> = ({
 
       {/* Footer / CTA Buttons */}
       <div className="p-4 pt-2 border-t border-stone-100 dark:border-stone-800 bg-white/60 dark:bg-stone-900/60 space-y-2">
-        {onToggleMyCrop && (
+        {onRequestAddVariety ? (
+          <button
+            id={`add-my-crop-variety-btn-${plant.id}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRequestAddVariety(plant);
+            }}
+            className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border ${
+              isMyCrop
+                ? 'bg-emerald-100/90 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700 hover:bg-emerald-200'
+                : 'bg-emerald-800 hover:bg-emerald-900 text-white border-emerald-800 shadow-xs'
+            }`}
+          >
+            {isMyCrop ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                <span>W uprawach ({cropCount > 1 ? `${cropCount}x` : 'dodano'}) • Dodaj kolejną donicę +</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Wybierz odmianę i dodaj do upraw</span>
+              </>
+            )}
+          </button>
+        ) : onToggleMyCrop ? (
           <button
             id={`toggle-my-crop-btn-${plant.id}`}
             onClick={(e) => {
@@ -411,7 +439,7 @@ export const PlantCard: React.FC<Props> = ({
               </>
             )}
           </button>
-        )}
+        ) : null}
 
         <button
           id={`open-guide-btn-${plant.id}`}

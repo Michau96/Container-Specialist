@@ -258,6 +258,58 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
               </div>
             </div>
 
+            {/* Specyfika siewu i palika bambusowego dla tego schematu uprawy */}
+            {plant.spacing_guide && (
+              <div className="pt-2 border-t border-stone-100 dark:border-stone-800 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                {/* Siew gniazdowy vs pojedynczy */}
+                <div className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-750 flex items-start gap-2">
+                  <span className="text-base leading-none">🌱</span>
+                  <div>
+                    <span className="font-bold text-[11px] text-stone-800 dark:text-stone-200 block">
+                      Metoda siewu w schemacie:{' '}
+                      <span className="text-emerald-800 dark:text-emerald-400 font-extrabold">
+                        {plant.spacing_guide.sowing_type === 'gniazdowo'
+                          ? 'Siew gniazdowy (gniazdowo po 2–3 nasiona)'
+                          : plant.spacing_guide.sowing_type === 'pojedynczo'
+                          ? 'Siew pojedynczy (pojedynczo)'
+                          : plant.spacing_guide.sowing_type === 'rzutowo'
+                          ? 'Siew rzutowy'
+                          : plant.spacing_guide.sowing_type === 'grzybnia'
+                          ? 'Grzybnia'
+                          : 'Sadzenie sadzonki'}
+                      </span>
+                    </span>
+                    <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-0.5 leading-tight">
+                      {plant.spacing_guide.sowing_type === 'gniazdowo'
+                        ? 'Wysiewaj gniazdowo (po 2–3 nasiona do 1 dołka). Po wykiełkowaniu zostaw 1 siewkę.'
+                        : plant.spacing_guide.sowing_type === 'pojedynczo'
+                        ? 'Wysiewaj pojedynczo po 1 nasionku w rozstawie co ' + plant.spacing_guide.spacing_cm + ' cm.'
+                        : plant.spacing_guide.sowing_type_details}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Palik bambusowy - TYLKO GDY NIEZBĘDNY */}
+                {plant.spacing_guide.requires_bamboo_stake && (
+                  <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 flex items-start gap-2 text-amber-950 dark:text-amber-200">
+                    <span className="text-base leading-none">🎋</span>
+                    <div>
+                      <span className="font-bold text-[11px] text-amber-900 dark:text-amber-200 block">
+                        Palik bambusowy:{' '}
+                        <span className="font-extrabold underline decoration-amber-500">
+                          Niezbędny do uprawy
+                        </span>
+                      </span>
+                      <p className="text-[11px] text-amber-900 dark:text-amber-300 mt-0.5 leading-tight">
+                        {plant.spacing_guide.bamboo_stake_desc ||
+                          'Wbij palik bambusowy do dna donicy już we wczesnej fazie, by nie uszkodzić korzeni.'}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 5. Custom Advice based on User's Pot */}
             <div className="pt-2 border-t border-stone-100 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div className="flex items-start gap-2">

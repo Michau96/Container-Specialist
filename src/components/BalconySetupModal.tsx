@@ -317,7 +317,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                 <span>3. Które to piętro? (wpływ na siłę wiatru i wysychanie donic)</span>
               </label>
               <span className="text-[11px] text-stone-500 dark:text-stone-400">
-                Klasa ekspozycji wiatrowej
+                Ekspozycja wiatrowa
               </span>
             </div>
 
@@ -325,25 +325,21 @@ export const BalconySetupModal: React.FC<Props> = ({
               {[
                 {
                   floor: 0,
-                  categoryClass: 'parter',
                   label: 'Parter',
                   desc: 'Wilgotniej, minimalny wiatr',
                 },
                 {
                   floor: 2,
-                  categoryClass: 'niskie piętro (1-3)',
                   label: 'Niskie piętro (1-3)',
                   desc: 'Optymalne warunki balkonowe',
                 },
                 {
                   floor: 5,
-                  categoryClass: 'średnie piętro (4-6)',
                   label: 'Średnie piętro (4-6)',
                   desc: 'Wyraźny wiatr, szybsze schnięcie',
                 },
                 {
                   floor: 8,
-                  categoryClass: 'wysokie (7+)',
                   label: 'Wysokie piętro (7+)',
                   desc: 'Silne porywy, zalecane niskie odmiany',
                 },
@@ -366,9 +362,6 @@ export const BalconySetupModal: React.FC<Props> = ({
                     }`}
                   >
                     <div>
-                      <span className="text-[10px] font-bold text-stone-800 dark:text-stone-200 bg-stone-200/80 dark:bg-stone-700 px-1.5 py-0.5 rounded uppercase tracking-wider block w-fit mb-1.5">
-                        Klasa: {item.categoryClass}
-                      </span>
                       <div className="font-bold text-xs text-stone-900 dark:text-stone-100">
                         {item.label}
                       </div>

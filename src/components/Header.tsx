@@ -43,8 +43,8 @@ export const Header: React.FC<Props> = ({
 
   const floorDisplay =
     userSpec.floor === 0
-      ? 'Parter (klasa: parter)'
-      : `${userSpec.floor}. piętro (klasa: ${floorClass})`;
+      ? 'Parter'
+      : `${userSpec.floor}. piętro`;
 
   return (
     <header className="sticky top-0 z-30 bg-[#FAF8F5]/90 dark:bg-stone-900/90 backdrop-blur-md border-b border-stone-200/80 dark:border-stone-800 transition-colors">

@@ -1,17 +1,22 @@
 import React from 'react';
 import { Layers, Droplets, ArrowDown } from 'lucide-react';
-import { SoilLayersInfo } from '../types';
+import { Plant, SoilLayersInfo } from '../types';
+import { SoilShoppingGuideCard } from './SoilShoppingGuideCard';
 
 interface Props {
   soilLayers?: SoilLayersInfo;
   potHeightCm?: number;
   potVolumeLiters?: number;
+  plant?: Plant | null;
+  showShoppingGuide?: boolean;
 }
 
 export const SoilCrossSection: React.FC<Props> = ({
   soilLayers,
   potHeightCm = 25,
   potVolumeLiters,
+  plant,
+  showShoppingGuide = true,
 }) => {
   const drainageCm = soilLayers?.drainage_cm ?? 3;
   const topMarginCm = soilLayers?.top_margin_cm ?? 2.5;
@@ -213,6 +218,12 @@ export const SoilCrossSection: React.FC<Props> = ({
           </div>
         </div>
       </div>
+
+      {showShoppingGuide && (
+        <div className="mt-4 pt-4 border-t border-stone-200 dark:border-stone-800">
+          <SoilShoppingGuideCard plant={plant} />
+        </div>
+      )}
     </div>
   );
 };

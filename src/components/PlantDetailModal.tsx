@@ -22,13 +22,16 @@ import {
 } from 'lucide-react';
 import { Plant } from '../types';
 import { FertilizerAndSprayCard } from './FertilizerAndSprayCard';
+import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 
 interface Props {
   plant: Plant | null;
   onClose: () => void;
   onOpenPotCalc?: (plant: Plant) => void;
   isMyCrop?: boolean;
+  cropCount?: number;
   onToggleMyCrop?: (plantId: string) => void;
+  onRequestAddVariety?: (plant: Plant, varietyName?: string, varietyBadge?: string) => void;
 }
 
 export const PlantDetailModal: React.FC<Props> = ({
@@ -36,7 +39,9 @@ export const PlantDetailModal: React.FC<Props> = ({
   onClose,
   onOpenPotCalc,
   isMyCrop = false,
+  cropCount = 0,
   onToggleMyCrop,
+  onRequestAddVariety,
 }) => {
   if (!plant) return null;
 
@@ -397,62 +402,71 @@ export const PlantDetailModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Dedykowane moduły: Palik Bambusowy oraz Metoda Siewu */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                {/* 1. Palik bambusowy */}
-                <div
-                  className={`p-3.5 rounded-xl border text-xs ${
-                    plant.spacing_guide.requires_bamboo_stake
-                      ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
-                      : 'bg-stone-50 dark:bg-stone-800/80 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-base leading-none">🎋</span>
-                    <span className="font-bold text-[11px] uppercase tracking-wide">
-                      Palik bambusowy:{' '}
-                      {plant.spacing_guide.requires_bamboo_stake ? (
-                        <span className="text-amber-800 dark:text-amber-300 font-extrabold underline decoration-amber-500">
-                          ZWRÓĆ UWAGĘ: NIEZBĘDNY DO UPRAWY
-                        </span>
-                      ) : (
-                        <span className="text-stone-500 dark:text-stone-400 font-semibold">
-                          Zbędny (brak konieczności)
-                        </span>
-                      )}
-                    </span>
+              {/* Dedykowane moduły: Palik Bambusowy (tylko gdy niezbędny) oraz Metoda Siewu */}
+              <div className={`mt-3 grid gap-3 ${plant.spacing_guide.requires_bamboo_stake ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+                {/* 1. Palik bambusowy - TYLKO GDY NIEZBĘDNY */}
+                {plant.spacing_guide.requires_bamboo_stake && (
+                  <div className="p-3.5 rounded-xl border text-xs bg-amber-50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200">
+                    <div className="flex items-center justify-between gap-2 mb-1.5">
+                      <span className="flex items-center gap-1.5 font-bold text-xs text-amber-900 dark:text-amber-200">
+                        <span>🎋</span>
+                        <span>Palik bambusowy:</span>
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase tracking-wide bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded border border-amber-400 dark:border-amber-700">
+                        Niezbędny do uprawy
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed font-medium">
+                      {plant.spacing_guide.bamboo_stake_desc ||
+                        'Wbij palik bambusowy (60–80 cm) w dno donicy już przy wysadzaniu rośliny, aby nie uszkodzić rozwijającej się bryły korzeniowej. Pędy podwiązuj w ósemkę.'}
+                    </p>
                   </div>
-                  <p className="text-[11px] leading-relaxed">
-                    {plant.spacing_guide.bamboo_stake_desc ||
-                      (plant.spacing_guide.requires_bamboo_stake
-                        ? 'Wbij palik bambusowy przy wysadzaniu rośliny, aby nie uszkodzić rozwijającej się bryły korzeniowej.'
-                        : 'Roślina samonośna, płożąca lub niska – nie wymaga palikowania.')}
-                  </p>
-                </div>
+                )}
 
                 {/* 2. Siew gniazdowy vs pojedynczy vs rzutowy */}
                 <div className="p-3.5 rounded-xl border bg-stone-50 dark:bg-stone-800/80 border-stone-200 dark:border-stone-700 text-xs text-stone-900 dark:text-stone-100">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-base leading-none">🌱</span>
-                    <span className="font-bold text-[11px] uppercase tracking-wide text-stone-800 dark:text-stone-200">
-                      Metoda siewu / sadzenia:{' '}
-                      <span className="font-extrabold underline decoration-stone-400">
-                        {plant.spacing_guide.sowing_type === 'gniazdowo'
-                          ? 'SIEW GNIAZDOWY'
-                          : plant.spacing_guide.sowing_type === 'pojedynczo'
-                          ? 'SIEW POJEDYNCZY'
-                          : plant.spacing_guide.sowing_type === 'rzutowo'
-                          ? 'SIEW RZUTOWY GĘSTY'
-                          : plant.spacing_guide.sowing_type === 'grzybnia'
-                          ? 'ZASZCZEPIENIE GRZYBNIĄ'
-                          : 'SADZENIE ROZSADY'}
-                      </span>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="font-bold text-xs flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
+                      <span>🌱</span>
+                      <span>Metoda siewu w schemacie:</span>
+                    </span>
+                    <span
+                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
+                        plant.spacing_guide.sowing_type === 'gniazdowo'
+                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                          : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                      }`}
+                    >
+                      {plant.spacing_guide.sowing_type === 'gniazdowo'
+                        ? 'SIEW GNIAZDOWY'
+                        : plant.spacing_guide.sowing_type === 'pojedynczo'
+                        ? 'SIEW POJEDYNCZY'
+                        : plant.spacing_guide.sowing_type === 'rzutowo'
+                        ? 'SIEW RZUTOWY GĘSTY'
+                        : plant.spacing_guide.sowing_type === 'grzybnia'
+                        ? 'ZASZCZEPIENIE GRZYBNIĄ'
+                        : 'SADZENIE ROZSADY'}
                     </span>
                   </div>
-                  <p className="text-[11px] leading-relaxed text-stone-700 dark:text-stone-300">
-                    {plant.spacing_guide.sowing_type_details ||
-                      plant.spacing_guide.planting_method}
+                  <p className="text-[11px] leading-relaxed text-stone-700 dark:text-stone-300 font-medium">
+                    {plant.spacing_guide.sowing_type === 'gniazdowo'
+                      ? '👉 Siać GNIAZDOWO: umieszczaj po 2–3 nasiona w jednym dołku co ' +
+                        plant.spacing_guide.spacing_cm +
+                        ' cm. Po wschodach zostaw 1 najsilniejszą siewkę.'
+                      : plant.spacing_guide.sowing_type === 'pojedynczo'
+                      ? '👉 Siać POJEDYNCZO: wysiewaj punktowo po 1 nasionku (lub sadź 1 sadzonkę) w każdym punkcie rozstawy co ' +
+                        plant.spacing_guide.spacing_cm +
+                        ' cm.'
+                      : plant.spacing_guide.sowing_type_details ||
+                        plant.spacing_guide.planting_method}
                   </p>
+                  {plant.spacing_guide.sowing_type_details &&
+                    plant.spacing_guide.sowing_type !== 'gniazdowo' &&
+                    plant.spacing_guide.sowing_type !== 'pojedynczo' && (
+                      <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1">
+                        {plant.spacing_guide.sowing_type_details}
+                      </p>
+                    )}
                 </div>
               </div>
 
@@ -461,6 +475,15 @@ export const PlantDetailModal: React.FC<Props> = ({
               </div>
             </div>
           )}
+
+          {/* SZACUNEK KOSZTÓW UPRAWY TEJ ROŚLINY */}
+          <CropCostEstimatorCard
+            plant={plant}
+            potVolumeLiters={plant.pot.recommended_volume_l || 15}
+            potMaterial="plastic"
+            supportType={plant.spacing_guide?.requires_bamboo_stake ? 'stake' : 'none'}
+            isCompact={true}
+          />
 
           {/* Analiza dopasowania do Twojego balkonu z rygorystyczną paletą Czerwony / Żółty / Zielony */}
           {suit && (
@@ -645,6 +668,20 @@ export const PlantDetailModal: React.FC<Props> = ({
                       </p>
                     </div>
                   </div>
+
+                  {onRequestAddVariety && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onClose();
+                        onRequestAddVariety(plant, item.name, item.badge);
+                      }}
+                      className="shrink-0 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-2xs cursor-pointer self-start sm:self-center"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Wybierz tę odmianę 🌱</span>
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -765,27 +802,54 @@ export const PlantDetailModal: React.FC<Props> = ({
         {/* Modal Footer */}
         <div className="p-4 bg-stone-100 dark:bg-stone-850 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
-            {onToggleMyCrop && (
-              <button
-                onClick={() => onToggleMyCrop(plant.id)}
-                className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border ${
-                  isMyCrop
-                    ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200 dark:border-emerald-800 hover:bg-red-50 hover:text-red-700 hover:border-red-300'
-                    : 'bg-emerald-800 hover:bg-emerald-900 text-white border-emerald-800 shadow-xs'
-                }`}
-              >
-                {isMyCrop ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                    <span>W Moich uprawach (usuń)</span>
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>+ Dodaj do Moich upraw</span>
-                  </>
+            {onRequestAddVariety ? (
+              <>
+                <button
+                  onClick={() => {
+                    onClose();
+                    onRequestAddVariety(plant);
+                  }}
+                  className="w-full sm:w-auto px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-800 shadow-xs"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>
+                    {isMyCrop ? '+ Dodaj kolejną odmianę lub inną donicę' : '+ Wybierz odmianę i dodaj do upraw'}
+                  </span>
+                </button>
+
+                {isMyCrop && onToggleMyCrop && (
+                  <button
+                    onClick={() => onToggleMyCrop(plant.id)}
+                    className="w-full sm:w-auto px-3.5 py-2.5 bg-stone-200 dark:bg-stone-750 hover:bg-red-100 hover:text-red-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    title="Usuń wszystkie donice tej rośliny z Moich upraw"
+                  >
+                    <span>Usuń z upraw</span>
+                  </button>
                 )}
-              </button>
+              </>
+            ) : (
+              onToggleMyCrop && (
+                <button
+                  onClick={() => onToggleMyCrop(plant.id)}
+                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border ${
+                    isMyCrop
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200 dark:border-emerald-800 hover:bg-red-50 hover:text-red-700 hover:border-red-300'
+                      : 'bg-emerald-800 hover:bg-emerald-900 text-white border-emerald-800 shadow-xs'
+                  }`}
+                >
+                  {isMyCrop ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                      <span>W Moich uprawach (usuń)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>+ Dodaj do Moich upraw</span>
+                    </>
+                  )}
+                </button>
+              )
             )}
 
             {onOpenPotCalc && (

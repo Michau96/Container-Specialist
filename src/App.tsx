@@ -25,7 +25,9 @@ import { CalendarView } from './components/CalendarView';
 import { BalconySetupModal } from './components/BalconySetupModal';
 import { PotCalculator } from './components/PotCalculator';
 import { MyCropsView } from './components/MyCropsView';
+import { SelectVarietyModal } from './components/SelectVarietyModal';
 import { computeDailyRecommendation } from './lib/dailyRecommendations';
+import { getEffectivePlantRequirements } from './lib/varietyData';
 
 export default function App() {
   const [userSpec, setUserSpec] = useState<UserBalconySpec>(() => loadSavedSpec());
@@ -34,6 +36,12 @@ export default function App() {
 
   // My Crops persistent state
   const [myCrops, setMyCrops] = useState<MyCropItem[]>(() => loadSavedMyCrops());
+
+  // Variety selection modal state
+  const [varietyPickerPlant, setVarietyPickerPlant] = useState<{
+    plant: Plant;
+    initialVariety?: string;
+  } | null>(null);
 
   // Dark mode state
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -136,46 +144,69 @@ export default function App() {
   };
 
   // My Crops operations
+  const handleAddCropWithVariety = (
+    plantId: string,
+    varietyName: string,
+    varietyBadge: string,
+    potCount: number = 1,
+    openConfigurator: boolean = false
+  ) => {
+    const targetPlant = plants.find((p) => p.id === plantId);
+    const reqs = targetPlant ? getEffectivePlantRequirements(targetPlant, varietyName) : null;
+    const initialVolume = reqs?.minVolumeL || targetPlant?.pot.min_volume_l || 10;
+
+    const newCropItem: MyCropItem = {
+      id: `${plantId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      plantId,
+      selectedVariety: varietyName,
+      varietyBadge: varietyBadge || 'Odmiana donicowa',
+      potCount: Math.max(1, potCount),
+      addedAt: new Date().toISOString(),
+      stage: 'rosnie' as const,
+      pot: {
+        potType: 'okragla',
+        diameterOrWidthCm: reqs?.spacingCm || targetPlant?.pot.min_depth_cm || 30,
+        depthCm: 25,
+        volumeL: initialVolume,
+        hasDrainage: true,
+        material: 'plastik',
+        quantity: Math.max(1, potCount),
+      },
+      sowing: {
+        method: 'nasiona',
+        date: new Date().toISOString().split('T')[0],
+        sowingLocation: 'balkon_bezposrednio',
+      },
+    };
+
+    setMyCrops((prev) => {
+      const next = [...prev, newCropItem];
+      saveMyCrops(next);
+      return next;
+    });
+
+    if (openConfigurator) {
+      setActiveTab('my_crops');
+    }
+  };
+
   const handleToggleMyCrop = (plantId: string) => {
-    setMyCrops((prev) => {
-      const exists = prev.some((c) => c.plantId === plantId);
-      let next: MyCropItem[];
-      if (exists) {
-        next = prev.filter((c) => c.plantId !== plantId);
-      } else {
-        next = [
-          ...prev,
-          {
-            plantId,
-            addedAt: new Date().toISOString(),
-            stage: 'rosnie' as const,
-          },
-        ];
-      }
-      saveMyCrops(next);
-      return next;
-    });
+    const targetPlant = plants.find((p) => p.id === plantId);
+    if (!targetPlant) return;
+
+    const exists = myCrops.some((c) => c.plantId === plantId);
+    if (exists) {
+      // Remove all entries of this plant
+      handleRemoveCrop(plantId);
+    } else {
+      // Prompt variety selection
+      setVarietyPickerPlant({ plant: targetPlant });
+    }
   };
 
-  const handleAddCrop = (plantId: string) => {
+  const handleRemoveCrop = (cropIdOrPlantId: string) => {
     setMyCrops((prev) => {
-      if (prev.some((c) => c.plantId === plantId)) return prev;
-      const next: MyCropItem[] = [
-        ...prev,
-        {
-          plantId,
-          addedAt: new Date().toISOString(),
-          stage: 'rosnie' as const,
-        },
-      ];
-      saveMyCrops(next);
-      return next;
-    });
-  };
-
-  const handleRemoveCrop = (plantId: string) => {
-    setMyCrops((prev) => {
-      const next = prev.filter((c) => c.plantId !== plantId);
+      const next = prev.filter((c) => c.id !== cropIdOrPlantId && c.plantId !== cropIdOrPlantId);
       saveMyCrops(next);
       return next;
     });
@@ -183,7 +214,12 @@ export default function App() {
 
   const handleUpdateCrop = (updated: MyCropItem) => {
     setMyCrops((prev) => {
-      const next = prev.map((c) => (c.plantId === updated.plantId ? updated : c));
+      const next = prev.map((c) => {
+        if (c.id && updated.id) {
+          return c.id === updated.id ? updated : c;
+        }
+        return c.plantId === updated.plantId ? updated : c;
+      });
       saveMyCrops(next);
       return next;
     });
@@ -288,7 +324,7 @@ export default function App() {
             dailyRecommendation={dailyRecommendation}
             onRemoveCrop={handleRemoveCrop}
             onUpdateCrop={handleUpdateCrop}
-            onAddCrop={handleAddCrop}
+            onAddCropWithVariety={handleAddCropWithVariety}
             onSelectPlant={setSelectedPlant}
             onOpenPotCalc={handleOpenPotCalcForPlant}
             onNavigateToSearch={() => setActiveTab('search_crops')}
@@ -697,16 +733,22 @@ export default function App() {
               </div>
             ) : filteredPlants.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredPlants.map((plant) => (
-                  <PlantCard
-                    key={plant.id}
-                    plant={plant}
-                    onSelect={setSelectedPlant}
-                    onOpenPotCalc={handleOpenPotCalcForPlant}
-                    isMyCrop={myCropIds.includes(plant.id)}
-                    onToggleMyCrop={handleToggleMyCrop}
-                  />
-                ))}
+                {filteredPlants.map((plant) => {
+                  const matchingCrops = myCrops.filter((c) => c.plantId === plant.id);
+                  const cropCount = matchingCrops.reduce((acc, c) => acc + (c.potCount || 1), 0);
+                  return (
+                    <PlantCard
+                      key={plant.id}
+                      plant={plant}
+                      onSelect={setSelectedPlant}
+                      onOpenPotCalc={handleOpenPotCalcForPlant}
+                      isMyCrop={matchingCrops.length > 0}
+                      cropCount={cropCount}
+                      onRequestAddVariety={(p) => setVarietyPickerPlant({ plant: p })}
+                      onToggleMyCrop={handleToggleMyCrop}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 p-6">
@@ -761,8 +803,35 @@ export default function App() {
         onClose={() => setSelectedPlant(null)}
         onOpenPotCalc={handleOpenPotCalcForPlant}
         isMyCrop={selectedPlant ? myCropIds.includes(selectedPlant.id) : false}
+        cropCount={
+          selectedPlant
+            ? myCrops.filter((c) => c.plantId === selectedPlant.id).reduce((acc, c) => acc + (c.potCount || 1), 0)
+            : 0
+        }
+        onRequestAddVariety={(p, varName, _varBadge) => {
+          setVarietyPickerPlant({ plant: p, initialVariety: varName });
+        }}
         onToggleMyCrop={handleToggleMyCrop}
       />
+
+      {/* Forced Variety & Multiple Pot Selection Modal */}
+      {varietyPickerPlant && (
+        <SelectVarietyModal
+          plant={varietyPickerPlant.plant}
+          isOpen={true}
+          initialVarietyName={varietyPickerPlant.initialVariety}
+          onClose={() => setVarietyPickerPlant(null)}
+          onConfirmAdd={(pId, vName, vBadge, pCount, openConfig) => {
+            handleAddCropWithVariety(pId, vName, vBadge, pCount, openConfig);
+            setVarietyPickerPlant(null);
+          }}
+          existingCropCountForPlant={
+            myCrops
+              .filter((c) => c.plantId === varietyPickerPlant.plant.id)
+              .reduce((acc, c) => acc + (c.potCount || 1), 0)
+          }
+        />
+      )}
 
       {/* Balcony Setup & Onboarding Modal */}
       <BalconySetupModal

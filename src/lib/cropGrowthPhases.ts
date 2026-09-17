@@ -432,7 +432,7 @@ const MUSHROOM_PHASES: PlantGrowthPhase[] = [
  * Fallback generator for generic plants based on days to harvest
  */
 function createGenericPhases(plant: Plant): PlantGrowthPhase[] {
-  const harvestDays = plant.growing_period.days_to_harvest || 75;
+  const harvestDays = (plant as unknown as { growing_period?: { days_to_harvest?: number } })?.growing_period?.days_to_harvest || 75;
   const p1End = Math.max(5, Math.round(harvestDays * 0.12));
   const p2End = Math.max(p1End + 8, Math.round(harvestDays * 0.32));
   const p3End = Math.max(p2End + 12, Math.round(harvestDays * 0.65));

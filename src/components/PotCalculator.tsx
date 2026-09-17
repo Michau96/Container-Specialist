@@ -8,9 +8,19 @@ import {
   Layers,
   Ruler,
   Compass,
+  ShieldCheck,
+  Info,
+  Coins,
 } from 'lucide-react';
-import { Plant, PotShape, PotMaterial, SupportType } from '../types';
+import { Plant, PotShape, LegacyPotMaterial, SupportType } from '../types';
 import { SoilCrossSection } from './SoilCrossSection';
+import { CropCostEstimatorCard } from './CropCostEstimatorCard';
+import {
+  POT_MATERIAL_OPTIONS,
+  POT_SUPPORT_OPTIONS,
+  evaluatePotMaterial,
+  evaluatePlantSupport,
+} from '../lib/potSupportEvaluations';
 
 interface Props {
   plants: Plant[];
@@ -46,17 +56,32 @@ export const PotCalculator: React.FC<Props> = ({
   const [roundHeightCm, setRoundHeightCm] = useState<number>(25);
 
   // Materiał
-  const [material, setMaterial] = useState<PotMaterial>('plastic');
+  const [material, setMaterial] = useState<LegacyPotMaterial>('plastic');
 
   // Podpora
   const [supports, setSupports] = useState<SupportType>('stake');
 
-  // Wyświetlany widok schematu: 'top_layout' (szkic z góry) lub 'soil_layers' (warstwy podłoża)
-  const [activeSchemaView, setActiveSchemaView] = useState<'top_layout' | 'soil_layers'>('top_layout');
+  // Liczba donic
+  const [potCount, setPotCount] = useState<number>(1);
+
+  // Metoda startu: nasiona vs gotowa sadzonka
+  const [sowingMethod, setSowingMethod] = useState<'nasiona' | 'sadzonka'>('nasiona');
+
+  // Wyświetlany widok schematu: 'top_layout' (szkic z góry), 'soil_layers' (warstwy podłoża), lub 'cost_estimates' (szacunek kosztów)
+  const [activeSchemaView, setActiveSchemaView] = useState<'top_layout' | 'soil_layers' | 'cost_estimates'>('top_layout');
 
   const currentPlant = useMemo(() => {
     return plants.find((p) => p.id === selectedPlantId) ?? plants[0];
   }, [plants, selectedPlantId]);
+
+  // Ocena agronomiczna materiału i podpory dla wybranej rośliny
+  const materialEvaluation = useMemo(() => {
+    return evaluatePotMaterial(material, currentPlant);
+  }, [material, currentPlant]);
+
+  const supportEvaluation = useMemo(() => {
+    return evaluatePlantSupport(supports, currentPlant);
+  }, [supports, currentPlant]);
 
   // Obliczenia objętości donicy w litrach
   const heightCm = shape === 'rectangular' ? rectHeightCm : roundHeightCm;
@@ -153,59 +178,6 @@ export const PotCalculator: React.FC<Props> = ({
   // Ocena dopasowania donicy
   const isDepthOk = heightCm >= minDepth;
   const isVolOk = volumeLiters >= minPlantVol;
-
-  // Porady dla materiału donicy (neutral / slate styling)
-  const materialAdviceMap: Record<PotMaterial, { title: string; desc: string; icon: string }> = {
-    plastic: {
-      title: 'Plastik / tworzywo sztuczne',
-      desc: 'Lekki i szczelny materiał, doskonale trzyma wilgoć. W pełnym słońcu ciemny plastik mocno nagrzewa korzenie (polecane jasne lub białe osłonki). Konieczne wywiercenie otworów odpływowych w dnie!',
-      icon: '🪴',
-    },
-    terracotta: {
-      title: 'Terakota / ceramika nieszkliwiona',
-      desc: 'Naturalny, porowaty materiał, który "oddycha". Odparowuje nadmiar wody przez ścianki i naturalnie chłodzi korzenie w upały. Bardzo stabilna przy silnym wietrze. Ziemia w niej wysycha nieco szybciej – wymaga regularniejszego podlewania.',
-      icon: '🏺',
-    },
-    wood: {
-      title: 'Drewno (skrzynia balkonowa)',
-      desc: 'Znakomity naturalny izolator termiczny – chroni korzenie przed letnim przegrzaniem oraz przed pierwszymi jesiennymi przymrozkami. Wnętrze wyłóż podziurawioną folią kubełkową lub agrowłókniną.',
-      icon: '🪵',
-    },
-    fabric: {
-      title: 'Tkanina / Smart Pot (geowłóknina)',
-      desc: 'Mistrz napowietrzenia korzeni i tzw. "air-pruning" – korzenie nie skręcają się w spiralę na dnie, lecz tworzą gęstą sieć włośników. Znakomite plony pomidorów i papryk. Wymaga podstawka zatrzymującego wypływającą wodę.',
-      icon: '👜',
-    },
-    ceramic: {
-      title: 'Ceramika szkliwiona',
-      desc: 'Bardzo trwała i estetyczna, ale ciężka i szczelna dla powietrza. Koniecznie sprawdź, czy donica ma fabryczny otwór odpływowy (osłonki bez dziury nie nadają się do uprawy na zewnątrz!).',
-      icon: '🥣',
-    },
-  };
-
-  // Porady dla podpór
-  const supportsAdviceMap: Record<SupportType, { title: string; desc: string }> = {
-    none: {
-      title: 'Brak podpory',
-      desc: 'Odpowiednie tylko dla roślin o sztywnych łodygach (np. rzodkiewka, sałata, aksamitka, pelargonia rabatowa) lub odmian płożących i zwisających.',
-    },
-    stake: {
-      title: 'Palik bambusowy (60-80 cm)',
-      desc: 'Wbij go w dno donicy tuż przy bryle korzeniowej podczas sadzenia, by nie uszkodzić rozrośniętych korzeni w późniejszym okresie. Podwiązuj pędy elastycznym sznurkiem jutowym lub klipsami w ósemkę.',
-    },
-    trellis: {
-      title: 'Kratka balkonowa / trejaż',
-      desc: 'Mocowana do ściany lub tylnej ścianki skrzynki. Niezastąpiona dla ogórków krzaczastych, groszku, fasoli pnącej oraz arbuza mini.',
-    },
-    balcony_railing: {
-      title: 'Balustrada balkonowa',
-      desc: 'Skorzystaj z poręczy balkonu jako naturalnej podpory – podwiązuj pędy sznurkiem ku górze, by zaoszczędzić miejsce na podłodze.',
-    },
-    cage: {
-      title: 'Klatka / spirala ogrodnicza',
-      desc: 'Trójwymiarowy stożek z drutu lub bambusa, który otacza krzew ze wszystkich stron, zapobiegając wyłamywaniu pędów pod ciężarem owoców przy wietrze.',
-    },
-  };
 
   // Presety donic
   const applyPreset = (preset: 'box60' | 'pot30' | 'large40' | 'bucket15') => {
@@ -518,28 +490,69 @@ export const PotCalculator: React.FC<Props> = ({
           </div>
 
           {/* 4. Materiał donicy */}
-          <div>
-            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-1.5">
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
               Materiał donicy:
             </label>
             <select
               id="pot-calc-material-select"
               value={material}
-              onChange={(e) => setMaterial(e.target.value as PotMaterial)}
+              onChange={(e) => setMaterial(e.target.value as LegacyPotMaterial)}
               className="w-full bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-xs font-semibold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-500"
             >
-              <option value="plastic">🪴 Plastik / technorattan (szczelny, lekki)</option>
-              <option value="terracotta">🏺 Terakota / gliniana nieszkliwiona (oddychająca, chłodzi korzenie)</option>
-              <option value="wood">🪵 Drewno (doskonała izolacja termiczna)</option>
-              <option value="fabric">👜 Geowłóknina / Smart Pot (napowietrzanie korzeni)</option>
-              <option value="ceramic">🥣 Ceramika szkliwiona (ciężka, stabilna)</option>
+              {POT_MATERIAL_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
+
+            {/* Ocena wybranego materiału dla tej konkretnej rośliny */}
+            <div
+              className={`p-3 rounded-xl border text-xs transition-all ${
+                materialEvaluation.rating === 'good'
+                  ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                  : materialEvaluation.rating === 'warning'
+                  ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
+                  : 'bg-red-50/90 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-950 dark:text-red-200'
+              }`}
+            >
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <span className="font-bold flex items-center gap-1.5 text-stone-900 dark:text-stone-100">
+                  {materialEvaluation.rating === 'good' ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  ) : materialEvaluation.rating === 'warning' ? (
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                  )}
+                  <span>Ocena materiału:</span>
+                </span>
+                <span
+                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wide ${
+                    materialEvaluation.rating === 'good'
+                      ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 border-emerald-300 dark:border-emerald-700'
+                      : materialEvaluation.rating === 'warning'
+                      ? 'bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700'
+                      : 'bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-100 border-red-300 dark:border-red-700'
+                  }`}
+                >
+                  {materialEvaluation.badgeText}
+                </span>
+              </div>
+              <div className="font-semibold text-[11px] mt-0.5 text-stone-800 dark:text-stone-200">
+                {materialEvaluation.title}
+              </div>
+              <p className="text-[11px] leading-relaxed mt-0.5 text-stone-700 dark:text-stone-300 font-normal">
+                {materialEvaluation.description}
+              </p>
+            </div>
           </div>
 
           {/* 5. Podpory */}
-          <div>
-            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-1.5">
-              Czy donica ma podpory?
+          <div className="space-y-2">
+            <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
+              Podpora w donicy:
             </label>
             <select
               id="pot-calc-support-select"
@@ -547,12 +560,139 @@ export const PotCalculator: React.FC<Props> = ({
               onChange={(e) => setSupports(e.target.value as SupportType)}
               className="w-full bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-xs font-semibold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-500"
             >
-              <option value="none">Brak podpory (odmiany krępe / zwisające)</option>
-              <option value="stake">Palik bambusowy (60-80 cm)</option>
-              <option value="trellis">Kratka balkonowa / trejaż ścienny</option>
-              <option value="balcony_railing">Balustrada balkonowa / poręcz</option>
-              <option value="cage">Klatka / spirala ogrodnicza</option>
+              {POT_SUPPORT_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
+
+            {/* Panel statusu: Czy podpora jest potrzebna + Ocena wybranej podpory */}
+            <div className="space-y-2">
+              {/* 1. Wskazanie: Czy podpora jest potrzebna dla wybranej rośliny */}
+              <div
+                className={`p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${
+                  supportEvaluation.isSupportNeeded
+                    ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
+                    : 'bg-stone-50 dark:bg-stone-800/80 border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200'
+                }`}
+              >
+                <span className="font-semibold text-[11px] flex items-center gap-1.5">
+                  <span>🎋</span>
+                  <span>Czy roślina wymaga podpory?</span>
+                </span>
+                <span
+                  className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wide ${
+                    supportEvaluation.isSupportNeeded
+                      ? 'bg-amber-200/90 dark:bg-amber-900 text-amber-950 dark:text-amber-100 border-amber-400 dark:border-amber-700'
+                      : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                  }`}
+                >
+                  {supportEvaluation.needBadgeText}
+                </span>
+              </div>
+
+              {/* 2. Ocena wybranej podpory: Dobry wybór / Średni z zastrzeżeniami / Zły wybór */}
+              <div
+                className={`p-3 rounded-xl border text-xs transition-all ${
+                  supportEvaluation.rating === 'good'
+                    ? 'bg-emerald-50/90 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                    : supportEvaluation.rating === 'warning'
+                    ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
+                    : 'bg-red-50/90 dark:bg-red-950/40 border-red-300 dark:border-red-800 text-red-950 dark:text-red-200'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="font-bold flex items-center gap-1.5 text-stone-900 dark:text-stone-100">
+                    {supportEvaluation.rating === 'good' ? (
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    ) : supportEvaluation.rating === 'warning' ? (
+                      <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
+                    )}
+                    <span>Ocena wybranej podpory:</span>
+                  </span>
+                  <span
+                    className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wide ${
+                      supportEvaluation.rating === 'good'
+                        ? 'bg-emerald-100 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-100 border-emerald-300 dark:border-emerald-700'
+                        : supportEvaluation.rating === 'warning'
+                        ? 'bg-amber-100 dark:bg-amber-900 text-amber-900 dark:text-amber-100 border-amber-300 dark:border-amber-700'
+                        : 'bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-100 border-red-300 dark:border-red-700'
+                    }`}
+                  >
+                    {supportEvaluation.badgeText}
+                  </span>
+                </div>
+                <div className="font-semibold text-[11px] mt-0.5 text-stone-800 dark:text-stone-200">
+                  {supportEvaluation.title}
+                </div>
+                <p className="text-[11px] leading-relaxed mt-0.5 text-stone-700 dark:text-stone-300 font-normal">
+                  {supportEvaluation.description}
+                </p>
+                {supportEvaluation.practicalTip && (
+                  <div className="mt-1.5 pt-1.5 border-t border-stone-200/60 dark:border-stone-700/60 text-[10px] text-stone-600 dark:text-stone-400 font-medium">
+                    💡 Wskazówka: {supportEvaluation.practicalTip}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 6. Liczba donic i metoda uprawy */}
+          <div className="p-3.5 bg-stone-50 dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
+                Liczba donic (sztuki):
+              </label>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 6].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setPotCount(num)}
+                    className={`w-7 h-7 rounded-lg text-xs font-bold transition flex items-center justify-center cursor-pointer ${
+                      potCount === num
+                        ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-2xs'
+                        : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100'
+                    }`}
+                  >
+                    {num}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between">
+              <label className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
+                Sposób startu:
+              </label>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => setSowingMethod('nasiona')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    sowingMethod === 'nasiona'
+                      ? 'bg-emerald-800 text-white'
+                      : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100'
+                  }`}
+                >
+                  🌱 Z nasion
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSowingMethod('sadzonka')}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    sowingMethod === 'sadzonka'
+                      ? 'bg-emerald-800 text-white'
+                      : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100'
+                  }`}
+                >
+                  🌿 Rozsada
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -580,7 +720,7 @@ export const PotCalculator: React.FC<Props> = ({
                 Dla <strong>{currentPlant.name}</strong> zalecane jest min. {minPlantVol}L oraz głębokość min. {minDepth} cm.
                 {capacityInfo.recommendedCount > 0 ? (
                   <span className="block mt-1 font-semibold text-emerald-900 dark:text-emerald-300">
-                    💡 Rekomendacja: w tej donicy możesz posadzić <strong>{capacityInfo.recommendedCount} {capacityInfo.recommendedCount === 1 ? 'sztukę' : capacityInfo.recommendedCount < 5 ? 'sztuki' : 'sztuk'}</strong> w optymalnej rozstawie co <strong>{spacingCm} cm</strong>.
+                    💡 Rekomendacja: w {potCount > 1 ? `${potCount} takich donicach` : 'tej donicy'} możesz posadzić łącznie <strong>{capacityInfo.recommendedCount * potCount} {capacityInfo.recommendedCount * potCount === 1 ? 'sztukę' : capacityInfo.recommendedCount * potCount < 5 ? 'sztuki' : 'sztuk'}</strong> w optymalnej rozstawie co <strong>{spacingCm} cm</strong>.
                   </span>
                 ) : (
                   <span className="block mt-1 text-red-800 dark:text-red-300 font-semibold">
@@ -591,30 +731,42 @@ export const PotCalculator: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Przełącznik zakładek szkicu: Rzut z góry (2D layout) vs Przekrój podłoża */}
-          <div className="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
+          {/* Przełącznik zakładek szkicu: Rzut z góry (2D layout) vs Przekrój podłoża vs Koszty */}
+          <div className="flex items-center gap-1.5 sm:gap-2 border-b border-stone-200 dark:border-stone-800 pb-2 overflow-x-auto">
             <button
               onClick={() => setActiveSchemaView('top_layout')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeSchemaView === 'top_layout'
-                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900'
+                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-2xs'
                   : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
               }`}
             >
               <Compass className="w-3.5 h-3.5" />
-              <span>Szkic z góry (rozstawa i punkty siewu)</span>
+              <span>Szkic z góry (rozstawa)</span>
             </button>
 
             <button
               onClick={() => setActiveSchemaView('soil_layers')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
                 activeSchemaView === 'soil_layers'
-                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900'
+                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-2xs'
                   : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Przekrój warstw podłoża ({volumeLiters}L)</span>
+              <span>Przekrój podłoża ({volumeLiters}L)</span>
+            </button>
+
+            <button
+              onClick={() => setActiveSchemaView('cost_estimates')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                activeSchemaView === 'cost_estimates'
+                  ? 'bg-amber-600 text-white shadow-2xs'
+                  : 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 hover:bg-amber-100'
+              }`}
+            >
+              <Coins className="w-3.5 h-3.5" />
+              <span>Szacunek kosztów (PLN)</span>
             </button>
           </div>
 
@@ -753,12 +905,18 @@ export const PotCalculator: React.FC<Props> = ({
                 <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-stone-600 dark:text-stone-400 mt-2">
                   <div className="flex items-center gap-1.5">
                     <span className="w-3.5 h-3.5 rounded-full bg-[#2e7d32] border border-green-200 inline-block" />
-                    <span>Lokalizacja sadzonki / gniazda siewu</span>
+                    <span>
+                      {currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                        ? 'Gniazdo siewu (2–3 nasiona)'
+                        : 'Punkt siewu / sadzonka'}
+                    </span>
                   </div>
-                  {supports === 'stake' && (
+                  {currentPlant.spacing_guide?.requires_bamboo_stake && (
                     <div className="flex items-center gap-1.5">
                       <span className="w-3 h-3 rounded-full bg-amber-500 border border-amber-800 inline-block" />
-                      <span>Palik bambusowy</span>
+                      <span className="font-semibold text-amber-800 dark:text-amber-300">
+                        🎋 Palik bambusowy (niezbędny)
+                      </span>
                     </div>
                   )}
                   {supports === 'trellis' && (
@@ -781,94 +939,110 @@ export const PotCalculator: React.FC<Props> = ({
                 </div>
 
                 {/* Siew gniazdowy / pojedynczy / rzutowy */}
-                <div className="p-2.5 rounded-lg bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200">
-                  <div className="font-bold text-[11px] flex items-center gap-1 mb-0.5 text-stone-900 dark:text-stone-100">
-                    <span>🌱</span>
-                    <span>
-                      Metoda siewu:{' '}
+                <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-800 dark:text-stone-200 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="font-bold text-[11px] flex items-center gap-1.5 text-stone-900 dark:text-stone-100">
+                      <span>🌱</span>
+                      <span>Metoda siewu w schemacie:</span>
+                    </div>
+                    <span
+                      className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
+                        currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                          : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                      }`}
+                    >
                       {currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
-                        ? 'Siew gniazdowy (gniazdowo po 2-3 nasiona)'
+                        ? 'Siew gniazdowy (gniazdowo)'
                         : currentPlant.spacing_guide?.sowing_type === 'pojedynczo'
-                        ? 'Siew pojedynczy (punktowy)'
+                        ? 'Siew pojedynczy (pojedynczo)'
                         : currentPlant.spacing_guide?.sowing_type === 'rzutowo'
                         ? 'Siew rzutowy (na gęsto)'
                         : currentPlant.spacing_guide?.sowing_type === 'grzybnia'
-                        ? 'Zaszczepienie grzybnią w wilgotnym podłożu'
+                        ? 'Zaszczepienie grzybnią'
                         : 'Sadzenie pojedynczej rozsady'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-stone-600 dark:text-stone-300 leading-relaxed">
-                    {currentPlant.spacing_guide?.sowing_type_details || plantingMethod}
+
+                  <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed font-medium">
+                    {currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                      ? '👉 Siać GNIAZDOWO: w każdym punkcie siewu umieszczaj po 2–3 nasiona w jednym dołku. Po wykiełkowaniu wykonaj selekcję (przerywkę), zostawiając 1 najsilniejszą siewkę.'
+                      : currentPlant.spacing_guide?.sowing_type === 'pojedynczo'
+                      ? '👉 Siać POJEDYNCZO: wysiewaj punktowo po 1 nasionku (lub sadź 1 sadzonkę) w każdym wyznaczonym punkcie bez potrzeby późniejszej przerywki.'
+                      : currentPlant.spacing_guide?.sowing_type_details || plantingMethod}
                   </p>
+                  {currentPlant.spacing_guide?.sowing_type_details &&
+                    currentPlant.spacing_guide?.sowing_type !== 'gniazdowo' &&
+                    currentPlant.spacing_guide?.sowing_type !== 'pojedynczo' && (
+                      <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                        {currentPlant.spacing_guide.sowing_type_details}
+                      </p>
+                    )}
                 </div>
 
-                {/* Palik bambusowy - Yellow warning/info badge */}
-                <div
-                  className={`p-2.5 rounded-lg border ${
-                    currentPlant.spacing_guide?.requires_bamboo_stake
-                      ? 'bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200'
-                      : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300'
-                  }`}
-                >
-                  <div className="font-bold text-[11px] flex items-center gap-1 mb-0.5">
-                    <span>🎋</span>
-                    <span>
-                      Palik bambusowy:{' '}
-                      {currentPlant.spacing_guide?.requires_bamboo_stake ? (
-                        <span className="text-amber-800 dark:text-amber-300 font-extrabold underline decoration-amber-500">
-                          Niezbędny do uprawy
-                        </span>
-                      ) : (
-                        <span className="text-stone-500 dark:text-stone-400 font-medium">
-                          Zbędny (roślina nie wymaga palika)
-                        </span>
-                      )}
-                    </span>
+                {/* Palik bambusowy - WIDOCZNY TYLKO GDY NIEZBĘDNY DO UPRAWY */}
+                {currentPlant.spacing_guide?.requires_bamboo_stake && (
+                  <div className="p-3 rounded-xl border bg-amber-50/90 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-950 dark:text-amber-200">
+                    <div className="font-bold text-[11px] flex items-center justify-between mb-1">
+                      <span className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200">
+                        <span>🎋</span>
+                        <span>Palik bambusowy:</span>
+                      </span>
+                      <span className="text-[10px] font-extrabold uppercase bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded border border-amber-400 dark:border-amber-700">
+                        Niezbędny do uprawy
+                      </span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed font-medium">
+                      {currentPlant.spacing_guide?.bamboo_stake_desc ||
+                        'Wbij palik bambusowy w dno donicy już na etapie sadzenia/siewu, aby nie uszkodzić korzeni. Pędy podwiązuj elastycznym sznurkiem w ósemkę.'}
+                    </p>
                   </div>
-                  <p className="text-[11px] leading-relaxed">
-                    {currentPlant.spacing_guide?.bamboo_stake_desc ||
-                      (currentPlant.spacing_guide?.requires_bamboo_stake
-                        ? 'Wbij palik bambusowy w dno donicy już na etapie sadzenia.'
-                        : 'Brak potrzeby stosowania palika.')}
-                  </p>
-                </div>
+                )}
 
                 <div className="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed">
                   <strong>Zalecana podpora:</strong> {requiredSupports}.
                   {supports === 'none' && currentPlant.spacing_guide?.requires_bamboo_stake && (
-                    <span className="text-red-700 dark:text-red-400 font-semibold block mt-1">
-                      ⚠️ Uwaga: wybrano brak podpory w kalkulatorze, a ta roślina wymaga stabilizacji palikiem pod ciężarem plonów!
+                    <span className="text-red-700 dark:text-red-400 font-bold block mt-1">
+                      ⚠️ Uwaga: wybrano brak podpory w kalkulatorze, a ta roślina bezwzględnie wymaga stabilizacji palikiem bambusowym pod ciężarem plonów!
                     </span>
                   )}
                 </div>
               </div>
             </div>
-          ) : (
+          ) : activeSchemaView === 'soil_layers' ? (
             /* Widok 2: Schemat warstw podłoża w tej konkretnej donicy */
             <SoilCrossSection
               soilLayers={currentPlant.soil_layers}
               potHeightCm={heightCm}
               potVolumeLiters={volumeLiters}
+              plant={currentPlant}
+            />
+          ) : (
+            /* Widok 3: Pełny szacunek kosztów uprawy z rozbiciem */
+            <CropCostEstimatorCard
+              plant={currentPlant}
+              sowingMethod={sowingMethod}
+              potVolumeLiters={volumeLiters}
+              potMaterial={material}
+              potCount={potCount}
+              supportType={supports}
+              onSowingMethodChange={setSowingMethod}
             />
           )}
 
-          {/* Porada materiałowa */}
-          <div className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-850 text-xs text-stone-700 dark:text-stone-300">
-            <div className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5 mb-1">
-              <span>{materialAdviceMap[material].icon}</span>
-              <span>Wskazówka materiałowa: {materialAdviceMap[material].title}</span>
-            </div>
-            <p className="leading-relaxed">{materialAdviceMap[material].desc}</p>
-          </div>
-
-          {/* Porada podpory */}
-          <div className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-850 text-xs text-stone-700 dark:text-stone-300">
-            <div className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5 mb-1">
-              <span>🎋</span>
-              <span>Rola podpory: {supportsAdviceMap[supports].title}</span>
-            </div>
-            <p className="leading-relaxed">{supportsAdviceMap[supports].desc}</p>
-          </div>
+          {/* Jeśli użytkownik jest w widoku szkicu lub warstw podłoża, wyświetlamy pod spodem podsumowanie kosztowe */}
+          {activeSchemaView !== 'cost_estimates' && (
+            <CropCostEstimatorCard
+              plant={currentPlant}
+              sowingMethod={sowingMethod}
+              potVolumeLiters={volumeLiters}
+              potMaterial={material}
+              potCount={potCount}
+              supportType={supports}
+              isCompact={true}
+              onSowingMethodChange={setSowingMethod}
+            />
+          )}
         </div>
       </div>
     </div>
