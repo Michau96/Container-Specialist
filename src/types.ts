@@ -57,6 +57,15 @@ export type ContainerType =
 
 export type CareTime = 'daily' | 'few_days' | 'weekends';
 
+export type FloorCategory = 'parter' | 'niskie piętro (1-3)' | 'średnie piętro (4-6)' | 'wysokie (7+)';
+
+export function getFloorCategory(floor: number): FloorCategory {
+  if (floor === 0) return 'parter';
+  if (floor <= 3) return 'niskie piętro (1-3)';
+  if (floor <= 6) return 'średnie piętro (4-6)';
+  return 'wysokie (7+)';
+}
+
 export interface UserBalconySpec {
   region: PolandRegionKey;
   floor: number;
@@ -67,7 +76,17 @@ export interface UserBalconySpec {
   care_time: CareTime;
 }
 
-export type PlantGroup = 'wszystkie' | 'warzywa' | 'owoce' | 'ziola' | 'ozdobne';
+export type PlantGroup = 'wszystkie' | 'warzywa' | 'owoce' | 'ziola' | 'ozdobne' | 'kielki' | 'grzyby';
+
+export type SowingType = 'gniazdowo' | 'pojedynczo' | 'rzutowo' | 'sadzonka' | 'grzybnia';
+
+export interface PlantSource {
+  title: string;
+  url?: string;
+  institution?: string;
+  country?: string;
+  notes?: string;
+}
 
 export interface SoilLayersInfo {
   drainage_cm: number;
@@ -100,6 +119,10 @@ export interface SpacingGuideInfo {
   planting_depth_cm: number;
   planting_method: string;
   supports_needed: string;
+  requires_bamboo_stake?: boolean;
+  bamboo_stake_desc?: string;
+  sowing_type?: SowingType;
+  sowing_type_details?: string;
   max_plants_per_standard_box_60cm: number;
   max_plants_per_round_pot_30cm: number;
 }
@@ -151,13 +174,14 @@ export interface PlantNutrition {
   vitamins: string;
   minerals: string;
   key_benefits: string;
+  antioxidants?: string;
   tags: string[];
 }
 
 export interface Plant {
   id: string;
   name: string;
-  plant_group: 'warzywa' | 'owoce' | 'ziola' | 'ozdobne';
+  plant_group: 'warzywa' | 'owoce' | 'ziola' | 'ozdobne' | 'kielki' | 'grzyby';
   category: string;
   varieties: string[];
   top_varieties?: PlantVariety[];
@@ -172,7 +196,7 @@ export interface Plant {
   summary: string;
   detailed_guide: string;
   schedule: Record<string, string>;
-  sources: string[];
+  sources: Array<string | PlantSource>;
   suitability?: PlantSuitability;
   soil_layers?: SoilLayersInfo;
   fertilizer_guide?: FertilizerGuideInfo;
@@ -252,4 +276,127 @@ export interface RegionInfo {
   lat: number;
   lon: number;
   frost_shift_days: number;
+}
+
+export type CropGrowthStage = 'planowanie' | 'siew' | 'rozsada' | 'rosnie' | 'kwitnie' | 'owocuje' | 'zbior';
+
+export type PotType =
+  | 'okragla'
+  | 'skrzynka'
+  | 'kwadratowa'
+  | 'worek_growbag'
+  | 'samonawadniajaca'
+  | 'wiszaca';
+
+export type PotMaterial = 'plastik' | 'ceramika_terakota' | 'tkanina' | 'drewno';
+
+export type SowingMethod = 'nasiona' | 'sadzonka';
+
+export interface PotConfig {
+  potType?: PotType;
+  volumeL?: number;
+  diameterOrWidthCm?: number;
+  depthCm?: number;
+  lengthCm?: number;
+  material?: PotMaterial;
+  hasDrainage?: boolean;
+  locationNote?: string;
+}
+
+export interface SowingConfig {
+  method: SowingMethod;
+  date?: string; // 'YYYY-MM-DD'
+  periodId?: string; // e.g. '04_2'
+  sowingLocation?: 'parapet_wewnetrzny' | 'balkon_bezposrednio' | 'szklarenka';
+}
+
+export interface PlantGrowthPhase {
+  id: string;
+  order: number;
+  name: string;
+  shortName: string;
+  icon: string;
+  dayStart: number;
+  dayEnd: number;
+  whatToExpect: string;
+  keyCareAction: string;
+  wateringTip: string;
+  fertilizingTip: string;
+  pruningOrSupportTip?: string;
+}
+
+export interface PotAssessment {
+  status: 'idealna' | 'za_mala' | 'brak_drenazu' | 'uwaga_material';
+  badge: string;
+  message: string;
+  wateringImpact: string;
+  fertilizingImpact: string;
+}
+
+export interface CropTimelineInfo {
+  phases: PlantGrowthPhase[];
+  totalDaysToHarvest: number;
+  currentPhaseIndex: number;
+  currentPhase: PlantGrowthPhase;
+  daysSinceSowing: number;
+  daysUntilNextPhase: number | null;
+  progressPercent: number;
+  isReadyForHarvest: boolean;
+  potAssessment: PotAssessment;
+  currentPhaseRecommendation: {
+    title: string;
+    action: string;
+    dangerToAvoid: string;
+  };
+}
+
+export interface MyCropItem {
+  plantId: string;
+  addedAt: string;
+  stage?: CropGrowthStage;
+  customPotName?: string;
+  notes?: string;
+  selectedVariety?: string;
+  completedTasks?: Record<string, boolean>; // e.g. "03_2_siew": true
+  pot?: PotConfig;
+  sowing?: SowingConfig;
+}
+
+export interface DailyWateringAdvice {
+  isGoodDay: boolean;
+  status: 'obfite' | 'umiarkowane' | 'wstrzymaj' | 'sprawdz';
+  title: string;
+  advice: string;
+  specifics: string[];
+}
+
+export interface DailyFertilizingAdvice {
+  isGoodDay: boolean;
+  status: 'zalecane' | 'odradzane' | 'umiarkowane';
+  title: string;
+  advice: string;
+  dosageTip: string;
+}
+
+export interface DailyPruningAdvice {
+  title: string;
+  advice: string;
+  plantTasks: { plantName: string; task: string; icon: string }[];
+}
+
+export interface DailySprayingAdvice {
+  isGoodDay: boolean;
+  status: 'dobry_dzien' | 'zly_dzien' | 'wstrzymaj';
+  title: string;
+  advice: string;
+  recommendedOrganicSolution?: string;
+}
+
+export interface DailyCropsRecommendation {
+  watering: DailyWateringAdvice;
+  fertilizing: DailyFertilizingAdvice;
+  pruning: DailyPruningAdvice;
+  spraying: DailySprayingAdvice;
+  specialAlerts: string[];
+  lastUpdated: string;
 }

@@ -269,7 +269,18 @@ def calculate_suitability(plant, user_spec):
     has_direct_match = orientation in plant_orientations
     has_component_match = any(c in plant_orientations for c in orient_meta["components"])
 
-    if has_direct_match or has_component_match:
+    if plant.get("plant_group") == "kielki":
+        score += 8
+        reasons.append("Mikrolistki i kiełki udają się znakomicie w każdych warunkach – potrzebują jedynie płaskiej tacki i światła dziennego.")
+    elif plant.get("plant_group") == "grzyby":
+        if orient_meta["is_north"] or orientation in ["E", "NE", "NW", "PATIO"]:
+            score += 12
+            reasons.append("Zacieniony i wilgotny mikroklimat Twojego balkonu to wymarzone warunki do owocowania grzybów!")
+        elif orient_meta["is_south"]:
+            score -= 15
+            warnings.append("Grzyby nie znoszą bezpośredniego słońca. Ustaw pojemnik w zacienionym kącie (pod stolikiem, szafką lub osłoną).")
+            tips.append("Zapewnij wysoką wilgotność powietrza (80-90%) przez częste zraszanie.")
+    elif has_direct_match or has_component_match:
         score += 6
     elif orient_meta["is_north"] and plant["category"] in ["Psiankowate", "Dyniowate"]:
         score -= 45
@@ -414,6 +425,19 @@ class BalconyApiHandler(BaseHTTPRequestHandler):
                 "periods": CALENDAR_PERIODS
             }).encode("utf-8"))
 
+        elif path == "/api/calendar":
+            period_id = params.get("period", [get_current_period_id()])[0]
+            plant_ids_raw = params.get("plant_ids", [None])[0]
+            plant_ids = [p.strip() for p in plant_ids_raw.split(",") if p.strip()] if plant_ids_raw else None
+            user_spec = {
+                "region": params.get("region", ["mazowieckie"])[0],
+                "floor": int(params.get("floor", ["2"])[0]),
+                "orientation": params.get("orientation", ["S"])[0]
+            }
+            calendar_res = self._build_calendar_response(user_spec, period_id, plant_ids)
+            self._set_headers(200)
+            self.wfile.write(json.dumps(calendar_res).encode("utf-8"))
+
         else:
             self._set_headers(404)
             self.wfile.write(json.dumps({"error": "Not Found"}).encode("utf-8"))
@@ -451,8 +475,9 @@ class BalconyApiHandler(BaseHTTPRequestHandler):
         elif path == "/api/calendar":
             user_spec = body.get("user_spec", {})
             period_id = body.get("period_id") or get_current_period_id()
+            plant_ids = body.get("plant_ids") or body.get("crop_ids")
 
-            calendar_res = self._build_calendar_response(user_spec, period_id)
+            calendar_res = self._build_calendar_response(user_spec, period_id, plant_ids)
             self._set_headers(200)
             self.wfile.write(json.dumps(calendar_res).encode("utf-8"))
 
@@ -577,7 +602,7 @@ class BalconyApiHandler(BaseHTTPRequestHandler):
             )
         }
 
-    def _build_calendar_response(self, user_spec, period_id):
+    def _build_calendar_response(self, user_spec, period_id, plant_ids=None):
         current_p_id = get_current_period_id()
         is_current = (period_id == current_p_id)
 
@@ -606,6 +631,9 @@ class BalconyApiHandler(BaseHTTPRequestHandler):
         actions_by_type = {}
 
         for plant in PLANTS_DATABASE:
+            if plant_ids is not None and plant["id"] not in plant_ids:
+                continue
+
             sched = plant.get("schedule", {})
             action_code = sched.get(period_id)
             if not action_code:
