@@ -28,6 +28,7 @@ import {
 import { getCropTimelineInfo } from '../lib/cropGrowthPhases';
 import { getPlantVarieties, getEffectivePlantRequirements } from '../lib/varietyData';
 import { evaluatePotMaterial } from '../lib/potSupportEvaluations';
+import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 import { SoilShoppingGuideCard } from './SoilShoppingGuideCard';
 
@@ -83,6 +84,11 @@ export const CropPotSowingModal: React.FC<Props> = ({
 
   const [depthCm, setDepthCm] = useState<number>(crop.pot?.depthCm || plant.pot.min_depth_cm || 20);
   const [diameterOrWidthCm, setDiameterOrWidthCm] = useState<number>(crop.pot?.diameterOrWidthCm || 25);
+
+  const greenhouseInfo = getPlantGreenhouseInfo(plant);
+  const [inGreenhouse, setInGreenhouse] = useState<boolean>(
+    crop.inGreenhouse ?? (greenhouseInfo.suitability === 'recommended')
+  );
 
   const [sowingMethod, setSowingMethod] = useState<SowingMethod>(crop.sowing?.method || 'nasiona');
   const [sowingDate, setSowingDate] = useState<string>(
@@ -153,6 +159,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
         `${potCount > 1 ? `${potCount}x ` : ''}${volumeL}L (${POT_TYPES.find((p) => p.key === potType)?.label})`,
       pot: updatedPot,
       sowing: updatedSowing,
+      inGreenhouse,
       stage:
         previewInfo.currentPhase.id === 'kielkowanie'
           ? 'siew'
@@ -555,6 +562,76 @@ export const CropPotSowingModal: React.FC<Props> = ({
               <span className="text-[11px] text-stone-500">
                 {hasDrainage ? '✅ Odpływ aktywny' : '🚨 Brak odpływu!'}
               </span>
+            </div>
+
+            {/* Balkonowa mini-szklarnia toggle & guidance */}
+            <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🏡</span>
+                  <div>
+                    <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                      <span>Balkonowa szklarnia / regał z folią</span>
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                          greenhouseInfo.badgeTone === 'emerald'
+                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                            : greenhouseInfo.badgeTone === 'amber'
+                            ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                            : greenhouseInfo.badgeTone === 'rose'
+                            ? 'bg-rose-100 dark:bg-rose-950 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700'
+                            : 'bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 border-stone-300'
+                        }`}
+                      >
+                        {greenhouseInfo.label}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                      Oznacz, czy donica stoi w mini-szklarni lub regale foliowym na balkonie.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setInGreenhouse(!inGreenhouse)}
+                  className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                    inGreenhouse ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-600'
+                  }`}
+                  role="switch"
+                  aria-checked={inGreenhouse}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                      inGreenhouse ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {inGreenhouse ? (
+                <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-950 dark:text-emerald-200 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-emerald-900 dark:text-emerald-100">
+                    <span>✅ Donica oznaczona jako: W szklarni balkonowej</span>
+                    <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold">
+                      ({greenhouseInfo.temperatureGain})
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900/90 dark:text-emerald-200/90 leading-relaxed">
+                    {greenhouseInfo.reason}
+                  </p>
+                  <div className="text-[11px] text-emerald-800 dark:text-emerald-300 font-semibold pt-1 border-t border-emerald-200/60 dark:border-emerald-800/60">
+                    ⚠️ {greenhouseInfo.risksAndVentilation}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-xl bg-stone-100/80 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-750 text-xs text-stone-600 dark:text-stone-400">
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">🌿 Stanowisko: Otwarty balkon</span> —{' '}
+                  {greenhouseInfo.suitability === 'recommended'
+                    ? 'Dla tej rośliny mini-szklarnia jest zalecana – w chłodne dni przyspiesza start i owocowanie o 2–3 tygodnie.'
+                    : greenhouseInfo.reason}
+                </div>
+              )}
             </div>
 
             {/* Callout promoting adding different pots as separate crops */}

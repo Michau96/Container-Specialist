@@ -218,6 +218,21 @@ export interface Plant {
   fertilizer_guide?: FertilizerGuideInfo;
   spray_guide?: SprayGuideInfo;
   spacing_guide?: SpacingGuideInfo;
+  greenhouse_recommendation?: GreenhouseSuitability;
+}
+
+export type GreenhouseSuitability = 'recommended' | 'optional' | 'not_recommended';
+
+export interface GreenhouseRecommendation {
+  suitability: GreenhouseSuitability;
+  label: string;
+  badgeLabel: string;
+  badgeTone: 'emerald' | 'amber' | 'stone' | 'rose';
+  icon: string;
+  temperatureGain: string;
+  reason: string;
+  risksAndVentilation: string;
+  practicalTip: string;
 }
 
 export interface CalendarPeriod {
@@ -378,6 +393,8 @@ export interface MyCropItem {
   completedTasks?: Record<string, boolean>; // e.g. "03_2_siew": true
   pot?: PotConfig;
   sowing?: SowingConfig;
+  inGreenhouse?: boolean; // Czy uprawa znajduje się w balkonowej mini-szklarni / folii
+  lastWateredDate?: string; // Data ostatniego podlania w formacie YYYY-MM-DD
 }
 
 export interface DailyWateringAdvice {
@@ -417,4 +434,19 @@ export interface DailyCropsRecommendation {
   spraying: DailySprayingAdvice;
   specialAlerts: string[];
   lastUpdated: string;
+}
+
+export interface UserAccount {
+  id: string;
+  username: string; // Nick użytkownika
+  createdAt: string;
+  balconySpec: UserBalconySpec;
+  myCrops?: MyCropItem[];
+  lastLoginAt?: string;
+}
+
+export interface AuthState {
+  user: UserAccount | null;
+  token: string | null;
+  isAuthenticated: boolean;
 }

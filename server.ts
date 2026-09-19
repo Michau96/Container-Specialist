@@ -3,6 +3,7 @@ import path from 'path';
 import http from 'http';
 import { spawn, ChildProcess } from 'child_process';
 import { createServer as createViteServer } from 'vite';
+import { createAuthRouter } from './server/auth';
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -67,6 +68,9 @@ process.on('SIGTERM', () => {
 
 // Middleware for parsing JSON
 app.use(express.json());
+
+// Authentication and user balcony settings API
+app.use('/api/auth', createAuthRouter());
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {

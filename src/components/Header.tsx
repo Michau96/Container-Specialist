@@ -11,8 +11,11 @@ import {
   Sun,
   Moon,
   Search,
+  User,
+  UserCheck,
+  ShieldCheck,
 } from 'lucide-react';
-import { UserBalconySpec, getFloorCategory, getFloorCategoryLabel } from '../types';
+import { UserBalconySpec, UserAccount, getFloorCategory, getFloorCategoryLabel } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
 
 export type ActiveNavTab = 'my_crops' | 'search_crops' | 'calendar' | 'calculator';
@@ -25,6 +28,9 @@ interface Props {
   darkMode: boolean;
   onToggleDarkMode: () => void;
   myCropsCount?: number;
+  currentUser?: UserAccount | null;
+  onOpenAuth?: () => void;
+  onOpenProfile?: () => void;
 }
 
 export const Header: React.FC<Props> = ({
@@ -35,6 +41,9 @@ export const Header: React.FC<Props> = ({
   darkMode,
   onToggleDarkMode,
   myCropsCount = 0,
+  currentUser = null,
+  onOpenAuth,
+  onOpenProfile,
 }) => {
   const regionInfo = POLAND_REGIONS[userSpec.region];
   const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec.orientation);
@@ -100,6 +109,32 @@ export const Header: React.FC<Props> = ({
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Dostosuj balkon</span>
             </button>
+
+            {/* User Account Button */}
+            {currentUser ? (
+              <button
+                id="user-profile-header-btn"
+                onClick={onOpenProfile}
+                className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 border border-emerald-300/80 dark:border-emerald-700/80 rounded-[1rem] text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-2xs"
+                title={`Zalogowano jako ${currentUser.username}. Kliknij, aby zobaczyć profil lub wylogować.`}
+              >
+                <div className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
+                  {currentUser.username.charAt(0).toUpperCase()}
+                </div>
+                <span className="max-w-[110px] truncate">{currentUser.username}</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Ustawienia balkonu zapisane na koncie" />
+              </button>
+            ) : (
+              <button
+                id="login-register-header-btn"
+                onClick={onOpenAuth}
+                className="px-3 py-1.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-800 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                title="Zaloguj się lub załóż konto z nickiem i hasłem, aby zapisać ustawienia balkonu"
+              >
+                <User className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Konto / Zaloguj</span>
+              </button>
+            )}
 
             {/* Dark Mode Switch */}
             <button

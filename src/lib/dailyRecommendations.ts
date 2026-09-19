@@ -294,6 +294,28 @@ export function computeDailyRecommendation(
     );
   }
 
+  // 5. Ostrzeżenia i mikroklimat szklarni balkonowej
+  const cropsInGreenhouse = userCrops.filter((c) => c.inGreenhouse === true);
+  if (cropsInGreenhouse.length > 0) {
+    if (temp >= 19 && precip < 1) {
+      specialAlerts.push(
+        `🏡 Wietrzenie szklarni balkonowej: Masz ${cropsInGreenhouse.length} ${
+          cropsInGreenhouse.length === 1 ? 'uprawę' : 'uprawy'
+        } w szklarni/folii. Przy temperaturze ${Math.round(
+          temp
+        )}°C i słońcu koniecznie rozsuń zamek lub uchyl klapę, aby wewnątrz nie przekroczyć 32°C.`
+      );
+    } else if (temp <= 6) {
+      specialAlerts.push(
+        `🛡️ Ochrona w szklarni: Twoje uprawy w szklarni balkonowej (${cropsInGreenhouse.length}) zyskują cenne +3°C do +5°C buforu termicznego. Zasuń szczelnie folię przed zachodem słońca.`
+      );
+    } else if (precip > 1.5) {
+      specialAlerts.push(
+        `🌧️ Donice w szklarni (${cropsInGreenhouse.length}): Mimo opadów na zewnątrz deszcz nie dociera pod folię. Pamiętaj o manualnym podlaniu ziemi w szklarence.`
+      );
+    }
+  }
+
   return {
     watering: {
       isGoodDay: waterIsGoodDay,

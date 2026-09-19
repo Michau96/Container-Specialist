@@ -5,8 +5,16 @@ import {
   Info,
   Sprout,
   ArrowRight,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
+  LayoutGrid,
+  SlidersHorizontal,
+  X,
+  ShieldCheck,
+  CheckCircle2,
 } from 'lucide-react';
-import { UserBalconySpec, Plant, WeatherData, PlantGroup, MyCropItem, getFloorCategoryLabel } from './types';
+import { UserBalconySpec, Plant, WeatherData, PlantGroup, MyCropItem, UserAccount, getFloorCategoryLabel } from './types';
 import {
   loadSavedSpec,
   saveUserSpec,
@@ -17,6 +25,12 @@ import {
   saveMyCrops,
   POLAND_REGIONS,
 } from './lib/api';
+import {
+  getStoredUser,
+  fetchCurrentUser,
+  saveBalconyToAccount,
+  logoutAccount,
+} from './lib/auth';
 import { Header, ActiveNavTab } from './components/Header';
 import { WeatherWidget } from './components/WeatherWidget';
 import { PlantCard } from './components/PlantCard';
@@ -26,13 +40,27 @@ import { BalconySetupModal } from './components/BalconySetupModal';
 import { PotCalculator } from './components/PotCalculator';
 import { MyCropsView } from './components/MyCropsView';
 import { SelectVarietyModal } from './components/SelectVarietyModal';
+import { AuthModal } from './components/AuthModal';
+import { UserProfileModal } from './components/UserProfileModal';
 import { computeDailyRecommendation } from './lib/dailyRecommendations';
 import { getEffectivePlantRequirements } from './lib/varietyData';
+import { getPlantTimingInfo, getCalendarPeriodId, getPeriodHumanLabel } from './lib/cropTiming';
+import { getPlantLifestylePills } from './lib/plantLifestyle';
 
 export default function App() {
   const [userSpec, setUserSpec] = useState<UserBalconySpec>(() => loadSavedSpec());
   const [isSetupModalOpen, setIsSetupModalOpen] = useState<boolean>(() => !hasUserOnboarded());
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('my_crops');
+
+  // User account state
+  const [currentUser, setCurrentUser] = useState<UserAccount | null>(() => getStoredUser());
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
+  const [authModalTab, setAuthModalTab] = useState<'login' | 'register'>('login');
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState<boolean>(false);
+  const [accountToast, setAccountToast] = useState<{
+    message: string;
+    type: 'success' | 'info';
+  } | null>(null);
 
   // My Crops persistent state
   const [myCrops, setMyCrops] = useState<MyCropItem[]>(() => loadSavedMyCrops());
@@ -43,13 +71,10 @@ export default function App() {
     initialVariety?: string;
   } | null>(null);
 
-  // Dark mode state
+  // Dark mode state - default to light mode by default, enable dark mode only if explicitly selected by user
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      return (
-        localStorage.getItem('theme') === 'dark' ||
-        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)
-      );
+      return localStorage.getItem('theme') === 'dark';
     }
     return false;
   });
@@ -79,7 +104,13 @@ export default function App() {
   const [selectedGroup, setSelectedGroup] = useState<PlantGroup>('wszystkie');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('Wszystkie');
-  const [sortOrder, setSortOrder] = useState<'score' | 'difficulty' | 'name'>('score');
+  const [sortOrder, setSortOrder] = useState<'timing_first' | 'score' | 'difficulty' | 'name'>('timing_first');
+  const [timingFilter, setTimingFilter] = useState<'all' | 'good_now' | 'sow_now' | 'transplant_now'>('all');
+
+  // UX & Information Density Controls: Collapsible panels and card detail modes
+  const [cardViewMode, setCardViewMode] = useState<'compact' | 'detailed'>('compact');
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState<boolean>(true);
+  const [showSeasonalityBanner, setShowSeasonalityBanner] = useState<boolean>(true);
 
   // Load recommendations & weather when userSpec changes
   useEffect(() => {
@@ -117,6 +148,31 @@ export default function App() {
       });
   };
 
+  // Check active session & synchronize saved balcony settings on mount
+  useEffect(() => {
+    fetchCurrentUser().then((user) => {
+      if (user) {
+        setCurrentUser(user);
+        if (user.balconySpec) {
+          setUserSpec(user.balconySpec);
+          saveUserSpec(user.balconySpec);
+        }
+        if (user.myCrops && user.myCrops.length > 0 && myCrops.length === 0) {
+          setMyCrops(user.myCrops);
+          saveMyCrops(user.myCrops);
+        }
+      }
+    });
+  }, []);
+
+  // Dismiss account notification toast
+  useEffect(() => {
+    if (accountToast) {
+      const timer = setTimeout(() => setAccountToast(null), 3500);
+      return () => clearTimeout(timer);
+    }
+  }, [accountToast]);
+
   useEffect(() => {
     loadWeather();
   }, [userSpec.region, userSpec.floor, userSpec.orientation]);
@@ -126,6 +182,49 @@ export default function App() {
     setUserSpec(newSpec);
     saveUserSpec(newSpec);
     setIsSetupModalOpen(false);
+
+    if (currentUser) {
+      saveBalconyToAccount(newSpec, myCrops).then((res) => {
+        if (res.user) {
+          setCurrentUser(res.user);
+        }
+        setAccountToast({
+          message: `Ustawienia balkonu zostały zapisane na Twoim koncie (${currentUser.username})!`,
+          type: 'success',
+        });
+      });
+    } else {
+      setAccountToast({
+        message: 'Parametry balkonu zaktualizowane lokalnie.',
+        type: 'info',
+      });
+    }
+  };
+
+  const handleAuthSuccess = (user: UserAccount, message: string) => {
+    setCurrentUser(user);
+    if (user.balconySpec) {
+      setUserSpec(user.balconySpec);
+      saveUserSpec(user.balconySpec);
+    }
+    if (user.myCrops && user.myCrops.length > 0) {
+      setMyCrops(user.myCrops);
+      saveMyCrops(user.myCrops);
+    }
+    setAccountToast({
+      message: message || `Witaj, ${user.username}! Wczytano ustawienia Twojego balkonu.`,
+      type: 'success',
+    });
+  };
+
+  const handleLogout = async () => {
+    const formerName = currentUser?.username;
+    await logoutAccount();
+    setCurrentUser(null);
+    setAccountToast({
+      message: `Wylogowano z konta ${formerName ? `"${formerName}"` : ''}. Bieżące parametry balkonu pozostały aktywne w trybie gościa.`,
+      type: 'info',
+    });
   };
 
   // Find plant by id (used by calendar view to open modal)
@@ -149,7 +248,8 @@ export default function App() {
     varietyName: string,
     varietyBadge: string,
     potCount: number = 1,
-    openConfigurator: boolean = false
+    openConfigurator: boolean = false,
+    inGreenhouse?: boolean
   ) => {
     const targetPlant = plants.find((p) => p.id === plantId);
     const reqs = targetPlant ? getEffectivePlantRequirements(targetPlant, varietyName) : null;
@@ -161,6 +261,7 @@ export default function App() {
       selectedVariety: varietyName,
       varietyBadge: varietyBadge || 'Odmiana donicowa',
       potCount: Math.max(1, potCount),
+      inGreenhouse: inGreenhouse ?? false,
       addedAt: new Date().toISOString(),
       stage: 'rosnie' as const,
       pot: {
@@ -182,6 +283,9 @@ export default function App() {
     setMyCrops((prev) => {
       const next = [...prev, newCropItem];
       saveMyCrops(next);
+      if (currentUser) {
+        saveBalconyToAccount(userSpec, next);
+      }
       return next;
     });
 
@@ -208,6 +312,9 @@ export default function App() {
     setMyCrops((prev) => {
       const next = prev.filter((c) => c.id !== cropIdOrPlantId && c.plantId !== cropIdOrPlantId);
       saveMyCrops(next);
+      if (currentUser) {
+        saveBalconyToAccount(userSpec, next);
+      }
       return next;
     });
   };
@@ -221,6 +328,9 @@ export default function App() {
         return c.plantId === updated.plantId ? updated : c;
       });
       saveMyCrops(next);
+      if (currentUser) {
+        saveBalconyToAccount(userSpec, next);
+      }
       return next;
     });
   };
@@ -260,12 +370,59 @@ export default function App() {
     };
   }, [plants]);
 
-  // Categories list for the currently active group
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    groupFilteredPlants.forEach((p) => set.add(p.category));
-    return ['Wszystkie', ...Array.from(set)];
-  }, [groupFilteredPlants]);
+  // Current real date and calendar period
+  const todayDate = useMemo(() => new Date(), []);
+  const currentPeriodId = useMemo(() => getCalendarPeriodId(todayDate), [todayDate]);
+  const currentPeriodName = useMemo(() => getPeriodHumanLabel(currentPeriodId), [currentPeriodId]);
+  const formattedToday = useMemo(() => {
+    const day = todayDate.getDate();
+    const months = [
+      '',
+      'stycznia',
+      'lutego',
+      'marca',
+      'kwietnia',
+      'maja',
+      'czerwca',
+      'lipca',
+      'sierpnia',
+      'września',
+      'października',
+      'listopada',
+      'grudnia',
+    ];
+    return `${day} ${months[todayDate.getMonth() + 1]}`;
+  }, [todayDate]);
+
+  // Timing statistics for current group
+  const timingCounts = useMemo(() => {
+    let goodNow = 0;
+    let sowNow = 0;
+    let transplantNow = 0;
+    groupFilteredPlants.forEach((p) => {
+      const t = getPlantTimingInfo(p, todayDate);
+      if (t.isGoodTimeToPlantNow) goodNow++;
+      if (t.status === 'sow_now' || t.status === 'year_round') sowNow++;
+      if (t.status === 'transplant_now') transplantNow++;
+    });
+    return { goodNow, sowNow, transplantNow };
+  }, [groupFilteredPlants, todayDate]);
+
+  // User-friendly lifestyle categories list (e.g. "Do sałatki", "Szybko rosnące", "Zero wysiłku")
+  const lifestyleFilters = useMemo(() => {
+    return [
+      { id: 'all', label: 'Wszystkie', icon: '' },
+      { id: 'do_salatki', label: 'Do sałatki', icon: '🥗' },
+      { id: 'szybko_rosnace', label: 'Szybko rosnące', icon: '⚡' },
+      { id: 'zero_wysilku', label: 'Zero wysiłku', icon: '✨' },
+      { id: 'slodkie_zbiory', label: 'Słodkie zbiory', icon: '🍓' },
+      { id: 'aromatyczne', label: 'Aromatyczne zioła', icon: '🌿' },
+      { id: 'kompaktowa', label: 'Kompaktowe donice', icon: '🪴' },
+      { id: 'superfood', label: 'Superfood', icon: '💪' },
+      { id: 'piekne_kwiaty', label: 'Piękne kwiaty', icon: '🌸' },
+      { id: 'dla_poczatkujacych', label: 'Dla początkujących', icon: '🌱' },
+    ];
+  }, []);
 
   // Filtered & Sorted recommendations
   const filteredPlants = useMemo(() => {
@@ -276,11 +433,39 @@ export default function App() {
           p.varieties.some((v) => v.toLowerCase().includes(searchQuery.toLowerCase())) ||
           p.summary.toLowerCase().includes(searchQuery.toLowerCase());
 
-        const matchesCategory = selectedCategory === 'Wszystkie' || p.category === selectedCategory;
+        const plantPills = getPlantLifestylePills(p);
+        const matchesCategory =
+          selectedCategory === 'Wszystkie' ||
+          selectedCategory === 'all' ||
+          p.category === selectedCategory ||
+          plantPills.some(
+            (pill) => pill.id === selectedCategory || pill.label === selectedCategory
+          );
 
-        return matchesSearch && matchesCategory;
+        if (!matchesSearch || !matchesCategory) return false;
+
+        const timing = getPlantTimingInfo(p, todayDate);
+
+        if (timingFilter === 'good_now') {
+          return timing.isGoodTimeToPlantNow;
+        }
+        if (timingFilter === 'sow_now') {
+          return timing.status === 'sow_now' || timing.status === 'year_round';
+        }
+        if (timingFilter === 'transplant_now') {
+          return timing.status === 'transplant_now';
+        }
+
+        return true;
       })
       .sort((a, b) => {
+        if (sortOrder === 'timing_first') {
+          const timingA = getPlantTimingInfo(a, todayDate);
+          const timingB = getPlantTimingInfo(b, todayDate);
+          if (timingA.isGoodTimeToPlantNow && !timingB.isGoodTimeToPlantNow) return -1;
+          if (!timingA.isGoodTimeToPlantNow && timingB.isGoodTimeToPlantNow) return 1;
+          return (b.suitability?.score ?? 0) - (a.suitability?.score ?? 0);
+        }
         if (sortOrder === 'score') {
           return (b.suitability?.score ?? 0) - (a.suitability?.score ?? 0);
         }
@@ -289,7 +474,7 @@ export default function App() {
         }
         return a.name.localeCompare(b.name);
       });
-  }, [groupFilteredPlants, searchQuery, selectedCategory, sortOrder]);
+  }, [groupFilteredPlants, searchQuery, selectedCategory, timingFilter, sortOrder, todayDate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 to-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors relative overflow-x-hidden"><div className="absolute top-0 right-0 -mr-32 -mt-32 w-[32rem] h-[32rem] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" /><div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[40rem] h-[40rem] bg-teal-100/20 dark:bg-teal-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
@@ -302,6 +487,12 @@ export default function App() {
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
         myCropsCount={myCrops.length}
+        currentUser={currentUser}
+        onOpenAuth={() => {
+          setAuthModalTab('login');
+          setIsAuthModalOpen(true);
+        }}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -322,6 +513,7 @@ export default function App() {
             weather={weather}
             userSpec={userSpec}
             dailyRecommendation={dailyRecommendation}
+            currentUser={currentUser}
             onRemoveCrop={handleRemoveCrop}
             onUpdateCrop={handleUpdateCrop}
             onAddCropWithVariety={handleAddCropWithVariety}
@@ -397,270 +589,370 @@ export default function App() {
                   </p>
                 </div>
 
-                {/* Quick stats badge: green reserved for confirmed high compliance */}
-                <div className="flex items-center gap-3 bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 p-3 rounded-2xl shrink-0">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
-                    {groupFilteredPlants.filter((p) => (p.suitability?.score ?? 0) >= 80).length}
+                {/* Quick stats & Collapse Filter Button */}
+                <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+                  <div className="flex items-center gap-3 bg-emerald-50/90 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 p-2.5 sm:p-3 rounded-2xl">
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center font-bold text-sm">
+                      {groupFilteredPlants.filter((p) => (p.suitability?.score ?? 0) >= 80).length}
+                    </div>
+                    <div className="text-xs">
+                      <div className="font-bold text-emerald-950 dark:text-emerald-200">Potwierdzone jako optymalne</div>
+                      <div className="text-stone-500 dark:text-stone-400 text-[11px]">&gt;80% dopasowania do donic</div>
+                    </div>
                   </div>
-                  <div className="text-xs">
-                    <div className="font-bold text-emerald-950 dark:text-emerald-200">Potwierdzone jako optymalne</div>
-                    <div className="text-stone-500 dark:text-stone-400 text-[11px]">&gt;80% dopasowania do Twoich warunków</div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Jasny podział na grupy roślin - bez zielonego/czerwonego w grupach */}
-              <div className="mt-5 pt-4 border-t border-stone-100 dark:border-stone-800">
-                <div className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2.5">
-                  Wybierz grupę roślin:
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
-                  {/* Wszystkie */}
                   <button
-                    id="group-filter-wszystkie"
-                    onClick={() => handleGroupChange('wszystkie')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'wszystkie'
-                        ? 'bg-stone-900 text-white border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100 shadow-sm'
-                        : 'bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
-                    }`}
+                    id="toggle-filters-expansion-btn"
+                    type="button"
+                    onClick={() => setIsFiltersExpanded((prev) => !prev)}
+                    className="p-2 sm:px-3 sm:py-2.5 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    title={isFiltersExpanded ? 'Zwiń panele grup roślin' : 'Pokaż pełne panele grup roślin'}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🪴</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'wszystkie'
-                            ? 'bg-stone-800 dark:bg-stone-200 text-stone-200 dark:text-stone-800'
-                            : 'bg-white dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-600'
-                        }`}
-                      >
-                        {groupCounts.wszystkie}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Wszystkie</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'wszystkie'
-                            ? 'text-stone-300 dark:text-stone-600'
-                            : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Pełna baza donicowa
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Warzywa - Indigo theme */}
-                  <button
-                    id="group-filter-warzywa"
-                    onClick={() => handleGroupChange('warzywa')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'warzywa'
-                        ? 'bg-indigo-900 text-white border-indigo-900 shadow-sm ring-2 ring-indigo-500/30'
-                        : 'bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-indigo-950 dark:text-indigo-200 border-indigo-200/80 dark:border-indigo-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🥕</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'warzywa'
-                            ? 'bg-indigo-950 text-indigo-100'
-                            : 'bg-white dark:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700'
-                        }`}
-                      >
-                        {groupCounts.warzywa}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Warzywa</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'warzywa' ? 'text-indigo-200' : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Pomidory, papryki, sałaty...
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Owoce - Fuchsia theme */}
-                  <button
-                    id="group-filter-owoce"
-                    onClick={() => handleGroupChange('owoce')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'owoce'
-                        ? 'bg-fuchsia-900 text-white border-fuchsia-900 shadow-sm ring-2 ring-fuchsia-500/30'
-                        : 'bg-fuchsia-50/50 dark:bg-fuchsia-950/30 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-950/50 text-fuchsia-950 dark:text-fuchsia-200 border-fuchsia-200/80 dark:border-fuchsia-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🍓</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'owoce'
-                            ? 'bg-fuchsia-950 text-fuchsia-100'
-                            : 'bg-white dark:bg-fuchsia-900/60 text-fuchsia-900 dark:text-fuchsia-200 border border-fuchsia-200 dark:border-fuchsia-700'
-                        }`}
-                      >
-                        {groupCounts.owoce}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Owoce</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'owoce' ? 'text-fuchsia-200' : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Truskawki, borówki, maliny...
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Zioła - Teal theme */}
-                  <button
-                    id="group-filter-ziola"
-                    onClick={() => handleGroupChange('ziola')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'ziola'
-                        ? 'bg-teal-900 text-white border-teal-900 shadow-sm ring-2 ring-teal-500/30'
-                        : 'bg-teal-50/50 dark:bg-teal-950/30 hover:bg-teal-50 dark:hover:bg-teal-950/50 text-teal-950 dark:text-teal-200 border-teal-200/80 dark:border-teal-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🌿</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'ziola'
-                            ? 'bg-teal-950 text-teal-100'
-                            : 'bg-white dark:bg-teal-900/60 text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-teal-700'
-                        }`}
-                      >
-                        {groupCounts.ziola}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Zioła</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'ziola' ? 'text-teal-200' : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Bazylia, mięta, tymianek...
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Ozdobne - Violet theme */}
-                  <button
-                    id="group-filter-ozdobne"
-                    onClick={() => handleGroupChange('ozdobne')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'ozdobne'
-                        ? 'bg-violet-900 text-white border-violet-900 shadow-sm ring-2 ring-violet-500/30'
-                        : 'bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-50 dark:hover:bg-violet-950/50 text-violet-950 dark:text-violet-200 border-violet-200/80 dark:border-violet-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🌸</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'ozdobne'
-                            ? 'bg-violet-950 text-violet-100'
-                            : 'bg-white dark:bg-violet-900/60 text-violet-900 dark:text-violet-200 border border-violet-200 dark:border-violet-700'
-                        }`}
-                      >
-                        {groupCounts.ozdobne}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Ozdobne</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'ozdobne' ? 'text-violet-200' : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Pelargonie, lawenda, bratki...
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Kiełki - Sky theme */}
-                  <button
-                    id="group-filter-kielki"
-                    onClick={() => handleGroupChange('kielki')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'kielki'
-                        ? 'bg-sky-900 text-white border-sky-900 shadow-sm ring-2 ring-sky-500/30'
-                        : 'bg-sky-50/50 dark:bg-sky-950/30 hover:bg-sky-50 dark:hover:bg-sky-950/50 text-sky-950 dark:text-sky-200 border-sky-200/80 dark:border-sky-800/60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🌱</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'kielki'
-                            ? 'bg-sky-950 text-sky-100'
-                            : 'bg-white dark:bg-sky-900/60 text-sky-900 dark:text-sky-200 border border-sky-200 dark:border-sky-700'
-                        }`}
-                      >
-                        {groupCounts.kielki}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Mikrolistki i kiełki</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'kielki' ? 'text-sky-200' : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Rzeżucha, rzodkiewka, słonecznik...
-                      </div>
-                    </div>
-                  </button>
-
-                  {/* Grzyby - Stone/Amber theme */}
-                  <button
-                    id="group-filter-grzyby"
-                    onClick={() => handleGroupChange('grzyby')}
-                    className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                      selectedGroup === 'grzyby'
-                        ? 'bg-stone-800 text-white border-stone-800 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200 shadow-sm'
-                        : 'bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xl">🍄</span>
-                      <span
-                        className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          selectedGroup === 'grzyby'
-                            ? 'bg-stone-900 dark:bg-stone-300 text-stone-100 dark:text-stone-900'
-                            : 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-600'
-                        }`}
-                      >
-                        {groupCounts.grzyby}
-                      </span>
-                    </div>
-                    <div className="mt-2.5">
-                      <div className="font-bold text-sm">Grzyby uprawne</div>
-                      <div
-                        className={`text-[11px] ${
-                          selectedGroup === 'grzyby'
-                            ? 'text-stone-300 dark:text-stone-600'
-                            : 'text-stone-500 dark:text-stone-400'
-                        }`}
-                      >
-                        Boczniaki, pieczarki, soplówka...
-                      </div>
-                    </div>
+                    <span className="hidden sm:inline">{isFiltersExpanded ? 'Zwiń grupy' : 'Rozwiń grupy'}</span>
+                    {isFiltersExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              {/* Search & Category Filter Controls */}
-              <div className="mt-4 pt-4 border-t border-stone-100 dark:border-stone-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              {/* Compact Group Pills when filter panel is collapsed */}
+              {!isFiltersExpanded && (
+                <div className="mt-4 pt-3 border-t border-stone-150 dark:border-stone-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                  <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1">
+                    Grupa:
+                  </span>
+                  {[
+                    { id: 'wszystkie', label: 'Wszystkie', icon: '🪴', count: groupCounts.wszystkie },
+                    { id: 'warzywa', label: 'Warzywa', icon: '🥕', count: groupCounts.warzywa },
+                    { id: 'owoce', label: 'Owoce', icon: '🍓', count: groupCounts.owoce },
+                    { id: 'ziola', label: 'Zioła', icon: '🌿', count: groupCounts.ziola },
+                    { id: 'ozdobne', label: 'Ozdobne', icon: '🌸', count: groupCounts.ozdobne },
+                    { id: 'kielki', label: 'Kiełki', icon: '🌱', count: groupCounts.kielki },
+                    { id: 'grzyby', label: 'Grzyby', icon: '🍄', count: groupCounts.grzyby },
+                  ].map((g) => (
+                    <button
+                      key={g.id}
+                      onClick={() => handleGroupChange(g.id as PlantGroup)}
+                      className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1.5 ${
+                        selectedGroup === g.id
+                          ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold shadow-xs'
+                          : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      }`}
+                    >
+                      <span>{g.icon}</span>
+                      <span>{g.label}</span>
+                      <span className="text-[10px] opacity-75 font-normal">({g.count})</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Jasny podział na grupy roślin (Full expanded view) */}
+              {isFiltersExpanded && (
+                <div className="mt-5 pt-4 border-t border-stone-100 dark:border-stone-800">
+                  <div className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2.5">
+                    Wybierz grupę roślin:
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
+                    {/* Wszystkie */}
+                    <button
+                      id="group-filter-wszystkie"
+                      onClick={() => handleGroupChange('wszystkie')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'wszystkie'
+                          ? 'bg-stone-900 text-white border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100 shadow-sm'
+                          : 'bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🪴</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'wszystkie'
+                              ? 'bg-stone-800 dark:bg-stone-200 text-stone-200 dark:text-stone-800'
+                              : 'bg-white dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-600'
+                          }`}
+                        >
+                          {groupCounts.wszystkie}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Wszystkie</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'wszystkie'
+                              ? 'text-stone-300 dark:text-stone-600'
+                              : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Pełna baza donicowa
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Warzywa - Indigo theme */}
+                    <button
+                      id="group-filter-warzywa"
+                      onClick={() => handleGroupChange('warzywa')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'warzywa'
+                          ? 'bg-indigo-900 text-white border-indigo-900 shadow-sm ring-2 ring-indigo-500/30'
+                          : 'bg-indigo-50/50 dark:bg-indigo-950/30 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 text-indigo-950 dark:text-indigo-200 border-indigo-200/80 dark:border-indigo-800/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🥕</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'warzywa'
+                              ? 'bg-indigo-950 text-indigo-100'
+                              : 'bg-white dark:bg-indigo-900/60 text-indigo-900 dark:text-indigo-200 border border-indigo-200 dark:border-indigo-700'
+                          }`}
+                        >
+                          {groupCounts.warzywa}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Warzywa</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'warzywa' ? 'text-indigo-200' : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Pomidory, papryki, sałaty...
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Owoce - Fuchsia theme */}
+                    <button
+                      id="group-filter-owoce"
+                      onClick={() => handleGroupChange('owoce')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'owoce'
+                          ? 'bg-fuchsia-900 text-white border-fuchsia-900 shadow-sm ring-2 ring-fuchsia-500/30'
+                          : 'bg-fuchsia-50/50 dark:bg-fuchsia-950/30 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-950/50 text-fuchsia-950 dark:text-fuchsia-200 border-fuchsia-200/80 dark:border-fuchsia-800/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🍓</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'owoce'
+                              ? 'bg-fuchsia-950 text-fuchsia-100'
+                              : 'bg-white dark:bg-fuchsia-900/60 text-fuchsia-900 dark:text-fuchsia-200 border border-fuchsia-200 dark:border-fuchsia-700'
+                          }`}
+                        >
+                          {groupCounts.owoce}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Owoce</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'owoce' ? 'text-fuchsia-200' : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Truskawki, borówki, maliny...
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Zioła - Teal theme */}
+                    <button
+                      id="group-filter-ziola"
+                      onClick={() => handleGroupChange('ziola')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'ziola'
+                          ? 'bg-teal-900 text-white border-teal-900 shadow-sm ring-2 ring-teal-500/30'
+                          : 'bg-teal-50/50 dark:bg-teal-950/30 hover:bg-teal-50 dark:hover:bg-teal-950/50 text-teal-950 dark:text-teal-200 border-teal-200/80 dark:border-teal-800/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🌿</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'ziola'
+                              ? 'bg-teal-950 text-teal-100'
+                              : 'bg-white dark:bg-teal-900/60 text-teal-900 dark:text-teal-200 border border-teal-200 dark:border-teal-700'
+                          }`}
+                        >
+                          {groupCounts.ziola}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Zioła</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'ziola' ? 'text-teal-200' : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Bazylia, mięta, tymianek...
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Ozdobne - Violet theme */}
+                    <button
+                      id="group-filter-ozdobne"
+                      onClick={() => handleGroupChange('ozdobne')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'ozdobne'
+                          ? 'bg-violet-900 text-white border-violet-900 shadow-sm ring-2 ring-violet-500/30'
+                          : 'bg-violet-50/50 dark:bg-violet-950/30 hover:bg-violet-50 dark:hover:bg-violet-950/50 text-violet-950 dark:text-violet-200 border-violet-200/80 dark:border-violet-800/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🌸</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'ozdobne'
+                              ? 'bg-violet-950 text-violet-100'
+                              : 'bg-white dark:bg-violet-900/60 text-violet-900 dark:text-violet-200 border border-violet-200 dark:border-violet-700'
+                          }`}
+                        >
+                          {groupCounts.ozdobne}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Ozdobne</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'ozdobne' ? 'text-violet-200' : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Pelargonie, lawenda, bratki...
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Kiełki - Sky theme */}
+                    <button
+                      id="group-filter-kielki"
+                      onClick={() => handleGroupChange('kielki')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'kielki'
+                          ? 'bg-sky-900 text-white border-sky-900 shadow-sm ring-2 ring-sky-500/30'
+                          : 'bg-sky-50/50 dark:bg-sky-950/30 hover:bg-sky-50 dark:hover:bg-sky-950/50 text-sky-950 dark:text-sky-200 border-sky-200/80 dark:border-sky-800/60'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🌱</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'kielki'
+                              ? 'bg-sky-950 text-sky-100'
+                              : 'bg-white dark:bg-sky-900/60 text-sky-900 dark:text-sky-200 border border-sky-200 dark:border-sky-700'
+                          }`}
+                        >
+                          {groupCounts.kielki}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Mikrolistki i kiełki</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'kielki' ? 'text-sky-200' : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Rzeżucha, rzodkiewka, słonecznik...
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Grzyby - Stone/Amber theme */}
+                    <button
+                      id="group-filter-grzyby"
+                      onClick={() => handleGroupChange('grzyby')}
+                      className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
+                        selectedGroup === 'grzyby'
+                          ? 'bg-stone-800 text-white border-stone-800 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200 shadow-sm'
+                          : 'bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xl">🍄</span>
+                        <span
+                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            selectedGroup === 'grzyby'
+                              ? 'bg-stone-900 dark:bg-stone-300 text-stone-100 dark:text-stone-900'
+                              : 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-600'
+                          }`}
+                        >
+                          {groupCounts.grzyby}
+                        </span>
+                      </div>
+                      <div className="mt-2.5">
+                        <div className="font-bold text-sm">Grzyby uprawne</div>
+                        <div
+                          className={`text-[11px] ${
+                            selectedGroup === 'grzyby'
+                              ? 'text-stone-300 dark:text-stone-600'
+                              : 'text-stone-500 dark:text-stone-400'
+                          }`}
+                        >
+                          Boczniaki, pieczarki, soplówka...
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Dynamic Seasonality Advice Banner for Current Date */}
+              {showSeasonalityBanner && (
+                <div className="mt-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-900/90 via-emerald-950 to-stone-900 text-white border border-emerald-800/60 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-800/80 text-emerald-100 flex items-center justify-center shrink-0 border border-emerald-700/60 text-lg">
+                      📅
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm text-emerald-100">
+                          Bieżący termin: {formattedToday}
+                        </span>
+                        <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-emerald-800 text-emerald-200 border border-emerald-700">
+                          {currentPeriodName}
+                        </span>
+                      </div>
+                      <p className="text-xs text-emerald-200/80 mt-0.5 truncate">
+                        Dla <strong>{timingCounts.goodNow}</strong> {timingCounts.goodNow === 1 ? 'uprawy' : 'upraw'} w tej kategorii przypada teraz idealny termin!
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                    {timingFilter !== 'good_now' ? (
+                      <button
+                        id="filter-good-timing-btn"
+                        onClick={() => setTimingFilter('good_now')}
+                        className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs rounded-xl transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Sprout className="w-3.5 h-3.5" />
+                        <span>Filtruj termin teraz ({timingCounts.goodNow})</span>
+                      </button>
+                    ) : (
+                      <button
+                        id="reset-timing-filter-btn"
+                        onClick={() => setTimingFilter('all')}
+                        className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white font-medium text-xs rounded-xl transition cursor-pointer"
+                      >
+                        Pokaż wszystkie
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => setShowSeasonalityBanner(false)}
+                      title="Ukryj ten baner"
+                      className="p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-800/50 transition cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Search, Sort, and Card View Mode Controls */}
+              <div className="mt-4 pt-4 border-t border-stone-100 dark:border-stone-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
                 {/* Search */}
                 <div className="relative flex-1 max-w-md">
                   <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -690,38 +982,145 @@ export default function App() {
                   )}
                 </div>
 
-                {/* Sort selector */}
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-stone-500 dark:text-stone-400 font-medium hidden sm:inline">Sortuj:</span>
-                  <select
-                    id="sort-plants-select"
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value as any)}
-                    className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-500"
-                  >
-                    <option value="score">Najlepsze dopasowanie (%)</option>
-                    <option value="difficulty">Najłatwiejsze w donicy (1-10)</option>
-                    <option value="name">Alfabetycznie (A-Z)</option>
-                  </select>
+                {/* Right controls: View mode selector & Sort dropdown */}
+                <div className="flex items-center gap-2.5 flex-wrap self-end md:self-auto">
+                  {/* View Mode Toggle: Compact vs Detailed */}
+                  <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700">
+                    <button
+                      id="view-mode-compact-btn"
+                      type="button"
+                      onClick={() => setCardViewMode('compact')}
+                      className={`px-2.5 py-1 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer ${
+                        cardViewMode === 'compact'
+                          ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs font-bold'
+                          : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+                      }`}
+                      title="Przyjazny zwięzły widok kafelków z możliwością rozwijania każdego z osobna"
+                    >
+                      <LayoutGrid className="w-3.5 h-3.5" />
+                      <span>🌿 Zwięzły</span>
+                    </button>
+                    <button
+                      id="view-mode-detailed-btn"
+                      type="button"
+                      onClick={() => setCardViewMode('detailed')}
+                      className={`px-2.5 py-1 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer ${
+                        cardViewMode === 'detailed'
+                          ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs font-bold'
+                          : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+                      }`}
+                      title="Szczegółowy widok analityczny ze wszystkimi tabelami i wytycznymi na wierzchu"
+                    >
+                      <SlidersHorizontal className="w-3.5 h-3.5" />
+                      <span>📋 Szczegółowy</span>
+                    </button>
+                  </div>
+
+                  {/* Sort selector */}
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span className="text-stone-500 dark:text-stone-400 font-medium hidden sm:inline">Sortuj:</span>
+                    <select
+                      id="sort-plants-select"
+                      value={sortOrder}
+                      onChange={(e) => setSortOrder(e.target.value as any)}
+                      className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-500"
+                    >
+                      <option value="timing_first">🌱 Najlepszy termin teraz</option>
+                      <option value="score">Dopasowanie (%)</option>
+                      <option value="difficulty">Trudność w donicy</option>
+                      <option value="name">Alfabetycznie (A-Z)</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Categories Pills */}
+              {/* Seasonality Quick Filters */}
               <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 text-xs">
-                {categories.map((cat) => (
+                <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Termin (dziś):</span>
+                </span>
+
+                <button
+                  id="timing-filter-all"
+                  onClick={() => setTimingFilter('all')}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer ${
+                    timingFilter === 'all'
+                      ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                  }`}
+                >
+                  Wszystkie terminy
+                </button>
+
+                <button
+                  id="timing-filter-good_now"
+                  onClick={() => setTimingFilter('good_now')}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1 ${
+                    timingFilter === 'good_now'
+                      ? 'bg-emerald-600 text-white font-semibold shadow-xs ring-1 ring-emerald-500'
+                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100'
+                  }`}
+                >
+                  <span>🌱</span>
+                  <span>Dobry termin teraz ({timingCounts.goodNow})</span>
+                </button>
+
+                <button
+                  id="timing-filter-sow_now"
+                  onClick={() => setTimingFilter('sow_now')}
+                  className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1 ${
+                    timingFilter === 'sow_now'
+                      ? 'bg-emerald-600 text-white font-semibold shadow-xs ring-1 ring-emerald-500'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                  }`}
+                >
+                  <span>🌾</span>
+                  <span>Siew teraz / całoroczne ({timingCounts.sowNow})</span>
+                </button>
+
+                {timingCounts.transplantNow > 0 && (
                   <button
-                    key={cat}
-                    id={`category-filter-${cat}`}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-full whitespace-nowrap transition text-xs cursor-pointer ${
-                      selectedCategory === cat
-                        ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold'
+                    id="timing-filter-transplant_now"
+                    onClick={() => setTimingFilter('transplant_now')}
+                    className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1 ${
+                      timingFilter === 'transplant_now'
+                        ? 'bg-amber-600 text-white font-semibold shadow-xs'
                         : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                     }`}
                   >
-                    {cat}
+                    <span>🪴</span>
+                    <span>Sadzenie na balkon ({timingCounts.transplantNow})</span>
                   </button>
-                ))}
+                )}
+              </div>
+
+              {/* Friendly Lifestyle Needs Pills (Replaces dry botanical families) */}
+              <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto pb-1 text-xs border-t border-stone-150 dark:border-stone-800/70 pt-2.5 scrollbar-none">
+                <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1">
+                  Potrzeba:
+                </span>
+                {lifestyleFilters.map((cat) => {
+                  const isActive =
+                    selectedCategory === cat.id ||
+                    (selectedCategory === 'Wszystkie' && cat.id === 'all') ||
+                    selectedCategory === cat.label;
+                  return (
+                    <button
+                      key={cat.id}
+                      id={`category-filter-${cat.id}`}
+                      onClick={() => setSelectedCategory(cat.id === 'all' ? 'Wszystkie' : cat.id)}
+                      className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1.5 ${
+                        isActive
+                          ? 'bg-emerald-700 text-white font-semibold shadow-xs ring-1 ring-emerald-600'
+                          : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      }`}
+                    >
+                      {cat.icon && <span className="text-xs">{cat.icon}</span>}
+                      <span>{cat.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -746,6 +1145,7 @@ export default function App() {
                       cropCount={cropCount}
                       onRequestAddVariety={(p) => setVarietyPickerPlant({ plant: p })}
                       onToggleMyCrop={handleToggleMyCrop}
+                      forceDetailed={cardViewMode === 'detailed'}
                     />
                   );
                 })}
@@ -840,16 +1240,71 @@ export default function App() {
         onSave={handleSaveSpec}
         onClose={() => setIsSetupModalOpen(false)}
         isFirstTime={!hasUserOnboarded()}
+        currentUser={currentUser}
+        onOpenAuth={() => {
+          setIsSetupModalOpen(false);
+          setAuthModalTab('register');
+          setIsAuthModalOpen(true);
+        }}
       />
 
+      {/* User Login / Registration Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        currentBalconySpec={userSpec}
+        currentMyCrops={myCrops}
+        onAuthSuccess={handleAuthSuccess}
+        initialTab={authModalTab}
+      />
+
+      {/* User Profile & Saved Balcony Summary Modal */}
+      {currentUser && (
+        <UserProfileModal
+          isOpen={isProfileModalOpen}
+          onClose={() => setIsProfileModalOpen(false)}
+          user={currentUser}
+          onLogout={handleLogout}
+          onEditBalcony={() => setIsSetupModalOpen(true)}
+          myCropsCount={myCrops.length}
+        />
+      )}
+
+      {/* Floating Notification Toast */}
+      {accountToast && (
+        <div
+          id="account-status-toast"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-stone-900/95 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-semibold shadow-2xl border border-stone-700/80 dark:border-stone-300 animate-in slide-in-from-bottom-5 fade-in duration-300 backdrop-blur-md"
+        >
+          {accountToast.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+          ) : (
+            <ShieldCheck className="w-4 h-4 text-sky-400 dark:text-sky-600 shrink-0" />
+          )}
+          <span>{accountToast.message}</span>
+          <button
+            onClick={() => setAccountToast(null)}
+            className="ml-2 text-stone-400 hover:text-white dark:hover:text-stone-900 p-0.5 cursor-pointer"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Minimal Footer */}
-      <footer className="bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 py-6 mt-12 text-center text-xs text-stone-500 dark:text-stone-400 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+      <footer className="bg-white dark:bg-stone-900 border-t border-stone-200 dark:border-stone-800 py-6 mt-12 text-xs text-stone-500 dark:text-stone-400 transition-colors">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div>
-            <strong>Donicowy Specjalista</strong> • Poradnik uprawy warzyw, owoców, ziół i roślin ozdobnych w donicach
+            <div className="font-semibold text-stone-700 dark:text-stone-300">
+              <strong>Donicowy Specjalista</strong> • Poradnik uprawy warzyw, owoców, ziół i roślin ozdobnych w donicach
+            </div>
+            <p className="text-[11px] text-stone-400 dark:text-stone-500 mt-1 max-w-2xl leading-relaxed">
+              Aplikacja czerpie wiedzę ze zweryfikowanych źródeł agrotechnicznych i ogrodniczych. Ze względu na zróżnicowane mikroklimaty balkonów dane mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.
+            </p>
           </div>
-          <div className="text-[11px] text-stone-400 dark:text-stone-500">
-            Darmowe dane pogodowe: Open-Meteo API • Strefy klimatyczne Polski: IMGW / Działkowiec
+          <div className="text-[11px] text-stone-400 dark:text-stone-500 text-center sm:text-right shrink-0">
+            <div>Dane pogodowe: Open-Meteo API</div>
+            <div>Strefy klimatyczne: IMGW / Działkowiec</div>
           </div>
         </div>
       </footer>

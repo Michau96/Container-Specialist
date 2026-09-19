@@ -19,10 +19,15 @@ import {
   Globe,
   Plus,
   Check,
+  Calendar,
+  Sprout,
+  Clock,
 } from 'lucide-react';
 import { Plant } from '../types';
 import { FertilizerAndSprayCard } from './FertilizerAndSprayCard';
 import { CropCostEstimatorCard } from './CropCostEstimatorCard';
+import { getPlantTimingInfo } from '../lib/cropTiming';
+import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 
 interface Props {
   plant: Plant | null;
@@ -47,6 +52,8 @@ export const PlantDetailModal: React.FC<Props> = ({
 
   const suit = plant.suitability;
   const score = suit?.score ?? 75;
+  const timing = getPlantTimingInfo(plant);
+  const greenhouse = getPlantGreenhouseInfo(plant);
 
   const topVarieties = plant.top_varieties && plant.top_varieties.length > 0
     ? plant.top_varieties
@@ -254,6 +261,136 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1">{plant.difficulty} / 10</div>
               <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
                 {plant.difficulty <= 3 ? 'Dla początkujących' : 'Średnia'}
+              </div>
+            </div>
+          </div>
+
+          {/* Seasonality, Current Date Suitability & Optimal Sowing/Transplanting Windows */}
+          <div className="bg-gradient-to-br from-stone-50 via-white to-stone-50 dark:from-stone-850 dark:via-stone-900 dark:to-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-stone-200/80 dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center font-bold">
+                  <Calendar className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                    Terminarz ogrodniczy i status na dziś
+                  </h3>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                    Analiza bieżącej daty oraz rekomendowane okna agrotechniczne
+                  </p>
+                </div>
+              </div>
+
+              <span
+                className={`text-xs font-bold px-3 py-1 rounded-full border shadow-2xs flex items-center gap-1.5 ${
+                  timing.badgeTone === 'emerald'
+                    ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                    : timing.badgeTone === 'amber'
+                    ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                    : timing.badgeTone === 'rose'
+                    ? 'bg-rose-100 dark:bg-rose-950 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700'
+                    : timing.badgeTone === 'sky'
+                    ? 'bg-sky-100 dark:bg-sky-950 text-sky-900 dark:text-sky-200 border-sky-300 dark:border-sky-700'
+                    : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-300 dark:border-stone-700'
+                }`}
+              >
+                <span>{timing.badgeLabel}</span>
+              </span>
+            </div>
+
+            {/* Current Date Explanation */}
+            <div className="p-3 rounded-xl bg-stone-100/80 dark:bg-stone-800/80 border border-stone-200/80 dark:border-stone-700 text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+              {timing.dateExplanation}
+            </div>
+
+            {/* Best Sowing & Best Transplanting schedule */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-700/80 bg-white dark:bg-stone-800/60 shadow-2xs">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  <Sprout className="w-4 h-4" />
+                  <span>Kiedy najlepszy termin na sianie:</span>
+                </div>
+                <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1.5">
+                  {timing.bestSowingLabel}
+                </div>
+                <div className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                  {timing.sowingMethodLabel}
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-700/80 bg-white dark:bg-stone-800/60 shadow-2xs">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
+                  <Sun className="w-4 h-4" />
+                  <span>Kiedy najlepszy termin na sadzenie:</span>
+                </div>
+                <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1.5">
+                  {timing.bestTransplantingLabel}
+                </div>
+                <div className="text-xs text-stone-500 dark:text-stone-400 mt-1">
+                  {timing.transplantingNote}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Balkonowa mini-szklarnia i mikroklimat */}
+          <div className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
+            <div className="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-stone-100 dark:border-stone-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center font-bold text-base">
+                  {greenhouse.icon}
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                    <span>Uprawa w szklarni balkonowej / mini-folii</span>
+                    <span
+                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                        greenhouse.badgeTone === 'emerald'
+                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                          : greenhouse.badgeTone === 'amber'
+                          ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                          : greenhouse.badgeTone === 'rose'
+                          ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700'
+                          : 'bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 border-stone-300'
+                      }`}
+                    >
+                      {greenhouse.label}
+                    </span>
+                  </h3>
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    Ocena mikroklimatu regałów foliowych, inspektów i szklarni balkonowych
+                  </p>
+                </div>
+              </div>
+              <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1 rounded-xl border border-emerald-200/80 dark:border-emerald-800">
+                🌡️ {greenhouse.temperatureGain}
+              </div>
+            </div>
+
+            <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+              {greenhouse.reason}
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 text-xs">
+                <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5 mb-1">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <span>Wietrzenie i ryzyko przegrzania:</span>
+                </div>
+                <div className="text-amber-950 dark:text-amber-300/90 leading-relaxed">
+                  {greenhouse.risksAndVentilation}
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 text-xs">
+                <div className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5 mb-1">
+                  <Lightbulb className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Praktyczna wskazówka balkonowa:</span>
+                </div>
+                <div className="text-emerald-950 dark:text-emerald-300/90 leading-relaxed">
+                  {greenhouse.practicalTip}
+                </div>
               </div>
             </div>
           </div>
@@ -796,6 +933,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                 );
               })}
             </div>
+            <p className="text-[11px] text-stone-400 dark:text-stone-500 pt-3 text-center sm:text-left leading-relaxed">
+              * Dane opracowano na bazie literatury i zweryfikowanych źródeł ogrodniczych. Ze względu na specyfikę poszczególnych mikroklimatów balkonowych informacje mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.
+            </p>
           </div>
         </div>
 

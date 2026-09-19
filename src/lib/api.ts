@@ -496,7 +496,40 @@ export function loadSavedMyCrops(): import('../types').MyCropItem[] {
     console.warn('Failed to read saved my crops:', e);
   }
 
-  return [];
+  // Starter balcony plants for new sessions
+  return [
+    {
+      id: 'crop_pomidor_1',
+      plantId: 'pomidor-karlowy',
+      addedAt: new Date().toISOString().split('T')[0],
+      stage: 'rosnie',
+      selectedVariety: 'Vilma (karłowy)',
+      customPotName: 'Donica terakota 15L (Słoneczny kącik)',
+      potCount: 1,
+      pot: { potType: 'okragla', diameterOrWidthCm: 30, depthCm: 30, volumeL: 15, hasDrainage: true },
+    },
+    {
+      id: 'crop_bazylia_2',
+      plantId: 'bazylia-pospolita',
+      addedAt: new Date().toISOString().split('T')[0],
+      stage: 'rosnie',
+      selectedVariety: 'Genovese',
+      customPotName: 'Skrzynka ziołowa na balustradzie',
+      potCount: 2,
+      pot: { potType: 'skrzynka', lengthCm: 40, diameterOrWidthCm: 18, depthCm: 18, volumeL: 10, hasDrainage: true },
+    },
+    {
+      id: 'crop_truskawka_3',
+      plantId: 'truskawka-zwisajaca',
+      addedAt: new Date().toISOString().split('T')[0],
+      stage: 'kwitnie',
+      selectedVariety: 'Temptation (zwisająca)',
+      customPotName: 'Doniczka wisząca 8L',
+      potCount: 1,
+      inGreenhouse: false,
+      pot: { potType: 'wiszaca', diameterOrWidthCm: 25, depthCm: 22, volumeL: 8, hasDrainage: true },
+    },
+  ];
 }
 
 export function saveMyCrops(crops: import('../types').MyCropItem[]): void {

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Plant, PlantVariety } from '../types';
 import { getPlantVarieties, getEffectivePlantRequirements } from '../lib/varietyData';
+import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 
 interface Props {
   plant: Plant | null;
@@ -26,7 +27,8 @@ interface Props {
     varietyName: string,
     varietyBadge: string,
     potCount: number,
-    openConfigurator?: boolean
+    openConfigurator?: boolean,
+    inGreenhouse?: boolean
   ) => void;
   existingCropCountForPlant?: number;
 }
@@ -43,8 +45,10 @@ export const SelectVarietyModal: React.FC<Props> = ({
   const [customVarietyInput, setCustomVarietyInput] = useState<string>('');
   const [isCustomVarietyMode, setIsCustomVarietyMode] = useState<boolean>(false);
   const [potCount, setPotCount] = useState<number>(1);
+  const [inGreenhouse, setInGreenhouse] = useState<boolean>(false);
 
   const varieties = plant ? getPlantVarieties(plant) : [];
+  const greenhouseInfo = plant ? getPlantGreenhouseInfo(plant) : null;
 
   useEffect(() => {
     if (plant && varieties.length > 0) {
@@ -64,6 +68,8 @@ export const SelectVarietyModal: React.FC<Props> = ({
         setCustomVarietyInput('');
       }
       setPotCount(1);
+      const ghInfo = getPlantGreenhouseInfo(plant);
+      setInGreenhouse(ghInfo.suitability === 'recommended');
     }
   }, [plant, initialVarietyName]);
 
@@ -85,7 +91,7 @@ export const SelectVarietyModal: React.FC<Props> = ({
       ? (customVarietyInput.trim() || 'Własna odmiana')
       : selectedVarietyName;
 
-    onConfirmAdd(plant.id, finalVarietyName, activeBadge, potCount, openConfigurator);
+    onConfirmAdd(plant.id, finalVarietyName, activeBadge, potCount, openConfigurator, inGreenhouse);
     onClose();
   };
 
@@ -323,6 +329,77 @@ export const SelectVarietyModal: React.FC<Props> = ({
               </p>
             </div>
           </div>
+
+          {/* STEP 3: GREENHOUSE / MICROCLIMATE */}
+          {greenhouseInfo && (
+            <div className="pt-2 border-t border-stone-200 dark:border-stone-800 space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
+                      3. Stanowisko: Balkonowa szklarnia / regał z folią:
+                    </label>
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                        greenhouseInfo.badgeTone === 'emerald'
+                          ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                          : greenhouseInfo.badgeTone === 'amber'
+                          ? 'bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                          : greenhouseInfo.badgeTone === 'rose'
+                          ? 'bg-rose-100 dark:bg-rose-950 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700'
+                          : 'bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 border-stone-300'
+                      }`}
+                    >
+                      {greenhouseInfo.label}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                    {greenhouseInfo.reason}
+                  </p>
+                </div>
+
+                {/* Toggle */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-xs font-semibold text-stone-700 dark:text-stone-300">
+                    {inGreenhouse ? 'W szklarni' : 'Otwarty'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setInGreenhouse(!inGreenhouse)}
+                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                      inGreenhouse ? 'bg-emerald-600' : 'bg-stone-300 dark:bg-stone-600'
+                    }`}
+                    role="switch"
+                    aria-checked={inGreenhouse}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                        inGreenhouse ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className={`p-2.5 rounded-xl border text-[11px] ${
+                  inGreenhouse
+                    ? 'bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
+                    : 'bg-stone-50 dark:bg-stone-800/50 border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-400'
+                }`}
+              >
+                {inGreenhouse ? (
+                  <span>
+                    🏡 Uprawa oznaczona w szklarni ({greenhouseInfo.temperatureGain}). System dostosuje porady pogodowe (wietrzenie, osłona).
+                  </span>
+                ) : (
+                  <span>
+                    🌿 Uprawa na otwartym balkonie – standardowy profil nasłonecznienia i naturalnej cyrkulacji powietrza.
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Modal Footer */}
