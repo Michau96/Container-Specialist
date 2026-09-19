@@ -22,9 +22,12 @@ interface UserDatabase {
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
+const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 
-// In-memory sessions: token -> userId
-const sessions = new Map<string, { userId: string; createdAt: number }>();
+interface SessionRecord {
+  userId: string;
+  createdAt: number;
+}
 
 function ensureDataDir(): void {
   try {
@@ -35,10 +38,55 @@ function ensureDataDir(): void {
       const initialDb: UserDatabase = { users: [] };
       fs.writeFileSync(USERS_FILE, JSON.stringify(initialDb, null, 2), 'utf-8');
     }
+    if (!fs.existsSync(SESSIONS_FILE)) {
+      fs.writeFileSync(SESSIONS_FILE, JSON.stringify({}, null, 2), 'utf-8');
+    }
   } catch (err) {
     console.error('[Auth Storage] Failed to ensure data directory:', err);
   }
 }
+
+function loadSessions(): Map<string, SessionRecord> {
+  ensureDataDir();
+  try {
+    if (fs.existsSync(SESSIONS_FILE)) {
+      const raw = fs.readFileSync(SESSIONS_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object') {
+        const map = new Map<string, SessionRecord>();
+        const now = Date.now();
+        const MAX_SESSION_AGE_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+        for (const [token, record] of Object.entries(parsed)) {
+          if (record && typeof record === 'object' && (record as any).userId) {
+            const age = now - ((record as any).createdAt || 0);
+            if (age < MAX_SESSION_AGE_MS) {
+              map.set(token, record as SessionRecord);
+            }
+          }
+        }
+        return map;
+      }
+    }
+  } catch (err) {
+    console.warn('[Auth Storage] Could not read sessions file:', err);
+  }
+  return new Map<string, SessionRecord>();
+}
+
+function saveSessions(sessionsMap: Map<string, SessionRecord>): void {
+  ensureDataDir();
+  try {
+    const obj: Record<string, SessionRecord> = {};
+    sessionsMap.forEach((v, k) => {
+      obj[k] = v;
+    });
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify(obj, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('[Auth Storage] Failed to save sessions file:', err);
+  }
+}
+
+const sessions = loadSessions();
 
 function loadDatabase(): UserDatabase {
   ensureDataDir();
@@ -175,6 +223,7 @@ export function createAuthRouter(): express.Router {
 
       const token = `tok_${crypto.randomBytes(32).toString('hex')}`;
       sessions.set(token, { userId, createdAt: Date.now() });
+      saveSessions(sessions);
 
       console.log(`[Auth] Registered new user "${trimmedNick}" (${userId})`);
 
@@ -227,6 +276,7 @@ export function createAuthRouter(): express.Router {
 
       const token = `tok_${crypto.randomBytes(32).toString('hex')}`;
       sessions.set(token, { userId: user.id, createdAt: Date.now() });
+      saveSessions(sessions);
 
       console.log(`[Auth] User logged in "${user.username}" (${user.id})`);
 
@@ -347,6 +397,7 @@ export function createAuthRouter(): express.Router {
         const token = authHeader.split(' ')[1]?.trim();
         if (token) {
           sessions.delete(token);
+          saveSessions(sessions);
         }
       }
       res.json({ success: true, message: 'Wylogowano pomyślnie.' });

@@ -1,4 +1,7 @@
 import { UserBalconySpec, Plant, CalendarResponse, WeatherData, RegionInfo, PolandRegionKey, Orientation } from '../types';
+import defaultPlantsData from '../data/plants.json';
+
+const fallbackPlants = defaultPlantsData as unknown as Plant[];
 
 export const DEFAULT_BALCONY_SPEC: UserBalconySpec = {
   region: 'mazowieckie',
@@ -384,12 +387,40 @@ export const ORIENTATION_OPTIONS: OrientationOption[] = [
   },
 ];
 
-const STORAGE_KEY = 'balkonowy_ogrod_user_spec';
-const ONBOARDING_KEY = 'balkonowy_ogrod_has_onboarded';
+export function getSpecStorageKey(userId?: string): string {
+  return userId ? `balkonowy_spec_usr_${userId}` : 'balkonowy_guest_spec';
+}
 
-export function loadSavedSpec(): UserBalconySpec {
+export function getOnboardingKey(userId?: string): string {
+  return userId ? `balkonowy_onboarded_usr_${userId}` : 'balkonowy_guest_onboarded';
+}
+
+export function getCropsStorageKey(userId?: string): string {
+  return userId ? `balkonowy_crops_usr_${userId}` : 'balkonowy_guest_crops';
+}
+
+const WELCOME_SEEN_KEY = 'balkonowy_ogrod_welcome_seen';
+
+export function hasUserSeenWelcome(): boolean {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(WELCOME_SEEN_KEY) === 'true';
+  } catch {
+    return false;
+  }
+}
+
+export function setWelcomeSeen(): void {
+  try {
+    localStorage.setItem(WELCOME_SEEN_KEY, 'true');
+  } catch (e) {
+    console.warn('Failed to save welcome seen flag:', e);
+  }
+}
+
+export function loadSavedSpec(userId?: string): UserBalconySpec {
+  try {
+    const key = getSpecStorageKey(userId);
+    const raw = localStorage.getItem(key);
     if (raw) {
       return JSON.parse(raw);
     }
@@ -399,53 +430,78 @@ export function loadSavedSpec(): UserBalconySpec {
   return DEFAULT_BALCONY_SPEC;
 }
 
-export function saveUserSpec(spec: UserBalconySpec): void {
+export function saveUserSpec(spec: UserBalconySpec, userId?: string): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(spec));
-    localStorage.setItem(ONBOARDING_KEY, 'true');
+    const key = getSpecStorageKey(userId);
+    const onboardKey = getOnboardingKey(userId);
+    localStorage.setItem(key, JSON.stringify(spec));
+    localStorage.setItem(onboardKey, 'true');
   } catch (e) {
     console.warn('Failed to save balcony spec:', e);
   }
 }
 
-export function hasUserOnboarded(): boolean {
+export function hasUserOnboarded(userId?: string): boolean {
   try {
-    return localStorage.getItem(ONBOARDING_KEY) === 'true';
+    const onboardKey = getOnboardingKey(userId);
+    return localStorage.getItem(onboardKey) === 'true';
   } catch {
     return false;
   }
 }
 
-export async function fetchRecommendations(userSpec: UserBalconySpec): Promise<Plant[]> {
-  const res = await fetch('/api/recommendations', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_spec: userSpec }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch recommendations: ${res.statusText}`);
+export function clearGuestData(): void {
+  try {
+    localStorage.removeItem('balkonowy_guest_spec');
+    localStorage.removeItem('balkonowy_guest_crops');
+    localStorage.removeItem('balkonowy_guest_onboarded');
+    localStorage.removeItem('balkonowy_ogrod_user_spec');
+    localStorage.removeItem('balkonowy_ogrod_my_crops_v2');
+    localStorage.removeItem('balkonowy_ogrod_has_onboarded');
+  } catch {
+    // ignore
   }
-  const data = await res.json();
-  const recommendations: Plant[] = data.recommendations || [];
-  
-  // Backwards compatibility for plants with missing 'soil' property
-  return recommendations.map(plant => {
-    if (!plant.soil) {
-      const phArray = (plant as any).soil_ph;
-      const phString = Array.isArray(phArray) ? phArray.join(', ') : (phArray || '6.0 - 6.8');
-      
-      return {
-        ...plant,
-        soil: {
-          type: 'Ziemia uniwersalna z perlitem',
-          ph: phString,
-          structure: 'Przepuszczalna, lekka',
-          fertilizer: 'Biohumus',
-        }
-      };
+}
+
+export async function fetchRecommendations(userSpec: UserBalconySpec): Promise<Plant[]> {
+  try {
+    const res = await fetch('/api/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_spec: userSpec }),
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch recommendations: ${res.statusText}`);
     }
-    return plant;
-  });
+    const data = await res.json();
+    const recommendations: Plant[] = data.recommendations || [];
+    
+    if (recommendations.length === 0) {
+      return fallbackPlants;
+    }
+
+    // Backwards compatibility for plants with missing 'soil' property
+    return recommendations.map(plant => {
+      if (!plant.soil) {
+        const phArray = (plant as any).soil_ph;
+        const phString = Array.isArray(phArray) ? phArray.join(', ') : (phArray || '6.0 - 6.8');
+        
+        return {
+          ...plant,
+          soil: {
+            type: 'Ziemia uniwersalna z perlitem',
+            ph: phString,
+            structure: 'Przepuszczalna, lekka',
+            fertilizer: 'Biohumus',
+          }
+        };
+      }
+      return plant;
+    });
+  } catch (err) {
+    console.warn('[API] fetchRecommendations error, using fallback plants:', err);
+    return fallbackPlants;
+  }
 }
 
 export async function fetchCalendar(
@@ -453,25 +509,59 @@ export async function fetchCalendar(
   periodId?: string,
   plantIds?: string[]
 ): Promise<CalendarResponse> {
-  const res = await fetch('/api/calendar', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_spec: userSpec, period_id: periodId, plant_ids: plantIds }),
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch calendar: ${res.statusText}`);
+  try {
+    const res = await fetch('/api/calendar', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_spec: userSpec, period_id: periodId, plant_ids: plantIds }),
+    });
+    if (!res.ok) {
+      throw new Error(`Failed to fetch calendar: ${res.statusText}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchCalendar error:', err);
+    const currId = getCurrentPeriodId();
+    return {
+      period: { id: periodId || currId, month: 5, half: 2, name: 'II połowa Maja (Po Zimnej Zośce)', short: 'Maj II' },
+      is_current_period: true,
+      current_period_id: currId,
+      actions_by_type: {},
+      pillars: { siew: [], sadzenie: [], pielegnacja: [], zbior: [] },
+      season_tips: ['WIELKI START: Od 16 maja możesz bezpiecznie wystawić na balkon pomidory, papryki i zioła.'],
+    };
   }
-  return res.json();
 }
 
 export async function fetchWeather(userSpec: UserBalconySpec): Promise<WeatherData> {
-  const region = POLAND_REGIONS[userSpec.region] || POLAND_REGIONS.mazowieckie;
-  const url = `/api/weather?lat=${region.lat}&lon=${region.lon}&region=${userSpec.region}&floor=${userSpec.floor}&orientation=${userSpec.orientation}`;
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`Failed to fetch weather: ${res.statusText}`);
+  try {
+    const region = POLAND_REGIONS[userSpec.region] || POLAND_REGIONS.mazowieckie;
+    const url = `/api/weather?lat=${region.lat}&lon=${region.lon}&region=${userSpec.region}&floor=${userSpec.floor}&orientation=${userSpec.orientation}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch weather: ${res.statusText}`);
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn('[API] fetchWeather error, using default weather data:', err);
+    return {
+      source: 'fallback',
+      temperature: 18.0,
+      apparent_temperature: 18.0,
+      wind_speed: 10.0,
+      humidity: 60,
+      precipitation: 0.0,
+      weather_code: 1,
+      weather_desc: 'Głównie słonecznie',
+      balcony_advice: {
+        watering_status: 'Umiarkowane podlewanie raz dziennie rano.',
+        frost_risk: false,
+        wind_risk: false,
+        adjusted_wind_at_floor: 12.0,
+        summary: 'Stabilne warunki do uprawy doniczkowej.',
+      },
+    };
   }
-  return res.json();
 }
 
 export function getCurrentPeriodId(): string {
@@ -481,11 +571,10 @@ export function getCurrentPeriodId(): string {
   return `${String(month).padStart(2, '0')}_${half}`;
 }
 
-const MY_CROPS_STORAGE_KEY = 'balkonowy_ogrod_my_crops_v2';
-
-export function loadSavedMyCrops(): import('../types').MyCropItem[] {
+export function loadSavedMyCrops(userId?: string): import('../types').MyCropItem[] {
   try {
-    const raw = localStorage.getItem(MY_CROPS_STORAGE_KEY);
+    const key = getCropsStorageKey(userId);
+    const raw = localStorage.getItem(key);
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -496,45 +585,14 @@ export function loadSavedMyCrops(): import('../types').MyCropItem[] {
     console.warn('Failed to read saved my crops:', e);
   }
 
-  // Starter balcony plants for new sessions
-  return [
-    {
-      id: 'crop_pomidor_1',
-      plantId: 'pomidor-karlowy',
-      addedAt: new Date().toISOString().split('T')[0],
-      stage: 'rosnie',
-      selectedVariety: 'Vilma (karłowy)',
-      customPotName: 'Donica terakota 15L (Słoneczny kącik)',
-      potCount: 1,
-      pot: { potType: 'okragla', diameterOrWidthCm: 30, depthCm: 30, volumeL: 15, hasDrainage: true },
-    },
-    {
-      id: 'crop_bazylia_2',
-      plantId: 'bazylia-pospolita',
-      addedAt: new Date().toISOString().split('T')[0],
-      stage: 'rosnie',
-      selectedVariety: 'Genovese',
-      customPotName: 'Skrzynka ziołowa na balustradzie',
-      potCount: 2,
-      pot: { potType: 'skrzynka', lengthCm: 40, diameterOrWidthCm: 18, depthCm: 18, volumeL: 10, hasDrainage: true },
-    },
-    {
-      id: 'crop_truskawka_3',
-      plantId: 'truskawka-zwisajaca',
-      addedAt: new Date().toISOString().split('T')[0],
-      stage: 'kwitnie',
-      selectedVariety: 'Temptation (zwisająca)',
-      customPotName: 'Doniczka wisząca 8L',
-      potCount: 1,
-      inGreenhouse: false,
-      pot: { potType: 'wiszaca', diameterOrWidthCm: 25, depthCm: 22, volumeL: 8, hasDrainage: true },
-    },
-  ];
+  // A fresh visitor or new account starts with clean 0 crops
+  return [];
 }
 
-export function saveMyCrops(crops: import('../types').MyCropItem[]): void {
+export function saveMyCrops(crops: import('../types').MyCropItem[], userId?: string): void {
   try {
-    localStorage.setItem(MY_CROPS_STORAGE_KEY, JSON.stringify(crops));
+    const key = getCropsStorageKey(userId);
+    localStorage.setItem(key, JSON.stringify(crops));
   } catch (e) {
     console.warn('Failed to save my crops:', e);
   }

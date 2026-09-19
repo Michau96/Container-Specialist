@@ -4,6 +4,7 @@ import http from 'http';
 import { spawn, ChildProcess } from 'child_process';
 import { createServer as createViteServer } from 'vite';
 import { createAuthRouter } from './server/auth';
+import { createApiRouter } from './server/apiRouter';
 
 const app = express();
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
@@ -71,6 +72,10 @@ app.use(express.json());
 
 // Authentication and user balcony settings API
 app.use('/api/auth', createAuthRouter());
+
+// Native Node.js gardening API (recommendations, calendar, weather, plants, regions)
+// Guarantees zero-dependency, ultra-fast responses in production deployment (Cloud Run) without Python
+app.use('/api', createApiRouter());
 
 // Health check endpoint
 app.get('/api/health', (_req, res) => {

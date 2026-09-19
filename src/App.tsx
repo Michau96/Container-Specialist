@@ -19,11 +19,14 @@ import {
   loadSavedSpec,
   saveUserSpec,
   hasUserOnboarded,
+  hasUserSeenWelcome,
+  setWelcomeSeen,
   fetchRecommendations,
   fetchWeather,
   loadSavedMyCrops,
   saveMyCrops,
   POLAND_REGIONS,
+  DEFAULT_BALCONY_SPEC,
 } from './lib/api';
 import {
   getStoredUser,
@@ -36,7 +39,11 @@ import { WeatherWidget } from './components/WeatherWidget';
 import { PlantCard } from './components/PlantCard';
 import { PlantDetailModal } from './components/PlantDetailModal';
 import { CalendarView } from './components/CalendarView';
+import defaultPlantsData from './data/plants.json';
+
+const defaultPlants = defaultPlantsData as unknown as Plant[];
 import { BalconySetupModal } from './components/BalconySetupModal';
+import { WelcomeModal } from './components/WelcomeModal';
 import { PotCalculator } from './components/PotCalculator';
 import { MyCropsView } from './components/MyCropsView';
 import { SelectVarietyModal } from './components/SelectVarietyModal';
@@ -48,8 +55,24 @@ import { getPlantTimingInfo, getCalendarPeriodId, getPeriodHumanLabel } from './
 import { getPlantLifestylePills } from './lib/plantLifestyle';
 
 export default function App() {
-  const [userSpec, setUserSpec] = useState<UserBalconySpec>(() => loadSavedSpec());
-  const [isSetupModalOpen, setIsSetupModalOpen] = useState<boolean>(() => !hasUserOnboarded());
+  const [userSpec, setUserSpec] = useState<UserBalconySpec>(() => {
+    const user = getStoredUser();
+    return loadSavedSpec(user?.id);
+  });
+  
+  // Welcome & onboarding splash screen state for first-time visitors
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState<boolean>(() => {
+    return !hasUserSeenWelcome() && !getStoredUser();
+  });
+
+  const [isSetupModalOpen, setIsSetupModalOpen] = useState<boolean>(() => {
+    // If first-time user hasn't seen welcome yet, wait until they interact with welcome screen
+    const user = getStoredUser();
+    if (!hasUserSeenWelcome() && !user) {
+      return false;
+    }
+    return !hasUserOnboarded(user?.id);
+  });
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('my_crops');
 
   // User account state
@@ -62,8 +85,11 @@ export default function App() {
     type: 'success' | 'info';
   } | null>(null);
 
-  // My Crops persistent state
-  const [myCrops, setMyCrops] = useState<MyCropItem[]>(() => loadSavedMyCrops());
+  // My Crops persistent state - isolated per user or empty for new users
+  const [myCrops, setMyCrops] = useState<MyCropItem[]>(() => {
+    const user = getStoredUser();
+    return loadSavedMyCrops(user?.id);
+  });
 
   // Variety selection modal state
   const [varietyPickerPlant, setVarietyPickerPlant] = useState<{
@@ -91,8 +117,8 @@ export default function App() {
 
   const toggleDarkMode = () => setDarkMode((prev) => !prev);
 
-  const [plants, setPlants] = useState<Plant[]>([]);
-  const [loadingPlants, setLoadingPlants] = useState<boolean>(true);
+  const [plants, setPlants] = useState<Plant[]>(defaultPlants);
+  const [loadingPlants, setLoadingPlants] = useState<boolean>(false);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(true);
@@ -120,13 +146,16 @@ export default function App() {
     fetchRecommendations(userSpec)
       .then((data) => {
         if (isMounted) {
-          setPlants(data);
+          setPlants(data && data.length > 0 ? data : defaultPlants);
           setLoadingPlants(false);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch recommendations:', err);
-        if (isMounted) setLoadingPlants(false);
+        if (isMounted) {
+          setPlants((prev) => (prev.length > 0 ? prev : defaultPlants));
+          setLoadingPlants(false);
+        }
       });
 
     return () => {
@@ -155,12 +184,18 @@ export default function App() {
         setCurrentUser(user);
         if (user.balconySpec) {
           setUserSpec(user.balconySpec);
-          saveUserSpec(user.balconySpec);
+          saveUserSpec(user.balconySpec, user.id);
         }
-        if (user.myCrops && user.myCrops.length > 0 && myCrops.length === 0) {
-          setMyCrops(user.myCrops);
-          saveMyCrops(user.myCrops);
-        }
+        const userCrops = Array.isArray(user.myCrops) ? user.myCrops : [];
+        setMyCrops(userCrops);
+        saveMyCrops(userCrops, user.id);
+      } else {
+        // Unauthenticated visitor / guest mode
+        setCurrentUser(null);
+        const guestSpec = loadSavedSpec();
+        setUserSpec(guestSpec);
+        const guestCrops = loadSavedMyCrops();
+        setMyCrops(guestCrops);
       }
     });
   }, []);
@@ -180,7 +215,7 @@ export default function App() {
   // Handle saving new balcony spec
   const handleSaveSpec = (newSpec: UserBalconySpec) => {
     setUserSpec(newSpec);
-    saveUserSpec(newSpec);
+    saveUserSpec(newSpec, currentUser?.id);
     setIsSetupModalOpen(false);
 
     if (currentUser) {
@@ -189,13 +224,13 @@ export default function App() {
           setCurrentUser(res.user);
         }
         setAccountToast({
-          message: `Ustawienia balkonu zostały zapisane na Twoim koncie (${currentUser.username})!`,
+          message: `Ustawienia balkonu zostały przypisane do Twojego konta (${currentUser.username})!`,
           type: 'success',
         });
       });
     } else {
       setAccountToast({
-        message: 'Parametry balkonu zaktualizowane lokalnie.',
+        message: 'Parametry balkonu zapisane w trybie gościa. Zarejestruj konto, aby zapisać je na stałe.',
         type: 'info',
       });
     }
@@ -203,26 +238,53 @@ export default function App() {
 
   const handleAuthSuccess = (user: UserAccount, message: string) => {
     setCurrentUser(user);
-    if (user.balconySpec) {
-      setUserSpec(user.balconySpec);
-      saveUserSpec(user.balconySpec);
-    }
-    if (user.myCrops && user.myCrops.length > 0) {
-      setMyCrops(user.myCrops);
-      saveMyCrops(user.myCrops);
-    }
+    const spec = user.balconySpec || DEFAULT_BALCONY_SPEC;
+    setUserSpec(spec);
+    saveUserSpec(spec, user.id);
+
+    const crops = Array.isArray(user.myCrops) ? user.myCrops : [];
+    setMyCrops(crops);
+    saveMyCrops(crops, user.id);
+
     setAccountToast({
-      message: message || `Witaj, ${user.username}! Wczytano ustawienia Twojego balkonu.`,
+      message: message || `Witaj, ${user.username}! Twoje uprawy i specyfikacja balkonu zostały wczytane.`,
       type: 'success',
     });
+  };
+
+  const handleWelcomeContinueAsGuest = () => {
+    setWelcomeSeen();
+    setIsWelcomeModalOpen(false);
+    if (!hasUserOnboarded()) {
+      setIsSetupModalOpen(true);
+    }
+  };
+
+  const handleWelcomeAuthSuccess = (user: UserAccount, message: string) => {
+    setWelcomeSeen();
+    setIsWelcomeModalOpen(false);
+    handleAuthSuccess(user, message);
+    if (!hasUserOnboarded(user.id)) {
+      setIsSetupModalOpen(true);
+    }
   };
 
   const handleLogout = async () => {
     const formerName = currentUser?.username;
     await logoutAccount();
     setCurrentUser(null);
+
+    // Reset view to clean guest state
+    const cleanGuestSpec = DEFAULT_BALCONY_SPEC;
+    setUserSpec(cleanGuestSpec);
+    saveUserSpec(cleanGuestSpec, undefined);
+
+    const cleanGuestCrops: MyCropItem[] = [];
+    setMyCrops(cleanGuestCrops);
+    saveMyCrops(cleanGuestCrops, undefined);
+
     setAccountToast({
-      message: `Wylogowano z konta ${formerName ? `"${formerName}"` : ''}. Bieżące parametry balkonu pozostały aktywne w trybie gościa.`,
+      message: `Wylogowano z konta ${formerName ? `"${formerName}"` : ''}. Jesteś teraz w trybie gościa.`,
       type: 'info',
     });
   };
@@ -282,7 +344,7 @@ export default function App() {
 
     setMyCrops((prev) => {
       const next = [...prev, newCropItem];
-      saveMyCrops(next);
+      saveMyCrops(next, currentUser?.id);
       if (currentUser) {
         saveBalconyToAccount(userSpec, next);
       }
@@ -311,7 +373,7 @@ export default function App() {
   const handleRemoveCrop = (cropIdOrPlantId: string) => {
     setMyCrops((prev) => {
       const next = prev.filter((c) => c.id !== cropIdOrPlantId && c.plantId !== cropIdOrPlantId);
-      saveMyCrops(next);
+      saveMyCrops(next, currentUser?.id);
       if (currentUser) {
         saveBalconyToAccount(userSpec, next);
       }
@@ -327,7 +389,7 @@ export default function App() {
         }
         return c.plantId === updated.plantId ? updated : c;
       });
-      saveMyCrops(next);
+      saveMyCrops(next, currentUser?.id);
       if (currentUser) {
         saveBalconyToAccount(userSpec, next);
       }
@@ -493,6 +555,7 @@ export default function App() {
           setIsAuthModalOpen(true);
         }}
         onOpenProfile={() => setIsProfileModalOpen(true)}
+        onOpenWelcome={() => setIsWelcomeModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -1232,6 +1295,22 @@ export default function App() {
           }
         />
       )}
+
+      {/* Welcome Screen & Onboarding for First-time Users */}
+      <WelcomeModal
+        isOpen={isWelcomeModalOpen}
+        onClose={() => {
+          setWelcomeSeen();
+          setIsWelcomeModalOpen(false);
+          if (!hasUserOnboarded()) {
+            setIsSetupModalOpen(true);
+          }
+        }}
+        balconySpec={userSpec}
+        myCrops={myCrops}
+        onAuthSuccess={handleWelcomeAuthSuccess}
+        onContinueAsGuest={handleWelcomeContinueAsGuest}
+      />
 
       {/* Balcony Setup & Onboarding Modal */}
       <BalconySetupModal

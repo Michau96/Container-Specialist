@@ -56,7 +56,7 @@ export interface SupportEvaluation {
  */
 export function evaluatePotMaterial(
   material: LegacyPotMaterial | PotMaterial | string,
-  plant: Plant,
+  plant?: Plant | null,
   varietyName?: string
 ): MaterialEvaluation {
   const normMat =
@@ -71,6 +71,17 @@ export function evaluatePotMaterial(
       : material === 'ceramic'
       ? 'ceramic'
       : 'plastic';
+
+  if (!plant || !plant.name) {
+    return {
+      rating: 'good',
+      badgeText: 'Dobry wybór',
+      title: 'Uniwersalny materiał donicy',
+      description: 'Materiał zapewnia odpowiednie warunki dla większości upraw balkonowych.',
+      waterImpact: 'Standardowa retencja wody',
+      thermalImpact: 'Optymalna temperatura podłoża',
+    };
+  }
 
   const plantNameLower = plant.name.toLowerCase();
   const isHerb = plant.plant_group === 'ziola' || plantNameLower.includes('rozmaryn') || plantNameLower.includes('lawenda') || plantNameLower.includes('tymianek') || plantNameLower.includes('oregano') || plantNameLower.includes('szałwia');
@@ -287,11 +298,18 @@ export function evaluatePotMaterial(
 /**
  * Sprawdza, czy roślina lub odmiana bezwzględnie wymaga podpory (np. palika, kratki).
  */
-export function isSupportNeededForPlant(plant: Plant, varietyName?: string): {
+export function isSupportNeededForPlant(plant?: Plant | null, varietyName?: string): {
   isNeeded: boolean;
   needBadgeText: 'TAK – Niezbędna do uprawy' | 'NIE – Roślina samonośna';
   needDescription: string;
 } {
+  if (!plant || !plant.name) {
+    return {
+      isNeeded: false,
+      needBadgeText: 'NIE – Roślina samonośna',
+      needDescription: 'Standardowa roślina kompaktowa nie wymaga podpory.',
+    };
+  }
   const reqs = getEffectivePlantRequirements(plant, varietyName);
   const plantNameLower = plant.name.toLowerCase();
   const varietyLower = (varietyName || '').toLowerCase();
@@ -409,9 +427,21 @@ export function isSupportNeededForPlant(plant: Plant, varietyName?: string): {
  */
 export function evaluatePlantSupport(
   support: SupportType,
-  plant: Plant,
+  plant?: Plant | null,
   varietyName?: string
 ): SupportEvaluation {
+  if (!plant || !plant.name) {
+    return {
+      isSupportNeeded: false,
+      needBadgeText: 'NIE – Roślina samonośna',
+      needDescription: 'Roślina nie wymaga podpory.',
+      rating: 'good',
+      badgeText: 'Dobry wybór',
+      title: 'Podpora opcjonalna',
+      description: 'Dla tej uprawy podpora nie jest wymagana.',
+      practicalTip: 'Dopasuj wysokość pojemnika do siły wzrostu rośliny.',
+    };
+  }
   const needInfo = isSupportNeededForPlant(plant, varietyName);
   const plantNameLower = plant.name.toLowerCase();
   const isClimber =

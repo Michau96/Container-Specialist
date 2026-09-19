@@ -14,6 +14,7 @@ import {
   User,
   UserCheck,
   ShieldCheck,
+  HelpCircle,
 } from 'lucide-react';
 import { UserBalconySpec, UserAccount, getFloorCategory, getFloorCategoryLabel } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
@@ -31,6 +32,7 @@ interface Props {
   currentUser?: UserAccount | null;
   onOpenAuth?: () => void;
   onOpenProfile?: () => void;
+  onOpenWelcome?: () => void;
 }
 
 export const Header: React.FC<Props> = ({
@@ -44,6 +46,7 @@ export const Header: React.FC<Props> = ({
   currentUser = null,
   onOpenAuth,
   onOpenProfile,
+  onOpenWelcome,
 }) => {
   const regionInfo = POLAND_REGIONS[userSpec.region];
   const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec.orientation);
@@ -55,13 +58,17 @@ export const Header: React.FC<Props> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between py-3.5 gap-3">
           {/* Logo & Subtitle */}
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 dark:from-emerald-700 dark:to-teal-900 flex items-center justify-center text-white shadow-xs">
+          <div
+            className={`flex items-center gap-3 ${onOpenWelcome ? 'cursor-pointer group' : ''}`}
+            onClick={onOpenWelcome}
+            title={onOpenWelcome ? 'Kliknij, aby otworzyć przewodnik startowy o aplikacji' : undefined}
+          >
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-600 to-teal-800 dark:from-emerald-700 dark:to-teal-900 flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform">
               <Sprout className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">
+                <h1 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
                   Donicowy specjalista
                 </h1>
                 <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100/70 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full uppercase tracking-wider border border-emerald-200/50 dark:border-emerald-800">
@@ -109,6 +116,19 @@ export const Header: React.FC<Props> = ({
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Dostosuj balkon</span>
             </button>
+
+            {onOpenWelcome && (
+              <button
+                id="open-welcome-guide-btn"
+                type="button"
+                onClick={onOpenWelcome}
+                className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-700 dark:text-stone-200 hover:text-emerald-900 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
+                title="O aplikacji i przewodnik startowy"
+              >
+                <HelpCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span className="hidden md:inline">O aplikacji</span>
+              </button>
+            )}
 
             {/* User Account Button */}
             {currentUser ? (

@@ -58,6 +58,10 @@ export function getStoredToken(): string | null {
 
 export function getStoredUser(): UserAccount | null {
   try {
+    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!token) {
+      return null;
+    }
     const raw = localStorage.getItem(USER_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
@@ -78,6 +82,15 @@ export function getKnownLocalAccounts(): { id: string; username: string; lastLog
     username: a.username,
     lastLoginAt: a.lastLoginAt,
   }));
+}
+
+export function removeKnownLocalAccount(idOrUsername: string): void {
+  const accounts = getLocalAccountsDb();
+  const normalized = idOrUsername.toLowerCase();
+  const filtered = accounts.filter(
+    (a) => a.id !== idOrUsername && a.normalizedUsername !== normalized && a.username !== idOrUsername
+  );
+  saveLocalAccountsDb(filtered);
 }
 
 /**
@@ -310,7 +323,14 @@ export async function loginAccount(
  */
 export async function fetchCurrentUser(): Promise<UserAccount | null> {
   const token = getStoredToken();
-  if (!token) return null;
+  if (!token) {
+    try {
+      localStorage.removeItem(USER_STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    return null;
+  }
 
   try {
     const res = await fetch('/api/auth/me', {
@@ -324,12 +344,34 @@ export async function fetchCurrentUser(): Promise<UserAccount | null> {
         localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
         return data.user;
       }
+    } else if (res.status === 401 || res.status === 403) {
+      // Server rejected token -> clear session
+      try {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+        localStorage.removeItem(USER_STORAGE_KEY);
+      } catch {
+        // ignore
+      }
+      return null;
     }
   } catch (err) {
-    console.warn('Could not fetch current user from server, using cached:', err);
+    console.warn('Network error while checking current user:', err);
   }
 
-  return getStoredUser();
+  // If offline fallback session
+  const localDb = getLocalAccountsDb();
+  const cachedUser = getStoredUser();
+  if (cachedUser && localDb.some((a) => a.id === cachedUser.id)) {
+    return cachedUser;
+  }
+
+  try {
+    localStorage.removeItem(TOKEN_STORAGE_KEY);
+    localStorage.removeItem(USER_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+  return null;
 }
 
 /**

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Box,
   Circle,
@@ -21,6 +21,9 @@ import {
   evaluatePotMaterial,
   evaluatePlantSupport,
 } from '../lib/potSupportEvaluations';
+import defaultPlantsData from '../data/plants.json';
+
+const defaultPlants = defaultPlantsData as unknown as Plant[];
 
 interface Props {
   plants: Plant[];
@@ -37,10 +40,29 @@ export const PotCalculator: React.FC<Props> = ({
   onClose,
   isModal = false,
 }) => {
+  // Gwarantujemy, że lista roślin nigdy nie jest pusta
+  const availablePlants = useMemo(() => {
+    return plants && plants.length > 0 ? plants : defaultPlants;
+  }, [plants]);
+
   // Wybrana roślina
   const [selectedPlantId, setSelectedPlantId] = useState<string>(
-    initialPlant ? initialPlant.id : plants[0]?.id ?? 'pomidor-karlowy'
+    initialPlant ? initialPlant.id : (availablePlants[0]?.id ?? 'pomidor-karlowy')
   );
+
+  // Synchronizacja przy zmianie initialPlant
+  useEffect(() => {
+    if (initialPlant?.id) {
+      setSelectedPlantId(initialPlant.id);
+    }
+  }, [initialPlant?.id]);
+
+  // Synchronizacja jeśli selectedPlantId nie istnieje w dostępnych roślinach
+  useEffect(() => {
+    if (availablePlants.length > 0 && !availablePlants.some(p => p.id === selectedPlantId)) {
+      setSelectedPlantId(availablePlants[0].id);
+    }
+  }, [availablePlants, selectedPlantId]);
 
   // Kształt donicy
   const [shape, setShape] = useState<PotShape>('rectangular');
@@ -71,8 +93,12 @@ export const PotCalculator: React.FC<Props> = ({
   const [activeSchemaView, setActiveSchemaView] = useState<'top_layout' | 'soil_layers' | 'cost_estimates'>('top_layout');
 
   const currentPlant = useMemo(() => {
-    return plants.find((p) => p.id === selectedPlantId) ?? plants[0];
-  }, [plants, selectedPlantId]);
+    return (
+      availablePlants.find((p) => p.id === selectedPlantId) ??
+      availablePlants[0] ??
+      defaultPlants[0]
+    );
+  }, [availablePlants, selectedPlantId]);
 
   // Ocena agronomiczna materiału i podpory dla wybranej rośliny
   const materialEvaluation = useMemo(() => {
@@ -284,7 +310,7 @@ export const PotCalculator: React.FC<Props> = ({
               className="w-full bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-500 focus:outline-none"
             >
               <optgroup label="Warzywa">
-                {plants
+                {availablePlants
                   .filter((p) => p.plant_group === 'warzywa')
                   .map((p) => (
                     <option key={p.id} value={p.id}>
@@ -293,7 +319,7 @@ export const PotCalculator: React.FC<Props> = ({
                   ))}
               </optgroup>
               <optgroup label="Owoce">
-                {plants
+                {availablePlants
                   .filter((p) => p.plant_group === 'owoce')
                   .map((p) => (
                     <option key={p.id} value={p.id}>
@@ -302,7 +328,7 @@ export const PotCalculator: React.FC<Props> = ({
                   ))}
               </optgroup>
               <optgroup label="Zioła">
-                {plants
+                {availablePlants
                   .filter((p) => p.plant_group === 'ziola')
                   .map((p) => (
                     <option key={p.id} value={p.id}>
@@ -311,7 +337,7 @@ export const PotCalculator: React.FC<Props> = ({
                   ))}
               </optgroup>
               <optgroup label="Rośliny ozdobne (kwiaty)">
-                {plants
+                {availablePlants
                   .filter((p) => p.plant_group === 'ozdobne')
                   .map((p) => (
                     <option key={p.id} value={p.id}>
@@ -320,7 +346,7 @@ export const PotCalculator: React.FC<Props> = ({
                   ))}
               </optgroup>
               <optgroup label="Mikrolistki i kiełki">
-                {plants
+                {availablePlants
                   .filter((p) => p.plant_group === 'kielki')
                   .map((p) => (
                     <option key={p.id} value={p.id}>
@@ -329,7 +355,7 @@ export const PotCalculator: React.FC<Props> = ({
                   ))}
               </optgroup>
               <optgroup label="Grzyby uprawne">
-                {plants
+                {availablePlants
                   .filter((p) => p.plant_group === 'grzyby')
                   .map((p) => (
                     <option key={p.id} value={p.id}>

@@ -21,6 +21,7 @@ import {
   loginAccount,
   registerAccount,
   getKnownLocalAccounts,
+  removeKnownLocalAccount,
 } from '../lib/auth';
 
 interface Props {
@@ -54,7 +55,13 @@ export const AuthModal: React.FC<Props> = ({
 
   const regionInfo = POLAND_REGIONS[currentBalconySpec.region];
   const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === currentBalconySpec.orientation);
-  const knownAccounts = getKnownLocalAccounts();
+  const [knownAccounts, setKnownAccounts] = useState(() => getKnownLocalAccounts());
+
+  const handleRemoveKnownAccount = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    removeKnownLocalAccount(id);
+    setKnownAccounts(getKnownLocalAccounts());
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -364,15 +371,27 @@ export const AuthModal: React.FC<Props> = ({
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {knownAccounts.map((acc) => (
-                  <button
+                  <div
                     key={acc.id}
-                    type="button"
-                    onClick={() => handleQuickFillAccount(acc.username)}
-                    className="px-2.5 py-1 text-xs rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-700 dark:text-stone-300 hover:text-emerald-700 border border-stone-200/80 dark:border-stone-700 transition cursor-pointer flex items-center gap-1.5"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-xl bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-700 dark:text-stone-300 hover:text-emerald-700 border border-stone-200/80 dark:border-stone-700 transition"
                   >
-                    <User className="w-3 h-3" />
-                    <span>{acc.username}</span>
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => handleQuickFillAccount(acc.username)}
+                      className="cursor-pointer flex items-center gap-1 font-medium"
+                    >
+                      <User className="w-3 h-3" />
+                      <span>{acc.username}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleRemoveKnownAccount(e, acc.id)}
+                      title="Usuń z listy urządzeń"
+                      className="text-stone-400 hover:text-red-500 p-0.5 rounded-full cursor-pointer ml-1"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
                 ))}
               </div>
             </div>
