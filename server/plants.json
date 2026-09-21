@@ -6603,17 +6603,23 @@
       "root_depth_category": "plytki"
     },
     "varieties": [
-      {
-        "features": "Wczesna, słodka, niska",
-        "name": "Bajka (karłowa)"
-      },
-      {
-        "features": "Brak pergaminowej wyściółki, wysoki",
-        "name": "Iłówiecki"
-      }
+      "Bajka (karłowa)",
+      "Iłówiecki"
     ],
     "water_needs": "Średnie",
-    "water_needs_level": 3
+    "water_needs_level": 3,
+    "top_varieties": [
+      {
+        "name": "Bajka (karłowa)",
+        "badge": "Polecana do donic",
+        "reason": "Wczesna, słodka, niska"
+      },
+      {
+        "name": "Iłówiecki",
+        "badge": "Polecana do donic",
+        "reason": "Brak pergaminowej wyściółki, wysoki"
+      }
+    ]
   },
   {
     "category": "Kapustowate",
@@ -6688,17 +6694,23 @@
       "root_depth_category": "plytki"
     },
     "varieties": [
-      {
-        "features": "Oryginalna, duże białe ogonki",
-        "name": "Canton White"
-      },
-      {
-        "features": "Mniejsza, bardziej chrupka, zielone ogonki",
-        "name": "Bonsai"
-      }
+      "Canton White",
+      "Bonsai"
     ],
     "water_needs": "Wysokie",
-    "water_needs_level": 4
+    "water_needs_level": 4,
+    "top_varieties": [
+      {
+        "name": "Canton White",
+        "badge": "Polecana do donic",
+        "reason": "Oryginalna, duże białe ogonki"
+      },
+      {
+        "name": "Bonsai",
+        "badge": "Polecana do donic",
+        "reason": "Mniejsza, bardziej chrupka, zielone ogonki"
+      }
+    ]
   },
   {
     "category": "Rutowate",
@@ -6767,17 +6779,23 @@
       "root_depth_category": "gleboki"
     },
     "varieties": [
-      {
-        "features": "Owalne owoce, zjadane ze skórką, najbardziej popularny",
-        "name": "Margarita (Fortunella margarita)"
-      },
-      {
-        "features": "Owoce okrągłe, słodsze",
-        "name": "Japonica"
-      }
+      "Margarita (Fortunella margarita)",
+      "Japonica"
     ],
     "water_needs": "Średnie",
-    "water_needs_level": 3
+    "water_needs_level": 3,
+    "top_varieties": [
+      {
+        "name": "Margarita (Fortunella margarita)",
+        "badge": "Polecana do donic",
+        "reason": "Owalne owoce, zjadane ze skórką, najbardziej popularny"
+      },
+      {
+        "name": "Japonica",
+        "badge": "Polecana do donic",
+        "reason": "Owoce okrągłe, słodsze"
+      }
+    ]
   },
   {
     "category": "Morwowate",
@@ -6848,17 +6866,23 @@
       "root_depth_category": "gleboki"
     },
     "varieties": [
-      {
-        "features": "Odmiana samopylna, fioletowe owoce, w miarę odporna na zimno",
-        "name": "Brown Turkey"
-      },
-      {
-        "features": "Szybko owocująca, mniejsze zielono-żółte owoce",
-        "name": "Free-bise"
-      }
+      "Brown Turkey",
+      "Free-bise"
     ],
     "water_needs": "Wysokie",
-    "water_needs_level": 4
+    "water_needs_level": 4,
+    "top_varieties": [
+      {
+        "name": "Brown Turkey",
+        "badge": "Polecana do donic",
+        "reason": "Odmiana samopylna, fioletowe owoce, w miarę odporna na zimno"
+      },
+      {
+        "name": "Free-bise",
+        "badge": "Polecana do donic",
+        "reason": "Szybko owocująca, mniejsze zielono-żółte owoce"
+      }
+    ]
   },
   {
     "category": "Psiankowate",
@@ -6930,17 +6954,23 @@
       "root_depth_category": "sredni"
     },
     "varieties": [
-      {
-        "features": "Standardowa odmiana wysoka",
-        "name": "Miechunka peruwiańska (Physalis peruviana)"
-      },
-      {
-        "features": "Niższa, drobniejsze owoce, szybciej owocująca",
-        "name": "Rodzynek brazylijski (Physalis edulis)"
-      }
+      "Miechunka peruwiańska (Physalis peruviana)",
+      "Rodzynek brazylijski (Physalis edulis)"
     ],
     "water_needs": "Średnie",
-    "water_needs_level": 3
+    "water_needs_level": 3,
+    "top_varieties": [
+      {
+        "name": "Miechunka peruwiańska (Physalis peruviana)",
+        "badge": "Polecana do donic",
+        "reason": "Standardowa odmiana wysoka"
+      },
+      {
+        "name": "Rodzynek brazylijski (Physalis edulis)",
+        "badge": "Polecana do donic",
+        "reason": "Niższa, drobniejsze owoce, szybciej owocująca"
+      }
+    ]
   },
   {
     "category": "Dyniowate",
@@ -7010,13 +7040,17 @@
       "root_depth_category": "sredni"
     },
     "varieties": [
-      {
-        "features": "Egzotyczny smak, duża plonność pod osłonami",
-        "name": "Kiwano"
-      }
+      "Kiwano"
     ],
     "water_needs": "Wysokie",
-    "water_needs_level": 5
+    "water_needs_level": 5,
+    "top_varieties": [
+      {
+        "name": "Kiwano",
+        "badge": "Polecana do donic",
+        "reason": "Egzotyczny smak, duża plonność pod osłonami"
+      }
+    ]
   },
   {
     "category": "Ślazowate",
@@ -7085,17 +7119,23 @@
       "root_depth_category": "gleboki"
     },
     "varieties": [
-      {
-        "features": "Odmiana o czerwonych pędach i owocach, niezwykle ozdobna",
-        "name": "Red Burgundy"
-      },
-      {
-        "features": "Klasyczna odmiana, zielone strąki, rodzi dużo owoców",
-        "name": "Clemson Spineless"
-      }
+      "Red Burgundy",
+      "Clemson Spineless"
     ],
     "water_needs": "Średnie",
-    "water_needs_level": 3
+    "water_needs_level": 3,
+    "top_varieties": [
+      {
+        "name": "Red Burgundy",
+        "badge": "Polecana do donic",
+        "reason": "Odmiana o czerwonych pędach i owocach, niezwykle ozdobna"
+      },
+      {
+        "name": "Clemson Spineless",
+        "badge": "Polecana do donic",
+        "reason": "Klasyczna odmiana, zielone strąki, rodzi dużo owoców"
+      }
+    ]
   },
   {
     "category": "Powojowate",
@@ -7164,17 +7204,23 @@
       "root_depth_category": "gleboki"
     },
     "varieties": [
-      {
-        "features": "Ozdobne limonkowe liście, tworzy mniejsze jasne bulwy",
-        "name": "Margarita"
-      },
-      {
-        "features": "Zwykły sklepowy batat z pomarańczowym miąższem",
-        "name": "Beauregard"
-      }
+      "Margarita",
+      "Beauregard"
     ],
     "water_needs": "Wysokie",
-    "water_needs_level": 4
+    "water_needs_level": 4,
+    "top_varieties": [
+      {
+        "name": "Margarita",
+        "badge": "Polecana do donic",
+        "reason": "Ozdobne limonkowe liście, tworzy mniejsze jasne bulwy"
+      },
+      {
+        "name": "Beauregard",
+        "badge": "Polecana do donic",
+        "reason": "Zwykły sklepowy batat z pomarańczowym miąższem"
+      }
+    ]
   },
   {
     "category": "Kapustowate",
@@ -7245,17 +7291,23 @@
       "root_depth_category": "plytki"
     },
     "varieties": [
-      {
-        "features": "Popularna odmiana tworząca zbite główki",
-        "name": "Hilton"
-      },
-      {
-        "features": "Czerwona/purpurowa odmiana, bardzo ozdobna",
-        "name": "Scarlet"
-      }
+      "Hilton",
+      "Scarlet"
     ],
     "water_needs": "Wysokie",
-    "water_needs_level": 4
+    "water_needs_level": 4,
+    "top_varieties": [
+      {
+        "name": "Hilton",
+        "badge": "Polecana do donic",
+        "reason": "Popularna odmiana tworząca zbite główki"
+      },
+      {
+        "name": "Scarlet",
+        "badge": "Polecana do donic",
+        "reason": "Czerwona/purpurowa odmiana, bardzo ozdobna"
+      }
+    ]
   },
   {
     "category": "Wiechlinowate",
@@ -7325,12 +7377,16 @@
       "root_depth_category": "sredni"
     },
     "varieties": [
-      {
-        "features": "Pospolita odmiana sklepowa, najlepsza w smaku",
-        "name": "Cymbopogon citratus"
-      }
+      "Cymbopogon citratus"
     ],
     "water_needs": "Średnie",
-    "water_needs_level": 3
+    "water_needs_level": 3,
+    "top_varieties": [
+      {
+        "name": "Cymbopogon citratus",
+        "badge": "Polecana do donic",
+        "reason": "Pospolita odmiana sklepowa, najlepsza w smaku"
+      }
+    ]
   }
 ]

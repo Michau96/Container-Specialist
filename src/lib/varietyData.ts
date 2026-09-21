@@ -413,6 +413,17 @@ export const VARIETY_CATALOG: Record<string, PlantVariety[]> = {
 };
 
 /**
+ * Safely extracts variety string name whether raw entry is a string or an object { name, features }.
+ */
+export function getRawVarietyName(raw: unknown): string {
+  if (typeof raw === 'string') return raw;
+  if (raw && typeof raw === 'object' && 'name' in raw && typeof (raw as any).name === 'string') {
+    return (raw as any).name;
+  }
+  return 'Odmiana standardowa';
+}
+
+/**
  * Returns all available varieties for a given plant, enriched with botanical traits.
  */
 export function getPlantVarieties(plant: Plant): PlantVariety[] {
@@ -425,6 +436,7 @@ export function getPlantVarieties(plant: Plant): PlantVariety[] {
   if (plant.top_varieties && plant.top_varieties.length > 0) {
     return plant.top_varieties.map((v) => ({
       ...v,
+      name: getRawVarietyName(v.name),
       habit: v.habit || 'Zwarty pokrój pojemnikowy',
       min_pot_vol_l: v.min_pot_vol_l || plant.pot.min_volume_l,
       recommended_spacing_cm: v.recommended_spacing_cm || plant.spacing_guide?.spacing_cm || 20,
@@ -437,19 +449,27 @@ export function getPlantVarieties(plant: Plant): PlantVariety[] {
   }
 
   if (plant.varieties && plant.varieties.length > 0) {
-    return plant.varieties.map((name) => ({
-      name,
-      badge: 'Odmiana donicowa',
-      reason: 'Polecana do uprawy w pojemnikach i skrzynkach balkonowych.',
-      habit: 'Zwarty pokrój',
-      min_pot_vol_l: plant.pot.min_volume_l,
-      recommended_spacing_cm: plant.spacing_guide?.spacing_cm || 20,
-      requires_support: plant.spacing_guide?.requires_bamboo_stake || false,
-      watering_profile: 'Umiarkowane podlewanie pod korzeń.',
-      soil_ph: plant.soil.ph,
-      soil_notes: plant.soil.type,
-      sowing_notes: '',
-    }));
+    return plant.varieties.map((item) => {
+      const name = getRawVarietyName(item);
+      const featureDesc =
+        typeof item === 'object' && item !== null && 'features' in item && typeof (item as any).features === 'string'
+          ? (item as any).features
+          : 'Polecana do uprawy w pojemnikach i skrzynkach balkonowych.';
+
+      return {
+        name,
+        badge: 'Odmiana donicowa',
+        reason: featureDesc,
+        habit: 'Zwarty pokrój',
+        min_pot_vol_l: plant.pot.min_volume_l,
+        recommended_spacing_cm: plant.spacing_guide?.spacing_cm || 20,
+        requires_support: plant.spacing_guide?.requires_bamboo_stake || false,
+        watering_profile: 'Umiarkowane podlewanie pod korzeń.',
+        soil_ph: plant.soil.ph,
+        soil_notes: plant.soil.type,
+        sowing_notes: '',
+      };
+    });
   }
 
   return [

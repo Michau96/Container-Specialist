@@ -389,6 +389,12 @@ function buildCalendarResponse(userSpec: UserBalconySpec, periodId: string, plan
     const topVar = plant.top_varieties || [];
     const varNames = plant.varieties || [];
 
+    const rawVariety0 = varNames[0];
+    const fallbackVarietyName =
+      typeof rawVariety0 === 'string'
+        ? rawVariety0
+        : (rawVariety0 && typeof rawVariety0 === 'object' ? rawVariety0.name : '') || '';
+
     const itemData = {
       plant_id: plant.id,
       plant_name: plant.name,
@@ -399,8 +405,8 @@ function buildCalendarResponse(userSpec: UserBalconySpec, periodId: string, plan
       pot_vol: plant.pot?.min_volume_l ?? 5,
       tip: suit.tips[0] || plant.summary,
       top_varieties: topVar,
-      recommended_variety: topVar[0]?.name || (varNames[0] || ''),
-      variety_badge: topVar[0]?.badge || '',
+      recommended_variety: (typeof topVar[0]?.name === 'string' ? topVar[0].name : '') || fallbackVarietyName,
+      variety_badge: (typeof topVar[0]?.badge === 'string' ? topVar[0].badge : '') || '',
       soil_fertilizer: plant.soil?.fertilizer || 'Biohumus',
       nutrition: plant.nutrition || {},
       fertilizer_guide: plant.fertilizer_guide,

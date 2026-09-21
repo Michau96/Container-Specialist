@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
   X,
@@ -22,12 +22,16 @@ import {
   Calendar,
   Sprout,
   Clock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Plant } from '../types';
 import { FertilizerAndSprayCard } from './FertilizerAndSprayCard';
 import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 import { getPlantTimingInfo } from '../lib/cropTiming';
 import { getPlantGreenhouseInfo } from '../lib/greenhouse';
+import { getPlantVarieties } from '../lib/varietyData';
+import { getPlantVisual } from '../lib/plantImages';
 
 interface Props {
   plant: Plant | null;
@@ -54,14 +58,9 @@ export const PlantDetailModal: React.FC<Props> = ({
   const score = suit?.score ?? 75;
   const timing = getPlantTimingInfo(plant);
   const greenhouse = getPlantGreenhouseInfo(plant);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-  const topVarieties = plant.top_varieties && plant.top_varieties.length > 0
-    ? plant.top_varieties
-    : plant.varieties.map((v) => ({
-        name: v,
-        badge: 'Polecana do pojemników',
-        reason: 'Sprawdzona odmiana o kompaktowym pokroju dostosowana do uprawy balkonowej.',
-      }));
+  const topVarieties = getPlantVarieties(plant);
 
   const cleanReasons = suit?.reasons.filter((r) => !r.includes('Idealna ekspozycja')) || [];
 
@@ -136,6 +135,8 @@ export const PlantDetailModal: React.FC<Props> = ({
     return 'bg-red-700 text-white ring-1 ring-red-500/50';
   };
 
+  const visual = getPlantVisual(plant.id, plant.plant_group);
+
   return (
     <div
       id="plant-detail-backdrop"
@@ -146,29 +147,46 @@ export const PlantDetailModal: React.FC<Props> = ({
         className="bg-[#FAF8F5] dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden"
       >
         {/* Header */}
-        <div className={`${headerTheme.headerBg} text-white p-5 sm:p-6 flex items-start justify-between border-b transition-colors`}>
-          <div>
-            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              <span className={`text-xs font-bold ${headerTheme.badgeText} px-2.5 py-0.5 rounded-md flex items-center gap-1 border`}>
-                <span>{headerTheme.icon}</span> {headerTheme.label}
+        <div className={`${headerTheme.headerBg} text-white p-5 sm:p-6 flex items-start justify-between border-b transition-colors gap-4`}>
+          <div className="flex items-start sm:items-center gap-4 min-w-0">
+            {/* Real Plant Photography Avatar */}
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-md relative bg-black/25">
+              <img
+                src={visual.imageUrl}
+                alt={visual.alt}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover object-center"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+              <span className="absolute inset-0 flex items-center justify-center text-3xl pointer-events-none -z-0">
+                {visual.emoji}
               </span>
-              <span className="text-xs font-bold text-stone-200 uppercase tracking-wider bg-black/30 px-2.5 py-0.5 rounded-md border border-white/10">
-                {plant.category}
-              </span>
-              {suit && (
-                <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${getSuitabilityBadge(score)}`}>
-                  <Sparkles className="w-3 h-3 text-white/90" />
-                  {score}% dopasowania do Twojego balkonu
-                </span>
-              )}
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
-              {plant.name}
-            </h2>
-            <p className="text-xs sm:text-sm text-stone-200 mt-1">
-              Top 5 rekomendowanych odmian do donic:{' '}
-              <strong className="text-white">{topVarieties.map((v) => v.name).join(', ')}</strong>
-            </p>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span className={`text-xs font-bold ${headerTheme.badgeText} px-2.5 py-0.5 rounded-md flex items-center gap-1 border`}>
+                  <span>{headerTheme.icon}</span> {headerTheme.label}
+                </span>
+                <span className="text-xs font-bold text-stone-200 uppercase tracking-wider bg-black/30 px-2.5 py-0.5 rounded-md border border-white/10">
+                  {plant.category}
+                </span>
+                {suit && (
+                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${getSuitabilityBadge(score)}`}>
+                    <Sparkles className="w-3 h-3 text-white/90" />
+                    {score}% dopasowania do Twojego balkonu
+                  </span>
+                )}
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                {plant.name}
+              </h2>
+              <p className="text-xs sm:text-sm text-stone-200 mt-1">
+                Top 5 rekomendowanych odmian do donic:{' '}
+                <strong className="text-white">{topVarieties.map((v) => v.name).join(', ')}</strong>
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {onToggleMyCrop && (
@@ -220,49 +238,108 @@ export const PlantDetailModal: React.FC<Props> = ({
 
         {/* Modal Scrollable Content */}
         <div className="flex-1 overflow-y-auto p-5 sm:p-7 space-y-6">
-          {/* Quick specs grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
-                <Maximize2 className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
-                <span>Pojemność donicy</span>
+          {/* 1. Highlighted Top Decision Metrics (Pojemność, Odczyn pH, Nasłonecznienie, Trudność) */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {/* Pojemność donicy */}
+            <div className="bg-white dark:bg-stone-800 p-4 rounded-2xl border-2 border-emerald-500/30 dark:border-emerald-500/40 shadow-xs hover:border-emerald-500/60 transition flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <span className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <div className="p-1 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                    <Maximize2 className="w-4 h-4" />
+                  </div>
+                  <span>Pojemność donicy</span>
+                </span>
+                <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                  głęb. {plant.pot.min_depth_cm} cm
+                </span>
               </div>
-              <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1">
-                min. {plant.pot.min_volume_l}L
+              <div>
+                <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 tracking-tight">
+                  min. {plant.pot.min_volume_l} L
+                </div>
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                  {plant.pot.recommended_volume_l ? `zalecana: ${plant.pot.recommended_volume_l} L` : 'na 1 sadzonkę'}
+                </div>
               </div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400">głęb. {plant.pot.min_depth_cm} cm</div>
             </div>
 
-            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
-                <span>Odczyn pH</span>
+            {/* Odczyn pH */}
+            <div className="bg-white dark:bg-stone-800 p-4 rounded-2xl border-2 border-amber-500/30 dark:border-amber-500/40 shadow-xs hover:border-amber-500/60 transition flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <span className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <div className="p-1 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                    <Layers className="w-4 h-4" />
+                  </div>
+                  <span>Odczyn pH</span>
+                </span>
+                <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
+                  podłoże
+                </span>
               </div>
-              <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1">{plant.soil.ph}</div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400">lekko kwaśne/obojętne</div>
+              <div>
+                <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 tracking-tight">
+                  pH {plant.soil.ph}
+                </div>
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">
+                  {plant.soil.ph.includes('5') ? 'lekko kwaśne' : 'obojętne / uniwersalne'}
+                </div>
+              </div>
             </div>
 
-            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
-                <Sun className="w-3.5 h-3.5 text-amber-500" />
-                <span>Nasłonecznienie</span>
+            {/* Nasłonecznienie */}
+            <div className="bg-white dark:bg-stone-800 p-4 rounded-2xl border-2 border-orange-500/30 dark:border-orange-500/40 shadow-xs hover:border-orange-500/60 transition flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <span className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <div className="p-1 rounded-lg bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300">
+                    <Sun className="w-4 h-4" />
+                  </div>
+                  <span>Nasłonecznienie</span>
+                </span>
+                <span className="text-[10px] font-semibold text-orange-800 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/70 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
+                  wystawa
+                </span>
               </div>
-              <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1 truncate" title={plant.sun_preference}>
-                {plant.orientations.join(', ')}
+              <div>
+                <div className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-50 tracking-tight truncate" title={plant.orientations.join(', ')}>
+                  {plant.orientations.join(', ')}
+                </div>
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate" title={plant.sun_preference}>
+                  {plant.sun_preference.split('(')[0]}
+                </div>
               </div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">{plant.sun_preference.split('(')[0]}</div>
             </div>
 
-            <div className="bg-white dark:bg-stone-800 p-3 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xs">
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium flex items-center gap-1">
-                <Wind className="w-3.5 h-3.5 text-stone-600 dark:text-stone-400" />
-                <span>Trudność (1-10)</span>
+            {/* Trudność */}
+            <div className="bg-white dark:bg-stone-800 p-4 rounded-2xl border-2 border-sky-500/30 dark:border-sky-500/40 shadow-xs hover:border-sky-500/60 transition flex flex-col justify-between">
+              <div className="flex items-center justify-between gap-1 mb-2">
+                <span className="text-xs font-bold text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <div className="p-1 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300">
+                    <Wind className="w-4 h-4" />
+                  </div>
+                  <span>Trudność</span>
+                </span>
+                <span className="text-[10px] font-semibold text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/70 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-800">
+                  skala 1-10
+                </span>
               </div>
-              <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1">{plant.difficulty} / 10</div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
-                {plant.difficulty <= 3 ? 'Dla początkujących' : 'Średnia'}
+              <div>
+                <div className="text-xl sm:text-2xl font-black text-stone-900 dark:text-stone-50 tracking-tight">
+                  {plant.difficulty} / 10
+                </div>
+                <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">
+                  {plant.difficulty <= 3 ? 'Dla początkujących' : plant.difficulty <= 6 ? 'Średnio wymagająca' : 'Wymagająca'}
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* 2. Streszczenie uprawy w donicy (kluczowe podsumowanie) */}
+          <div className="bg-stone-100/90 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl p-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2 mb-1.5">
+              <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>Streszczenie uprawy w donicy</span>
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">{plant.summary}</p>
           </div>
 
           {/* Seasonality, Current Date Suitability & Optimal Sowing/Transplanting Windows */}
@@ -334,149 +411,7 @@ export const PlantDetailModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Balkonowa mini-szklarnia i mikroklimat */}
-          <div className="bg-white dark:bg-stone-850 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-stone-100 dark:border-stone-800">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center font-bold text-base">
-                  {greenhouse.icon}
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                    <span>Uprawa w szklarni balkonowej / mini-folii</span>
-                    <span
-                      className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                        greenhouse.badgeTone === 'emerald'
-                          ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
-                          : greenhouse.badgeTone === 'amber'
-                          ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
-                          : greenhouse.badgeTone === 'rose'
-                          ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700'
-                          : 'bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 border-stone-300'
-                      }`}
-                    >
-                      {greenhouse.label}
-                    </span>
-                  </h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
-                    Ocena mikroklimatu regałów foliowych, inspektów i szklarni balkonowych
-                  </p>
-                </div>
-              </div>
-              <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1 rounded-xl border border-emerald-200/80 dark:border-emerald-800">
-                🌡️ {greenhouse.temperatureGain}
-              </div>
-            </div>
 
-            <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
-              {greenhouse.reason}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 text-xs">
-                <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5 mb-1">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                  <span>Wietrzenie i ryzyko przegrzania:</span>
-                </div>
-                <div className="text-amber-950 dark:text-amber-300/90 leading-relaxed">
-                  {greenhouse.risksAndVentilation}
-                </div>
-              </div>
-
-              <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 text-xs">
-                <div className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5 mb-1">
-                  <Lightbulb className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                  <span>Praktyczna wskazówka balkonowa:</span>
-                </div>
-                <div className="text-emerald-950 dark:text-emerald-300/90 leading-relaxed">
-                  {greenhouse.practicalTip}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Streszczenie uprawy */}
-          <div className="bg-stone-100/90 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl p-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2 mb-1.5">
-              <Lightbulb className="w-4 h-4 text-amber-600" />
-              <span>Streszczenie uprawy w donicy</span>
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">{plant.summary}</p>
-          </div>
-
-          {/* OGÓLNE INFORMACJE O PODŁOŻU I ODNOŚNIK DO SCHEMATU DONICY (zgodnie z życzeniem usera) */}
-          <div id="plant-soil-general-section" className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
-            <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-150 dark:border-stone-700">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center justify-center font-bold">
-                  <Layers className="w-4 h-4 text-amber-700 dark:text-amber-400" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Wymagania glebowe i ogólne zasady podłoża
-                  </h3>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                    Podstawowe parametry ziemi dla tej uprawy
-                  </p>
-                </div>
-              </div>
-              <span className="text-[10px] font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full border border-stone-200 dark:border-stone-700">
-                pH {plant.soil.ph}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-              <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
-                <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                  Zalecany typ ziemi:
-                </div>
-                <p className="text-stone-800 dark:text-stone-200 font-medium leading-relaxed">
-                  {plant.soil.type}
-                </p>
-              </div>
-
-              <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
-                <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                  Drenaż i struktura:
-                </div>
-                <p className="text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
-                  Konieczny drenaż z keramzytu (2–4 cm na dnie donicy) oraz domieszka perlitu dla dotlenienia korzeni i ochrony przed przelaniem.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 p-3.5 rounded-xl flex items-start gap-3">
-              <span className="text-xl leading-none">💡</span>
-              <div className="text-xs text-amber-950 dark:text-amber-200 space-y-1">
-                <p className="font-semibold text-[12px]">
-                  Indywidualny schemat warstw podłoża w donicy:
-                </p>
-                <p className="text-amber-900 dark:text-amber-300 leading-relaxed text-[11px]">
-                  Szczegółowy przekrój warstw donicy, dokładne proporcje keramzytu, perlitu oraz łączną objętość ziemi dobierzesz w zakładce <strong>„Projektant donicy i rozstawy”</strong> po skomponowaniu upraw.
-                </p>
-                {onOpenPotCalc && (
-                  <button
-                    onClick={() => {
-                      onClose();
-                      onOpenPotCalc(plant);
-                    }}
-                    className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
-                  >
-                    <span>📐 Przejdź do schematu donicy</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* CZYM NAWOZIĆ I CZY STOSOWAĆ OPRYSK */}
-          <div id="plant-fertilizer-spray-section">
-            <FertilizerAndSprayCard
-              fertilizerGuide={plant.fertilizer_guide}
-              sprayGuide={plant.spray_guide}
-              fallbackFertilizer={plant.soil.fertilizer}
-            />
-          </div>
 
           {/* ROZSTAWA, GŁĘBOKOŚĆ I PODPORY */}
           {plant.spacing_guide && (
@@ -613,15 +548,6 @@ export const PlantDetailModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* SZACUNEK KOSZTÓW UPRAWY TEJ ROŚLINY */}
-          <CropCostEstimatorCard
-            plant={plant}
-            potVolumeLiters={plant.pot.recommended_volume_l || 15}
-            potMaterial="plastic"
-            supportType={plant.spacing_guide?.requires_bamboo_stake ? 'stake' : 'none'}
-            isCompact={true}
-          />
-
           {/* Analiza dopasowania do Twojego balkonu z rygorystyczną paletą Czerwony / Żółty / Zielony */}
           {suit && (
             <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-4 space-y-3">
@@ -693,72 +619,6 @@ export const PlantDetailModal: React.FC<Props> = ({
             </div>
           )}
 
-          {/* SEKCJA: WARTOŚCI ODŻYWCZE, WITAMINY I MINERAŁY */}
-          {plant.nutrition && (
-            <div id="plant-nutrition-section" className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3.5 shadow-2xs">
-              <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-200 flex items-center justify-center font-bold">
-                    <Heart className="w-4 h-4 fill-pink-500 text-pink-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                      Wartości odżywcze, witaminy i wpływ na zdrowie
-                    </h3>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                      Dlaczego warto zrywać prosto z krzaczka na balkonie
-                    </p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full border border-stone-200 dark:border-stone-700">
-                  100% naturalne bio
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
-                  <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wide mb-1">
-                    Kluczowe witaminy i minerały:
-                  </div>
-                  <p className="text-stone-900 dark:text-stone-100 font-semibold leading-relaxed">
-                    {plant.nutrition.vitamins}
-                  </p>
-                </div>
-
-                <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
-                  <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wide mb-1">
-                    Główne korzyści dla organizmu:
-                  </div>
-                  <p className="text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
-                    {plant.nutrition.key_benefits}
-                  </p>
-                </div>
-              </div>
-
-              {plant.nutrition.antioxidants && (
-                <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 text-xs">
-                  <span className="font-bold text-stone-700 dark:text-stone-300 text-[11px] uppercase tracking-wide">
-                    Antyoksydanty i fitoskładniki:
-                  </span>
-                  <p className="text-stone-800 dark:text-stone-200 mt-0.5 leading-relaxed">
-                    {plant.nutrition.antioxidants}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {plant.nutrition.tags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="text-[11px] font-semibold text-stone-800 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-2.5 py-0.5 rounded-full"
-                  >
-                    ✓ {tag}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Sekcja: Top 5 Polecanych Odmian do Donic */}
           <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-4 shadow-2xs">
             <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
@@ -824,118 +684,372 @@ export const PlantDetailModal: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Sekcja: Dokładny Opis Uprawy (Krok po kroku) - Markdown rendered */}
-          <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
-              <BookOpen className="w-4 h-4 text-stone-800 dark:text-stone-200" />
-              <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                Dokładny przewodnik uprawy krok po kroku
-              </h3>
-            </div>
-            <div className="markdown-body text-xs sm:text-[13px] leading-relaxed text-stone-700 dark:text-stone-300 font-sans">
-              <ReactMarkdown
-                components={{
-                  h3: ({ children }) => (
-                    <h4 className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 mt-4 mb-2 pb-1 border-b border-stone-200 dark:border-stone-700 flex items-center gap-1.5">
-                      {children}
-                    </h4>
-                  ),
-                  p: ({ children }) => (
-                    <p className="mb-3 leading-relaxed text-stone-700 dark:text-stone-300">
-                      {children}
-                    </p>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="list-disc pl-5 space-y-1.5 mb-3 text-stone-700 dark:text-stone-300">
-                      {children}
-                    </ul>
-                  ),
-                  li: ({ children }) => (
-                    <li className="leading-relaxed">
-                      {children}
-                    </li>
-                  ),
-                  strong: ({ children }) => (
-                    <strong className="font-semibold text-stone-950 dark:text-stone-100">
-                      {children}
-                    </strong>
-                  ),
-                }}
-              >
-                {plant.detailed_guide}
-              </ReactMarkdown>
-            </div>
-          </div>
-
-          {/* Sekcja: Zweryfikowane Źródła Portali Ogrodniczych */}
-          <div className="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-600 dark:text-stone-400">
-            <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-stone-700 dark:text-stone-300" />
-                <span>Zweryfikowane źródła wiedzy ogrodniczej (krajowe i zagraniczne):</span>
-              </span>
-              <span className="text-[10px] text-stone-600 dark:text-stone-400 bg-stone-200 dark:bg-stone-800 px-2 py-0.5 rounded-full font-medium">
-                Porady i zalecenia w 100% po polsku
-              </span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-              {plant.sources && plant.sources.map((src, idx) => {
-                if (typeof src === 'string') {
-                  return (
-                    <div
-                      key={idx}
-                      className="p-2.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-[11px] text-stone-700 dark:text-stone-300"
-                    >
-                      • {src}
-                    </div>
-                  );
-                }
-                return (
-                  <div
-                    key={idx}
-                    className="p-2.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 flex flex-col justify-between hover:border-stone-400 transition"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-1.5 mb-1">
-                        <span className="font-bold text-stone-900 dark:text-stone-100 text-xs leading-snug">
-                          {src.title}
-                        </span>
-                        {src.country && (
-                          <span className="text-[10px] uppercase font-bold text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-600 shrink-0">
-                            {src.country}
-                          </span>
-                        )}
-                      </div>
-                      {src.institution && (
-                        <p className="text-[10px] text-stone-600 dark:text-stone-400 font-medium mb-0.5">
-                          {src.institution}
-                        </p>
-                      )}
-                      {src.notes && (
-                        <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">
-                          {src.notes}
-                        </p>
-                      )}
-                    </div>
-                    {src.url && (
-                      <a
-                        href={src.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white transition underline"
-                      >
-                        <span>Zobacz publikację / źródło</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
+          {/* AKORDEON: WSKAZÓWKI DLA ZAAWANSOWANYCH (Progressive Disclosure) */}
+          <div className="border border-stone-200 dark:border-stone-700 rounded-2xl bg-white dark:bg-stone-800/90 overflow-hidden shadow-xs">
+            <button
+              type="button"
+              id="toggle-advanced-plant-details-btn"
+              onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+              className="w-full p-4 sm:p-5 flex items-center justify-between gap-3 text-left hover:bg-stone-50 dark:hover:bg-stone-800/60 transition cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 flex items-center justify-center font-bold text-lg shrink-0">
+                  🛠️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+                      Wskazówki dla zaawansowanych
+                    </h3>
+                    <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
+                      Szklarnia, nawożenie, koszty, witaminy, przewodnik
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-            <p className="text-[11px] text-stone-400 dark:text-stone-500 pt-3 text-center sm:text-left leading-relaxed">
-              * Dane opracowano na bazie literatury i zweryfikowanych źródeł ogrodniczych. Ze względu na specyfikę poszczególnych mikroklimatów balkonowych informacje mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.
-            </p>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                    {isAdvancedOpen
+                      ? 'Kliknij, aby zwinąć szczegółowe moduły i wskazówki'
+                      : 'Rozwiń, aby zobaczyć instrukcję szklarniową, skład gleby, opryski, koszty i źródła'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-xs font-semibold text-stone-600 dark:text-stone-300 hidden sm:inline">
+                  {isAdvancedOpen ? 'Zwiń' : 'Rozwiń'}
+                </span>
+                <div className="p-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
+                  {isAdvancedOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                </div>
+              </div>
+            </button>
+
+            {isAdvancedOpen && (
+              <div className="p-4 sm:p-6 border-t border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-900/40 space-y-6">
+                {/* 1. Balkonowa mini-szklarnia i mikroklimat */}
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
+                  <div className="flex items-center justify-between gap-2 flex-wrap pb-3 border-b border-stone-100 dark:border-stone-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center font-bold text-base">
+                        {greenhouse.icon}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
+                          <span>Uprawa w szklarni balkonowej / mini-folii</span>
+                          <span
+                            className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                              greenhouse.badgeTone === 'emerald'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                                : greenhouse.badgeTone === 'amber'
+                                ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700'
+                                : greenhouse.badgeTone === 'rose'
+                                ? 'bg-rose-100 dark:bg-rose-950/80 text-rose-900 dark:text-rose-200 border-rose-300 dark:border-rose-700'
+                                : 'bg-stone-200 dark:bg-stone-700 text-stone-800 dark:text-stone-200 border-stone-300'
+                            }`}
+                          >
+                            {greenhouse.label}
+                          </span>
+                        </h4>
+                        <p className="text-xs text-stone-500 dark:text-stone-400">
+                          Ocena mikroklimatu regałów foliowych, inspektów i szklarni balkonowych
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-3 py-1 rounded-xl border border-emerald-200/80 dark:border-emerald-800">
+                      🌡️ {greenhouse.temperatureGain}
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">
+                    {greenhouse.reason}
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 text-xs">
+                      <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5 mb-1">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <span>Wietrzenie i ryzyko przegrzania:</span>
+                      </div>
+                      <div className="text-amber-950 dark:text-amber-300/90 leading-relaxed">
+                        {greenhouse.risksAndVentilation}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 text-xs">
+                      <div className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5 mb-1">
+                        <Lightbulb className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <span>Praktyczna wskazówka balkonowa:</span>
+                      </div>
+                      <div className="text-emerald-950 dark:text-emerald-300/90 leading-relaxed">
+                        {greenhouse.practicalTip}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Wymagania glebowe i ogólne zasady podłoża */}
+                <div id="plant-soil-general-section" className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 shadow-2xs space-y-3.5">
+                  <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-150 dark:border-stone-700">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 flex items-center justify-center font-bold">
+                        <Layers className="w-4 h-4 text-amber-700 dark:text-amber-400" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                          Wymagania glebowe i ogólne zasady podłoża
+                        </h4>
+                        <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                          Podstawowe parametry ziemi dla tej uprawy
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-semibold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-1 rounded-full border border-stone-200 dark:border-stone-700">
+                      pH {plant.soil.ph}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                      <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                        Zalecany typ ziemi:
+                      </div>
+                      <p className="text-stone-800 dark:text-stone-200 font-medium leading-relaxed">
+                        {plant.soil.type}
+                      </p>
+                    </div>
+
+                    <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
+                      <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
+                        Drenaż i struktura:
+                      </div>
+                      <p className="text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
+                        Konieczny drenaż z keramzytu (2–4 cm na dnie donicy) oraz domieszka perlitu dla dotlenienia korzeni i ochrony przed przelaniem.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-amber-50/80 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 p-3.5 rounded-xl flex items-start gap-3">
+                    <span className="text-xl leading-none">💡</span>
+                    <div className="text-xs text-amber-950 dark:text-amber-200 space-y-1">
+                      <p className="font-semibold text-[12px]">
+                        Indywidualny schemat warstw podłoża w donicy:
+                      </p>
+                      <p className="text-amber-900 dark:text-amber-300 leading-relaxed text-[11px]">
+                        Szczegółowy przekrój warstw donicy, dokładne proporcje keramzytu, perlitu oraz łączną objętość ziemi dobierzesz w zakładce <strong>„Projektant donicy i rozstawy”</strong> po skomponowaniu upraw.
+                      </p>
+                      {onOpenPotCalc && (
+                        <button
+                          onClick={() => {
+                            onClose();
+                            onOpenPotCalc(plant);
+                          }}
+                          className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+                        >
+                          <span>📐 Przejdź do schematu donicy</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Czym nawozić i czy stosować oprysk */}
+                <div id="plant-fertilizer-spray-section">
+                  <FertilizerAndSprayCard
+                    fertilizerGuide={plant.fertilizer_guide}
+                    sprayGuide={plant.spray_guide}
+                    fallbackFertilizer={plant.soil.fertilizer}
+                  />
+                </div>
+
+                {/* 4. Szacunek kosztów uprawy tej rośliny */}
+                <CropCostEstimatorCard
+                  plant={plant}
+                  potVolumeLiters={plant.pot.recommended_volume_l || 15}
+                  potMaterial="plastic"
+                  supportType={plant.spacing_guide?.requires_bamboo_stake ? 'stake' : 'none'}
+                  isCompact={true}
+                />
+
+                {/* 5. Wartości odżywcze, witaminy i wpływ na zdrowie */}
+                {plant.nutrition && (
+                  <div id="plant-nutrition-section" className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3.5 shadow-2xs">
+                    <div className="flex items-center justify-between flex-wrap gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-pink-100 dark:bg-pink-950 text-pink-800 dark:text-pink-200 flex items-center justify-center font-bold">
+                          <Heart className="w-4 h-4 fill-pink-500 text-pink-600" />
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                            Wartości odżywcze, witaminy i wpływ na zdrowie
+                          </h4>
+                          <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                            Dlaczego warto zrywać prosto z krzaczka na balkonie
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full border border-stone-200 dark:border-stone-700">
+                        100% naturalne bio
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                      <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
+                        <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wide mb-1">
+                          Kluczowe witaminy i minerały:
+                        </div>
+                        <p className="text-stone-900 dark:text-stone-100 font-semibold leading-relaxed">
+                          {plant.nutrition.vitamins}
+                        </p>
+                      </div>
+
+                      <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
+                        <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wide mb-1">
+                          Główne korzyści dla organizmu:
+                        </div>
+                        <p className="text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
+                          {plant.nutrition.key_benefits}
+                        </p>
+                      </div>
+                    </div>
+
+                    {plant.nutrition.antioxidants && (
+                      <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 text-xs">
+                        <span className="font-bold text-stone-700 dark:text-stone-300 text-[11px] uppercase tracking-wide">
+                          Antyoksydanty i fitoskładniki:
+                        </span>
+                        <p className="text-stone-800 dark:text-stone-200 mt-0.5 leading-relaxed">
+                          {plant.nutrition.antioxidants}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {plant.nutrition.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="text-[11px] font-semibold text-stone-800 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-2.5 py-0.5 rounded-full"
+                        >
+                          ✓ {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 6. Dokładny Opis Uprawy (Krok po kroku) - Markdown rendered */}
+                <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-5 space-y-3">
+                  <div className="flex items-center gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
+                    <BookOpen className="w-4 h-4 text-stone-800 dark:text-stone-200" />
+                    <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                      Dokładny przewodnik uprawy krok po kroku
+                    </h4>
+                  </div>
+                  <div className="markdown-body text-xs sm:text-[13px] leading-relaxed text-stone-700 dark:text-stone-300 font-sans">
+                    <ReactMarkdown
+                      components={{
+                        h3: ({ children }) => (
+                          <h4 className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 mt-4 mb-2 pb-1 border-b border-stone-200 dark:border-stone-700 flex items-center gap-1.5">
+                            {children}
+                          </h4>
+                        ),
+                        p: ({ children }) => (
+                          <p className="mb-3 leading-relaxed text-stone-700 dark:text-stone-300">
+                            {children}
+                          </p>
+                        ),
+                        ul: ({ children }) => (
+                          <ul className="list-disc pl-5 space-y-1.5 mb-3 text-stone-700 dark:text-stone-300">
+                            {children}
+                          </ul>
+                        ),
+                        li: ({ children }) => (
+                          <li className="leading-relaxed">
+                            {children}
+                          </li>
+                        ),
+                        strong: ({ children }) => (
+                          <strong className="font-semibold text-stone-950 dark:text-stone-100">
+                            {children}
+                          </strong>
+                        ),
+                      }}
+                    >
+                      {plant.detailed_guide}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+
+                {/* 7. Zweryfikowane Źródła Portali Ogrodniczych */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-xs text-stone-600 dark:text-stone-400">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5 text-stone-700 dark:text-stone-300" />
+                      <span>Zweryfikowane źródła wiedzy ogrodniczej (krajowe i zagraniczne):</span>
+                    </span>
+                    <span className="text-[10px] text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full font-medium">
+                      Porady i zalecenia w 100% po polsku
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                    {plant.sources && plant.sources.map((src, idx) => {
+                      if (typeof src === 'string') {
+                        return (
+                          <div
+                            key={idx}
+                            className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 text-[11px] text-stone-700 dark:text-stone-300"
+                          >
+                            • {src}
+                          </div>
+                        );
+                      }
+                      return (
+                        <div
+                          key={idx}
+                          className="p-2.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 flex flex-col justify-between hover:border-stone-400 transition"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-1.5 mb-1">
+                              <span className="font-bold text-stone-900 dark:text-stone-100 text-xs leading-snug">
+                                {src.title}
+                              </span>
+                              {src.country && (
+                                <span className="text-[10px] uppercase font-bold text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-700 px-1.5 py-0.5 rounded border border-stone-300 dark:border-stone-600 shrink-0">
+                                  {src.country}
+                                </span>
+                              )}
+                            </div>
+                            {src.institution && (
+                              <p className="text-[10px] text-stone-600 dark:text-stone-400 font-medium mb-0.5">
+                                {src.institution}
+                              </p>
+                            )}
+                            {src.notes && (
+                              <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed">
+                                {src.notes}
+                              </p>
+                            )}
+                          </div>
+                          {src.url && (
+                            <a
+                              href={src.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white transition underline"
+                            >
+                              <span>Zobacz publikację / źródło</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="text-[11px] text-stone-400 dark:text-stone-500 pt-3 text-center sm:text-left leading-relaxed">
+                    * Dane opracowano na bazie literatury i zweryfikowanych źródeł ogrodniczych. Ze względu na specyfikę poszczególnych mikroklimatów balkonowych informacje mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

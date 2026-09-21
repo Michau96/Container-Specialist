@@ -1,4 +1,5 @@
 import { UserAccount, UserBalconySpec, MyCropItem } from '../types';
+import { saveBalconyToFirestore, logoutFirebaseUser } from './firebase';
 
 const TOKEN_STORAGE_KEY = 'balkonowy_auth_token';
 const USER_STORAGE_KEY = 'balkonowy_current_user';
@@ -323,6 +324,13 @@ export async function loginAccount(
  */
 export async function fetchCurrentUser(): Promise<UserAccount | null> {
   const token = getStoredToken();
+  const cachedUser = getStoredUser();
+
+  // If user is authenticated via Google, return stored user session
+  if (cachedUser && cachedUser.authProvider === 'google') {
+    return cachedUser;
+  }
+
   if (!token) {
     try {
       localStorage.removeItem(USER_STORAGE_KEY);
@@ -360,7 +368,6 @@ export async function fetchCurrentUser(): Promise<UserAccount | null> {
 
   // If offline fallback session
   const localDb = getLocalAccountsDb();
-  const cachedUser = getStoredUser();
   if (cachedUser && localDb.some((a) => a.id === cachedUser.id)) {
     return cachedUser;
   }
@@ -400,6 +407,12 @@ export async function saveBalconyToAccount(
     }
   }
 
+  if (currentUser?.id) {
+    saveBalconyToFirestore(currentUser.id, spec, myCrops).catch((err) => {
+      console.warn('Could not sync balcony to Firestore:', err);
+    });
+  }
+
   if (!token) {
     return { success: false };
   }
@@ -435,6 +448,8 @@ export async function saveBalconyToAccount(
  * Log out of the current account.
  */
 export async function logoutAccount(): Promise<void> {
+  await logoutFirebaseUser().catch(() => {});
+
   const token = getStoredToken();
   if (token) {
     try {

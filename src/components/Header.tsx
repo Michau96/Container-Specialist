@@ -3,21 +3,14 @@ import {
   Sprout,
   Calendar,
   Settings,
-  Compass,
-  Building,
-  MapPin,
-  Sparkles,
   Ruler,
   Sun,
   Moon,
   Search,
   User,
-  UserCheck,
-  ShieldCheck,
   HelpCircle,
 } from 'lucide-react';
-import { UserBalconySpec, UserAccount, getFloorCategory, getFloorCategoryLabel } from '../types';
-import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
+import { UserBalconySpec, UserAccount } from '../types';
 
 export type ActiveNavTab = 'my_crops' | 'search_crops' | 'calendar' | 'calculator';
 
@@ -25,7 +18,8 @@ interface Props {
   activeTab: ActiveNavTab;
   onTabChange: (tab: ActiveNavTab) => void;
   userSpec: UserBalconySpec;
-  onOpenSetup: () => void;
+  onOpenSetup?: () => void;
+  onOpenBalconyDrawer?: () => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
   myCropsCount?: number;
@@ -40,6 +34,7 @@ export const Header: React.FC<Props> = ({
   onTabChange,
   userSpec,
   onOpenSetup,
+  onOpenBalconyDrawer,
   darkMode,
   onToggleDarkMode,
   myCropsCount = 0,
@@ -48,10 +43,7 @@ export const Header: React.FC<Props> = ({
   onOpenProfile,
   onOpenWelcome,
 }) => {
-  const regionInfo = POLAND_REGIONS[userSpec.region];
-  const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec.orientation);
-  const orientationDisplay = orientItem ? orientItem.label : userSpec.orientation;
-  const floorDisplay = getFloorCategoryLabel(userSpec.floor);
+  const handleOpenDrawer = onOpenBalconyDrawer || onOpenSetup || (() => {});
 
   return (
     <header className="sticky top-0 z-30 bg-[#FAF8F5]/90 dark:bg-stone-900/90 backdrop-blur-md border-b border-stone-200/80 dark:border-stone-800 transition-colors">
@@ -81,40 +73,18 @@ export const Header: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Current Balcony Specs Summary Badge & Actions */}
+          {/* Actions: Subtle "Mój balkon" Drawer trigger + Account + Theme */}
           <div className="flex items-center gap-2 flex-wrap">
-            <div
-              id="balcony-summary-badge"
-              onClick={onOpenSetup}
-              title="Kliknij, aby zmienić specyfikację Twojego balkonu"
-              className="flex items-center gap-2.5 px-3 py-1.5 bg-white dark:bg-stone-800 rounded-[1rem] border border-stone-200 dark:border-stone-700 shadow-2xs hover:border-emerald-700 dark:hover:border-emerald-500 hover:bg-stone-50/80 dark:hover:bg-stone-800 transition cursor-pointer text-xs text-stone-700 dark:text-stone-300"
-            >
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                <span className="font-semibold text-stone-900 dark:text-stone-100">
-                  {regionInfo ? regionInfo.name.split('(')[0].trim() : 'Polska'}
-                </span>
-              </div>
-              <span className="text-stone-300 dark:text-stone-600">•</span>
-              <div className="flex items-center gap-1.5">
-                <Building className="w-3.5 h-3.5 text-sky-700 dark:text-sky-400" />
-                <span className="font-medium">{floorDisplay}</span>
-              </div>
-              <span className="text-stone-300 dark:text-stone-600">•</span>
-              <div className="flex items-center gap-1.5">
-                <Compass className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                <span>{orientationDisplay}</span>
-              </div>
-            </div>
-
             <button
-              id="edit-balcony-settings-btn"
-              onClick={onOpenSetup}
-              className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-700 dark:text-stone-200 hover:text-emerald-900 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1 cursor-pointer"
-              title="Zmień parametry balkonu"
+              id="open-balcony-drawer-btn"
+              type="button"
+              onClick={handleOpenDrawer}
+              className="px-3.5 py-1.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-800 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-2xs group"
+              title="Parametry Twojego balkonu (wystawa, piętro, region) — otwórz boczny panel"
             >
-              <Settings className="w-4 h-4" />
-              <span className="hidden sm:inline">Dostosuj balkon</span>
+              <Settings className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:rotate-45 transition-transform duration-300" />
+              <span>Mój balkon</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
             </button>
 
             {onOpenWelcome && (
@@ -138,9 +108,18 @@ export const Header: React.FC<Props> = ({
                 className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/60 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 border border-emerald-300/80 dark:border-emerald-700/80 rounded-[1rem] text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-2xs"
                 title={`Zalogowano jako ${currentUser.username}. Kliknij, aby zobaczyć profil lub wylogować.`}
               >
-                <div className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
-                  {currentUser.username.charAt(0).toUpperCase()}
-                </div>
+                {currentUser.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    alt={currentUser.username}
+                    referrerPolicy="no-referrer"
+                    className="w-5 h-5 rounded-full object-cover border border-emerald-400"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-emerald-700 text-white flex items-center justify-center font-bold text-[10px]">
+                    {currentUser.username.charAt(0).toUpperCase()}
+                  </div>
+                )}
                 <span className="max-w-[110px] truncate">{currentUser.username}</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" title="Ustawienia balkonu zapisane na koncie" />
               </button>

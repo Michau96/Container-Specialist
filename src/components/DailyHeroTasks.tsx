@@ -19,6 +19,7 @@ import {
   Heart,
   Calendar,
   Layers,
+  LifeBuoy,
 } from 'lucide-react';
 import {
   MyCropItem,
@@ -28,16 +29,17 @@ import {
   DailyCropsRecommendation,
   UserAccount,
 } from '../types';
+import { isWateringSuspended, getDaysRemainingInSuspension } from '../lib/rescueData';
 
 export interface DailyTaskItem {
   id: string;
-  type: 'water' | 'greenhouse' | 'fertilize' | 'prune' | 'inspect';
+  type: 'water' | 'greenhouse' | 'fertilize' | 'prune' | 'inspect' | 'rescue';
   cropId?: string;
   plantId?: string;
   title: string;
   subtitle: string;
   badge: string;
-  badgeTone: 'sky' | 'emerald' | 'amber' | 'violet';
+  badgeTone: 'sky' | 'emerald' | 'amber' | 'violet' | 'rose';
   icon: string;
   iconBg: string;
   actionText: string;
@@ -57,6 +59,7 @@ interface Props {
   onUpdateCrop: (updated: MyCropItem) => void;
   onSelectCrop?: (cropId: string) => void;
   onNavigateToSearch?: () => void;
+  onOpenRescueModal?: (crop: MyCropItem, plant: Plant) => void;
 }
 
 export const DailyHeroTasks: React.FC<Props> = ({
@@ -70,6 +73,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
   onUpdateCrop,
   onSelectCrop,
   onNavigateToSearch,
+  onOpenRescueModal,
 }) => {
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const storageKey = `balcony_daily_tasks_done_${todayStr}`;
@@ -119,14 +123,45 @@ export const DailyHeroTasks: React.FC<Props> = ({
     // Helper to find plant
     const findPlant = (plantId: string) => allPlants.find((p) => p.id === plantId);
 
-    // 1. Watering Tasks for crops
-    // We prioritize crops that haven't been watered today
+    // 1. Watering & Rescue Tasks for crops
+    // If a crop is in Rescue Mode, normal watering is suspended and replaced with a rescue task
     crops.forEach((crop, index) => {
       const plant = findPlant(crop.plantId);
       const cropKey = crop.id || `${crop.plantId}_${crop.selectedVariety || index}`;
-      const isWateredToday = crop.lastWateredDate === todayStr;
-      const variety = crop.selectedVariety || plant?.varieties?.[0] || '';
+      const rawVariety = crop.selectedVariety || plant?.top_varieties?.[0]?.name || plant?.varieties?.[0] || '';
+      const variety = typeof rawVariety === 'string' ? rawVariety : (rawVariety as any)?.name || '';
       const plantName = plant?.name || 'Roślina';
+
+      // CHECK FOR ACTIVE RESCUE MODE FIRST
+      if (crop.rescuePlan?.active) {
+        const isSuspended = isWateringSuspended(crop.rescuePlan);
+        const daysLeft = getDaysRemainingInSuspension(crop.rescuePlan);
+        const rescueTaskId = `rescue_${cropKey}_${todayStr}`;
+        const isRescueDoneToday = genericCompletedTaskIds.includes(rescueTaskId);
+
+        tasks.push({
+          id: rescueTaskId,
+          type: 'rescue',
+          cropId: cropKey,
+          plantId: crop.plantId,
+          title: `🚨 Ratuj ${plantName.toLowerCase()}: ${crop.rescuePlan.issueTitle}`,
+          subtitle: isSuspended
+            ? `Harmonogram podlewania ZAWIESZONY (${daysLeft > 0 ? `jeszcze ${daysLeft} dni` : 'karencja'}). ${crop.rescuePlan.immediateAction}`
+            : `Karencja wstrzymania wody minęła. Wykonaj zalecenia: ${crop.rescuePlan.immediateAction}`,
+          badge: '🚑 Tryb ratunkowy',
+          badgeTone: 'rose',
+          icon: crop.rescuePlan.issueIcon || '🚑',
+          iconBg: 'from-rose-500/20 to-amber-500/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
+          actionText: isRescueDoneToday ? 'Kroki wykonane' : 'Kroki ratunkowe',
+          isCompleted: isRescueDoneToday,
+          crop,
+          plant,
+        });
+        // Important: Return early so standard watering task is suspended!
+        return;
+      }
+
+      const isWateredToday = crop.lastWateredDate === todayStr;
 
       // Specific watering advice tailored to plant
       let waterSubtitle = 'Umiarkowana dawka wody u nasady łodygi (nie mocz liści).';
@@ -334,7 +369,9 @@ export const DailyHeroTasks: React.FC<Props> = ({
 
                     <span
                       className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                        task.badgeTone === 'sky'
+                        task.badgeTone === 'rose'
+                          ? 'bg-rose-100 dark:bg-rose-950/90 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800'
+                          : task.badgeTone === 'sky'
                           ? 'bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800'
                           : task.badgeTone === 'amber'
                           ? 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
@@ -354,6 +391,22 @@ export const DailyHeroTasks: React.FC<Props> = ({
                     <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-relaxed">
                       {task.subtitle}
                     </p>
+
+                    {task.type === 'rescue' && task.crop && task.plant && onOpenRescueModal && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (task.crop && task.plant && onOpenRescueModal) {
+                            onOpenRescueModal(task.crop, task.plant);
+                          }
+                        }}
+                        className="mt-2.5 w-full py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-950/90 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-800 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                      >
+                        <LifeBuoy className="w-4 h-4 text-rose-600 dark:text-rose-400 animate-pulse" />
+                        <span>Zobacz zalecenia ratunkowe</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 

@@ -462,14 +462,21 @@ export const CalendarView: React.FC<Props> = ({
                             </div>
 
                             {/* Top variety recommendation */}
-                            {item.recommended_variety && (
+                            {Boolean(item.recommended_variety) && (
                               <div className="text-[11px] font-medium text-stone-700 dark:text-stone-300 bg-white/80 dark:bg-stone-800/80 px-2 py-1 rounded-lg border border-stone-200/60 dark:border-stone-700 mt-1 flex items-center justify-between">
                                 <span className="truncate">
-                                  Odmiana: <strong>{item.recommended_variety}</strong>
+                                  Odmiana:{' '}
+                                  <strong>
+                                    {typeof item.recommended_variety === 'string'
+                                      ? item.recommended_variety
+                                      : (item.recommended_variety as any)?.name || ''}
+                                  </strong>
                                 </span>
                                 {item.variety_badge && (
                                   <span className="text-[9px] font-bold text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-950 px-1.5 py-0.2 rounded-md shrink-0 ml-1 border border-amber-200 dark:border-amber-800">
-                                    {item.variety_badge}
+                                    {typeof item.variety_badge === 'string'
+                                      ? item.variety_badge
+                                      : (item.variety_badge as any)?.badge || ''}
                                   </span>
                                 )}
                               </div>

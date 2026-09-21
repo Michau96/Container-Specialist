@@ -298,20 +298,30 @@ export const MyCropsCalendar: React.FC<Props> = ({
                                   )}
                                 </button>
                                 <div>
-                                  <h5
-                                    className={`font-bold text-sm tracking-tight ${
-                                      isCompleted
-                                        ? 'line-through text-stone-500 dark:text-stone-400'
-                                        : 'text-stone-900 dark:text-stone-100'
-                                    }`}
-                                  >
-                                    {item.plant_name} {crop?.selectedVariety ? `– ${crop.selectedVariety}` : ''}
-                                  </h5>
-                                  {crop?.selectedVariety && (
-                                    <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">
-                                      🌱 Odmiana: {crop.selectedVariety} {crop.potCount && crop.potCount > 1 ? `(${crop.potCount}x)` : ''}
-                                    </span>
-                                  )}
+                                  {(() => {
+                                    const safeVariety =
+                                      typeof crop?.selectedVariety === 'string'
+                                        ? crop.selectedVariety
+                                        : (crop?.selectedVariety as any)?.name || '';
+                                    return (
+                                      <>
+                                        <h5
+                                          className={`font-bold text-sm tracking-tight ${
+                                            isCompleted
+                                              ? 'line-through text-stone-500 dark:text-stone-400'
+                                              : 'text-stone-900 dark:text-stone-100'
+                                          }`}
+                                        >
+                                          {item.plant_name} {safeVariety ? `– ${safeVariety}` : ''}
+                                        </h5>
+                                        {safeVariety && (
+                                          <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">
+                                            🌱 Odmiana: {safeVariety} {crop?.potCount && crop.potCount > 1 ? `(${crop.potCount}x)` : ''}
+                                          </span>
+                                        )}
+                                      </>
+                                    );
+                                  })()}
                                 </div>
                               </div>
 

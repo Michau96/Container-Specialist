@@ -578,7 +578,17 @@ export function loadSavedMyCrops(userId?: string): import('../types').MyCropItem
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
-        return parsed;
+        return parsed.map((item) => {
+          if (!item || typeof item !== 'object') return item;
+          let safeVariety = item.selectedVariety;
+          if (safeVariety && typeof safeVariety === 'object') {
+            safeVariety = (safeVariety as any).name || (safeVariety as any).variety || '';
+          }
+          return {
+            ...item,
+            selectedVariety: typeof safeVariety === 'string' ? safeVariety : String(safeVariety || ''),
+          };
+        });
       }
     }
   } catch (e) {
@@ -592,7 +602,18 @@ export function loadSavedMyCrops(userId?: string): import('../types').MyCropItem
 export function saveMyCrops(crops: import('../types').MyCropItem[], userId?: string): void {
   try {
     const key = getCropsStorageKey(userId);
-    localStorage.setItem(key, JSON.stringify(crops));
+    const sanitized = (crops || []).map((item) => {
+      if (!item || typeof item !== 'object') return item;
+      let safeVariety = item.selectedVariety;
+      if (safeVariety && typeof safeVariety === 'object') {
+        safeVariety = (safeVariety as any).name || (safeVariety as any).variety || '';
+      }
+      return {
+        ...item,
+        selectedVariety: typeof safeVariety === 'string' ? safeVariety : String(safeVariety || ''),
+      };
+    });
+    localStorage.setItem(key, JSON.stringify(sanitized));
   } catch (e) {
     console.warn('Failed to save my crops:', e);
   }

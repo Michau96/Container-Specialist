@@ -132,7 +132,11 @@ export const PlantCard: React.FC<Props> = ({
                 <>
                   Odmiany do donic:{' '}
                   <span className="font-semibold text-stone-700 dark:text-stone-300">
-                    {plant.varieties.slice(0, 3).join(', ')}
+                    {plant.varieties
+                      .slice(0, 3)
+                      .map((v) => (typeof v === 'string' ? v : v?.name || ''))
+                      .filter(Boolean)
+                      .join(', ')}
                   </span>
                 </>
               ) : (

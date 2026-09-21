@@ -6,6 +6,7 @@ import {
   DailyCropsRecommendation,
 } from '../types';
 import { getCropTimelineInfo } from './cropGrowthPhases';
+import { isWateringSuspended } from './rescueData';
 
 export function computeDailyRecommendation(
   weather: WeatherData | null,
@@ -100,6 +101,21 @@ export function computeDailyRecommendation(
   }
 
   // Inject pot & sowing specific watering nuances
+  const activeRescueCrops = userCrops.filter((c) => c.rescuePlan?.active);
+  const suspendedCrops = activeRescueCrops.filter((c) => isWateringSuspended(c.rescuePlan));
+  if (suspendedCrops.length > 0) {
+    const names = suspendedCrops
+      .map((c) => {
+        const p = userPlants.find((pl) => pl.id === c.plantId);
+        return p?.name || 'roślina';
+      })
+      .slice(0, 3)
+      .join(', ');
+    waterSpecifics.unshift(
+      `🛟 Tryb ratunkowy aktywny: ${names} ${suspendedCrops.length === 1 ? 'ma' : 'mają'} zawieszone podlewanie. Sprawdź zalecenia na karcie uprawy.`
+    );
+  }
+
   if (cropsWithoutDrainage.length > 0) {
     waterSpecifics.push(
       `🚨 Uwaga: Posiadasz donice bez odpływu wody! Podlewaj je minimalną porcją, by woda nie stała na dnie.`

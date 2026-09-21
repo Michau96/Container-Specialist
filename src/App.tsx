@@ -43,6 +43,7 @@ import defaultPlantsData from './data/plants.json';
 
 const defaultPlants = defaultPlantsData as unknown as Plant[];
 import { BalconySetupModal } from './components/BalconySetupModal';
+import { BalconyDrawer } from './components/BalconyDrawer';
 import { WelcomeModal } from './components/WelcomeModal';
 import { PotCalculator } from './components/PotCalculator';
 import { MyCropsView } from './components/MyCropsView';
@@ -73,6 +74,7 @@ export default function App() {
     }
     return !hasUserOnboarded(user?.id);
   });
+  const [isBalconyDrawerOpen, setIsBalconyDrawerOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('my_crops');
 
   // User account state
@@ -492,7 +494,10 @@ export default function App() {
       .filter((p) => {
         const matchesSearch =
           p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.varieties.some((v) => v.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          p.varieties.some((v) => {
+            const str = typeof v === 'string' ? v : `${v?.name || ''} ${v?.features || ''}`;
+            return str.toLowerCase().includes(searchQuery.toLowerCase());
+          }) ||
           p.summary.toLowerCase().includes(searchQuery.toLowerCase());
 
         const plantPills = getPlantLifestylePills(p);
@@ -546,6 +551,7 @@ export default function App() {
         onTabChange={setActiveTab}
         userSpec={userSpec}
         onOpenSetup={() => setIsSetupModalOpen(true)}
+        onOpenBalconyDrawer={() => setIsBalconyDrawerOpen(true)}
         darkMode={darkMode}
         onToggleDarkMode={toggleDarkMode}
         myCropsCount={myCrops.length}
@@ -1323,6 +1329,23 @@ export default function App() {
         onOpenAuth={() => {
           setIsSetupModalOpen(false);
           setAuthModalTab('register');
+          setIsAuthModalOpen(true);
+        }}
+      />
+
+      {/* Quick Balcony Spec Side Drawer */}
+      <BalconyDrawer
+        isOpen={isBalconyDrawerOpen}
+        onClose={() => setIsBalconyDrawerOpen(false)}
+        userSpec={userSpec}
+        onOpenFullSetup={() => {
+          setIsBalconyDrawerOpen(false);
+          setIsSetupModalOpen(true);
+        }}
+        currentUser={currentUser}
+        onOpenAuth={() => {
+          setIsBalconyDrawerOpen(false);
+          setAuthModalTab('login');
           setIsAuthModalOpen(true);
         }}
       />

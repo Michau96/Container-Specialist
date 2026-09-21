@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { UserAccount, UserBalconySpec, MyCropItem } from '../types';
 import { registerAccount, loginAccount } from '../lib/auth';
+import { signInWithGoogle } from '../lib/firebase';
 
 interface Props {
   isOpen: boolean;
@@ -44,10 +45,29 @@ export const WelcomeModal: React.FC<Props> = ({
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [authLoading, setAuthLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
 
   if (!isOpen) return null;
+
+  const handleGoogleAuth = async () => {
+    setAuthError(null);
+    setAuthSuccess(null);
+    setGoogleLoading(true);
+    try {
+      const res = await signInWithGoogle(balconySpec, myCrops);
+      setAuthSuccess(`Super! Witaj ${res.user.username}.`);
+      setTimeout(() => {
+        onAuthSuccess(res.user, res.message);
+        onClose();
+      }, 500);
+    } catch (err: any) {
+      setAuthError(err.message || 'Wystąpił błąd podczas autoryzacji kontem Google.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -235,32 +255,61 @@ export const WelcomeModal: React.FC<Props> = ({
                 </div>
 
                 {/* Primary Action Buttons */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                <div className="space-y-2.5 pt-1">
                   <button
                     type="button"
-                    id="welcome-register-btn"
-                    onClick={() => {
-                      setAuthError(null);
-                      setViewMode('register');
-                    }}
-                    className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                    id="welcome-google-auth-btn"
+                    onClick={handleGoogleAuth}
+                    disabled={googleLoading || authLoading}
+                    className="w-full py-3 px-4 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 font-bold text-xs sm:text-sm border border-stone-300 dark:border-stone-650 shadow-xs hover:shadow-sm transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 group"
                   >
-                    <UserPlus className="w-4 h-4" />
-                    <span>Załóż darmowe konto</span>
+                    {googleLoading ? (
+                      <div className="w-4 h-4 border-2 border-stone-400 border-t-emerald-600 rounded-full animate-spin" />
+                    ) : (
+                      <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                      </svg>
+                    )}
+                    <span>Zarejestruj lub zaloguj przez konto Google</span>
                   </button>
 
-                  <button
-                    type="button"
-                    id="welcome-login-btn"
-                    onClick={() => {
-                      setAuthError(null);
-                      setViewMode('login');
-                    }}
-                    className="w-full py-3 px-4 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-600 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <LogIn className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Mam już konto (Zaloguj)</span>
-                  </button>
+                  <div className="relative flex items-center justify-center">
+                    <div className="border-t border-emerald-200/60 dark:border-emerald-800/40 w-full" />
+                    <span className="bg-[#FAF8F5] dark:bg-stone-900 px-2.5 text-[11px] text-stone-500 dark:text-stone-400 font-medium shrink-0">
+                      lub tradycyjne konto
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <button
+                      type="button"
+                      id="welcome-register-btn"
+                      onClick={() => {
+                        setAuthError(null);
+                        setViewMode('register');
+                      }}
+                      className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <UserPlus className="w-4 h-4" />
+                      <span>Załóż darmowe konto</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="welcome-login-btn"
+                      onClick={() => {
+                        setAuthError(null);
+                        setViewMode('login');
+                      }}
+                      className="w-full py-2.5 px-4 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-600 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <LogIn className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                      <span>Mam już konto (Zaloguj)</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Guest option */}
@@ -323,6 +372,34 @@ export const WelcomeModal: React.FC<Props> = ({
                   <span>{authSuccess}</span>
                 </div>
               )}
+
+              {/* Google Button */}
+              <button
+                type="button"
+                id="welcome-reg-google-btn"
+                onClick={handleGoogleAuth}
+                disabled={googleLoading || authLoading}
+                className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 font-bold text-xs sm:text-sm border border-stone-300 dark:border-stone-650 shadow-xs hover:shadow-sm transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 group"
+              >
+                {googleLoading ? (
+                  <div className="w-4 h-4 border-2 border-stone-400 border-t-emerald-600 rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                )}
+                <span>Zarejestruj się błyskawicznie przez konto Google</span>
+              </button>
+
+              <div className="relative flex items-center justify-center my-1">
+                <div className="border-t border-stone-200 dark:border-stone-800 w-full" />
+                <span className="bg-[#FAF8F5] dark:bg-stone-900 px-3 text-[11px] text-stone-400 dark:text-stone-500 font-medium shrink-0">
+                  lub tradycyjnie przez nick i hasło
+                </span>
+              </div>
 
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
@@ -445,6 +522,34 @@ export const WelcomeModal: React.FC<Props> = ({
                   <span>{authSuccess}</span>
                 </div>
               )}
+
+              {/* Google Button */}
+              <button
+                type="button"
+                id="welcome-login-google-btn"
+                onClick={handleGoogleAuth}
+                disabled={googleLoading || authLoading}
+                className="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 font-bold text-xs sm:text-sm border border-stone-300 dark:border-stone-650 shadow-xs hover:shadow-sm transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 group"
+              >
+                {googleLoading ? (
+                  <div className="w-4 h-4 border-2 border-stone-400 border-t-emerald-600 rounded-full animate-spin" />
+                ) : (
+                  <svg className="w-4 h-4 shrink-0 transition-transform group-hover:scale-105" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                  </svg>
+                )}
+                <span>Zaloguj się przez konto Google</span>
+              </button>
+
+              <div className="relative flex items-center justify-center my-1">
+                <div className="border-t border-stone-200 dark:border-stone-800 w-full" />
+                <span className="bg-[#FAF8F5] dark:bg-stone-900 px-3 text-[11px] text-stone-400 dark:text-stone-500 font-medium shrink-0">
+                  lub tradycyjnie przez nick i hasło
+                </span>
+              </div>
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">

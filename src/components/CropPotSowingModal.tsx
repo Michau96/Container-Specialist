@@ -66,9 +66,11 @@ export const CropPotSowingModal: React.FC<Props> = ({
   if (!plant || !crop) return null;
 
   const availableVarieties = getPlantVarieties(plant);
-  const [selectedVariety, setSelectedVariety] = useState<string>(
-    crop.selectedVariety || (availableVarieties[0]?.name ?? 'Standardowa')
-  );
+  const initialVarietyStr =
+    typeof crop.selectedVariety === 'string'
+      ? crop.selectedVariety
+      : (crop.selectedVariety as any)?.name || (availableVarieties[0]?.name ?? 'Standardowa');
+  const [selectedVariety, setSelectedVariety] = useState<string>(initialVarietyStr);
 
   const varietyDetails = getEffectivePlantRequirements(plant, selectedVariety);
 

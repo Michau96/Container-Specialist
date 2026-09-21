@@ -4,8 +4,10 @@ import {
   MyCropItem,
   PlantGrowthPhase,
   CropTimelineInfo,
+  CropPhotoEntry,
 } from '../types';
 import { getCropTimelineInfo } from '../lib/cropGrowthPhases';
+import { getPhotoCadenceInfo, SAMPLE_TOMATO_TIMELAPSE } from '../lib/cropPhotos';
 import {
   Clock,
   CheckCircle2,
@@ -13,11 +15,14 @@ import {
   Droplets,
   Zap,
   Scissors,
-  AlertTriangle,
-  ArrowRight,
   Info,
   ChevronDown,
   ChevronUp,
+  Camera,
+  Play,
+  Sparkles,
+  Film,
+  Plus,
 } from 'lucide-react';
 
 interface Props {
@@ -25,6 +30,9 @@ interface Props {
   crop: MyCropItem;
   onOpenPotSowingModal?: () => void;
   compact?: boolean;
+  onUpdateCrop?: (updatedCrop: MyCropItem) => void;
+  onOpenAddPhoto?: (phaseId?: string) => void;
+  onOpenTimelapse?: (initialIndex?: number) => void;
 }
 
 export const CropGrowthPhaseTimeline: React.FC<Props> = ({
@@ -32,13 +40,37 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
   crop,
   onOpenPotSowingModal,
   compact = false,
+  onUpdateCrop,
+  onOpenAddPhoto,
+  onOpenTimelapse,
 }) => {
   const info: CropTimelineInfo = getCropTimelineInfo(plant, crop);
   const [selectedPhaseIndex, setSelectedPhaseIndex] = useState<number>(info.currentPhaseIndex);
   const [isExpanded, setIsExpanded] = useState<boolean>(!compact);
 
+  const photos = [...(crop.photos || [])].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+  const cadence = getPhotoCadenceInfo(crop, plant);
+
   const selectedPhase: PlantGrowthPhase = info.phases[selectedPhaseIndex] || info.currentPhase;
   const isSelectedCurrent = selectedPhaseIndex === info.currentPhaseIndex;
+
+  // Photos belonging to the selected phase
+  const selectedPhasePhotos: CropPhotoEntry[] = photos.filter(
+    (p) =>
+      p.phaseId === selectedPhase.id ||
+      (p.dayNumber >= selectedPhase.dayStart && p.dayNumber <= selectedPhase.dayEnd)
+  );
+
+  const handleLoadDemo = () => {
+    if (!onUpdateCrop) return;
+    const updated: MyCropItem = {
+      ...crop,
+      photos: SAMPLE_TOMATO_TIMELAPSE,
+    };
+    onUpdateCrop(updated);
+  };
 
   return (
     <div className="bg-stone-50/80 dark:bg-stone-800/80 rounded-2xl border border-stone-200/80 dark:border-stone-700 p-4 sm:p-5 space-y-4">
@@ -106,6 +138,67 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* 2.5. PHOTO JOURNAL & TIMELAPSE BANNER INTEGRATED WITH SCHEDULE */}
+      <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/50 to-stone-100 dark:from-emerald-950/40 dark:via-stone-900 dark:to-stone-800/60 border border-emerald-200/80 dark:border-emerald-800/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+            <Film className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-bold text-stone-900 dark:text-stone-100">
+                Dziennik zdjęć i animacja poklatkowa (Timelapse)
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-200/80 dark:bg-emerald-900 text-emerald-900 dark:text-emerald-200">
+                {photos.length === 1
+                  ? '1 zdjęcie'
+                  : photos.length > 1 && photos.length < 5
+                  ? `${photos.length} zdjęcia`
+                  : `${photos.length} zdjęć`}
+              </span>
+            </div>
+            <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-0.5 leading-snug">
+              {cadence.cadenceMessage}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-stretch sm:self-auto justify-end flex-wrap">
+          {photos.length >= 2 ? (
+            <button
+              type="button"
+              onClick={() => onOpenTimelapse && onOpenTimelapse()}
+              className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs flex items-center gap-2 transition cursor-pointer shadow-sm"
+              title="Odtwórz animację poklatkową ze wzrostu rośliny"
+            >
+              <Play className="w-3.5 h-3.5 fill-current" />
+              <span>Odtwórz timelapse</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleLoadDemo}
+              className="px-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-200 text-xs font-semibold hover:bg-stone-100 transition cursor-pointer flex items-center gap-1.5"
+              title="Załaduj 6 przykładowych zdjęć etapów wzrostu pomidora"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+              <span>Zobacz demo timelapse</span>
+            </button>
+          )}
+
+          {onOpenAddPhoto && (
+            <button
+              type="button"
+              onClick={() => onOpenAddPhoto(selectedPhase.id)}
+              className="px-3.5 py-2 rounded-xl bg-white dark:bg-stone-800 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>+ Dodaj kadr</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 3. The Visual Phase Stepper Pipeline */}
       {isExpanded && (
         <>
@@ -114,6 +207,12 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
               const isPast = idx < info.currentPhaseIndex;
               const isCurrent = idx === info.currentPhaseIndex;
               const isSelected = idx === selectedPhaseIndex;
+
+              const phasePhotosCount = photos.filter(
+                (p) =>
+                  p.phaseId === phase.id ||
+                  (p.dayNumber >= phase.dayStart && p.dayNumber <= phase.dayEnd)
+              ).length;
 
               return (
                 <button
@@ -133,19 +232,30 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
                   {/* Top indicators */}
                   <div className="flex items-center justify-between text-[10px] font-bold mb-1">
                     <span className="text-stone-600 dark:text-stone-400">Krok {phase.order}</span>
-                    {isPast ? (
-                      <span className="text-emerald-700 dark:text-emerald-400 flex items-center gap-0.5">
-                        <CheckCircle2 className="w-3 h-3" />
-                      </span>
-                    ) : isCurrent ? (
-                      <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-emerald-700 text-white text-[9px] font-bold uppercase tracking-tight animate-pulse">
-                        Teraz
-                      </span>
-                    ) : (
-                      <span className="text-stone-600 dark:text-stone-400 font-normal">
-                        od d.{phase.dayStart}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {phasePhotosCount > 0 && (
+                        <span
+                          className="px-1.5 py-0.2 rounded-md bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[9px] font-bold flex items-center gap-0.5"
+                          title={`${phasePhotosCount} zdjęcie w tej fazie`}
+                        >
+                          <Camera className="w-2.5 h-2.5" />
+                          <span>{phasePhotosCount}</span>
+                        </span>
+                      )}
+                      {isPast ? (
+                        <span className="text-emerald-700 dark:text-emerald-400 flex items-center gap-0.5">
+                          <CheckCircle2 className="w-3 h-3" />
+                        </span>
+                      ) : isCurrent ? (
+                        <span className="inline-flex items-center px-1.5 py-0.2 rounded-full bg-emerald-700 text-white text-[9px] font-bold uppercase tracking-tight animate-pulse">
+                          Teraz
+                        </span>
+                      ) : (
+                        <span className="text-stone-600 dark:text-stone-400 font-normal">
+                          od d.{phase.dayStart}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {/* Title & Icon */}
@@ -196,6 +306,63 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
                   <Calendar className="w-3.5 h-3.5" />
                   <span>Zmień datę siewu / donicę</span>
                 </button>
+              )}
+            </div>
+
+            {/* Photos for this phase */}
+            <div className="p-3 bg-stone-50/80 dark:bg-stone-800/60 rounded-xl border border-stone-200/80 dark:border-stone-700/80 space-y-2">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-stone-800 dark:text-stone-200">
+                  <Camera className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>Zdjęcia z tej fazy fenologicznej ({selectedPhasePhotos.length}):</span>
+                </div>
+                {onOpenAddPhoto && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenAddPhoto(selectedPhase.id)}
+                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Dodaj zdjęcie dla tej fazy</span>
+                  </button>
+                )}
+              </div>
+
+              {selectedPhasePhotos.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                  {selectedPhasePhotos.map((photo, pIdx) => (
+                    <div
+                      key={photo.id}
+                      onClick={() => {
+                        const globalIdx = photos.findIndex((p) => p.id === photo.id);
+                        if (onOpenTimelapse) onOpenTimelapse(globalIdx >= 0 ? globalIdx : 0);
+                      }}
+                      className="group relative rounded-xl overflow-hidden border border-stone-200 dark:border-stone-700 aspect-[4/3] bg-black cursor-pointer shadow-2xs hover:border-emerald-500 transition"
+                      title="Kliknij, aby otworzyć w odtwarzaczu timelapse"
+                    >
+                      <img
+                        src={photo.imageUrl}
+                        alt={photo.caption || ''}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-100 transition-opacity p-2 flex flex-col justify-end">
+                        <span className="text-[10px] font-bold text-white">
+                          Dzień {photo.dayNumber}
+                        </span>
+                        {photo.caption && (
+                          <span className="text-[9px] text-stone-300 line-clamp-1">
+                            {photo.caption}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 italic">
+                  Brak zdjęć zarejestrowanych w fazie: &bdquo;{selectedPhase.name}&rdquo;. Zrób zdjęcie, by wzbogacić pamiątkową animację timelapse!
+                </p>
               )}
             </div>
 

@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil użytkownika przechowujący konfigurację balkonu i listę upraw",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unikalny identyfikator użytkownika Firebase Auth UID",
+          "maxLength": 128
+        },
+        "username": {
+          "type": "string",
+          "description": "Nazwa wyświetlana lub nick użytkownika",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "Adres e-mail użytkownika",
+          "maxLength": 256
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Pełna nazwa użytkownika z konta Google",
+          "maxLength": 128
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Adres URL awatara profilowego",
+          "maxLength": 512
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Data utworzenia konta w formacie ISO8601",
+          "maxLength": 64
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "Data ostatniego logowania w formacie ISO8601",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Data ostatniej modyfikacji w formacie ISO8601",
+          "maxLength": 64
+        },
+        "authProvider": {
+          "type": "string",
+          "description": "Dostawca uwierzytelniania (google)",
+          "maxLength": 32
+        },
+        "balconySpec": {
+          "type": "object",
+          "description": "Specyfikacja techniczna i warunki mikroklimatyczne balkonu"
+        },
+        "myCrops": {
+          "type": "array",
+          "description": "Lista uprawianych roślin na balkonie"
+        }
+      },
+      "required": ["id", "username", "email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Kolekcja profili użytkowników zabezpieczona dostępem wyłącznie dla właściciela dokumentu (userId == request.auth.uid)"
+    }
+  }
+}

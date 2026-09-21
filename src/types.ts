@@ -194,12 +194,14 @@ export interface PlantNutrition {
   tags: string[];
 }
 
+export type PlantVarietyRaw = string | { name: string; features?: string };
+
 export interface Plant {
   id: string;
   name: string;
   plant_group: 'warzywa' | 'owoce' | 'ziola' | 'ozdobne' | 'kielki' | 'grzyby';
   category: string;
-  varieties: string[];
+  varieties: PlantVarietyRaw[];
   top_varieties?: PlantVariety[];
   nutrition?: PlantNutrition;
   difficulty: number; // 1-10
@@ -380,6 +382,38 @@ export interface CropTimelineInfo {
   };
 }
 
+export interface CropRescuePlan {
+  active: boolean;
+  issueId: string;
+  issueTitle: string;
+  issueIcon: string;
+  imageUrl?: string;
+  symptomBadge: string;
+  category: string;
+  activatedAt: string; // Data uruchomienia w ISO
+  suspendedWateringUntil?: string; // YYYY-MM-DD
+  suspendedWateringDays: number;
+  diagnosis: string;
+  cause: string;
+  immediateAction: string;
+  steps: string[];
+  whatToAvoid: string;
+  recoveryTimeline: string;
+  completedSteps?: Record<number, boolean>;
+}
+
+export interface CropPhotoEntry {
+  id: string;
+  date: string; // Data w formacie YYYY-MM-DD
+  imageUrl: string; // Base64 data URL lub zdalny adres URL
+  caption?: string; // Opcjonalny opis/notatka z danego tygodnia
+  phaseId?: string; // ID fazy rozwoju (np. germination, vegetative, flowering, etc.)
+  phaseName?: string; // Nazwa fazy po polsku
+  dayNumber: number; // Dzień od wysiewu/posadzenia
+  weekNumber: number; // Tydzień od wysiewu/posadzenia (np. 1, 2, 3...)
+  createdAt?: string; // ISO timestamp
+}
+
 export interface MyCropItem {
   id?: string; // Unikalne ID wpisu uprawy
   plantId: string;
@@ -395,6 +429,8 @@ export interface MyCropItem {
   sowing?: SowingConfig;
   inGreenhouse?: boolean; // Czy uprawa znajduje się w balkonowej mini-szklarni / folii
   lastWateredDate?: string; // Data ostatniego podlania w formacie YYYY-MM-DD
+  rescuePlan?: CropRescuePlan; // Aktywny lub archiwalny tryb ratunkowy
+  photos?: CropPhotoEntry[]; // Dziennik zdjęć postępu i klatek do animacji poklatkowej (timelapse)
 }
 
 export interface DailyWateringAdvice {
@@ -438,7 +474,11 @@ export interface DailyCropsRecommendation {
 
 export interface UserAccount {
   id: string;
-  username: string; // Nick użytkownika
+  username: string; // Nick lub nazwa użytkownika
+  email?: string;
+  displayName?: string;
+  photoURL?: string;
+  authProvider?: 'google' | 'password';
   createdAt: string;
   balconySpec: UserBalconySpec;
   myCrops?: MyCropItem[];
