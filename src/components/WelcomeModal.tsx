@@ -20,6 +20,7 @@ import {
 import { UserAccount, UserBalconySpec, MyCropItem } from '../types';
 import { registerAccount, loginAccount } from '../lib/auth';
 import { signInWithGoogle } from '../lib/firebase';
+import { PasswordStrengthIndicator, PasswordMatchIndicator, evaluatePasswordMatch } from './PasswordStrengthIndicator';
 
 interface Props {
   isOpen: boolean;
@@ -432,6 +433,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     minLength={4}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
+                  <PasswordStrengthIndicator password={password} idPrefix="welcome-reg-pwd" />
                 </div>
 
                 <div className="space-y-1.5">
@@ -446,7 +448,17 @@ export const WelcomeModal: React.FC<Props> = ({
                     placeholder="Wpisz hasło ponownie"
                     required
                     minLength={4}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 transition ${
+                      confirmPassword
+                        ? evaluatePasswordMatch(password, confirmPassword, 4).borderColorClass
+                        : 'border-stone-200 dark:border-stone-700 focus:ring-emerald-500'
+                    }`}
+                  />
+                  <PasswordMatchIndicator
+                    password={password}
+                    confirmPassword={confirmPassword}
+                    idPrefix="welcome-reg-pwd-match"
+                    minLength={4}
                   />
                 </div>
 
@@ -466,19 +478,45 @@ export const WelcomeModal: React.FC<Props> = ({
                     type="submit"
                     id="submit-welcome-register-btn"
                     disabled={authLoading}
-                    className="w-full sm:w-auto px-6 py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 order-1 sm:order-2"
+                    className="w-full sm:w-auto px-6 py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 order-1 sm:order-2 group"
                   >
                     {authLoading ? (
                       <span>Tworzenie konta...</span>
                     ) : (
                       <>
-                        <Sparkles className="w-4 h-4 text-emerald-200" />
+                        <Sparkles className="w-4 h-4 text-emerald-200 shrink-0" />
                         <span>Zarejestruj i przejdź do balkonu</span>
+                        <ArrowRight className="w-4 h-4 text-emerald-200 shrink-0 transition-transform group-hover:translate-x-0.5" />
                       </>
                     )}
                   </button>
                 </div>
               </form>
+
+              {/* Offline-First / Continue as Guest Banner */}
+              <div className="pt-2 border-t border-stone-200 dark:border-stone-800">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-stone-100/90 dark:bg-stone-800/70 border border-stone-200/80 dark:border-stone-700/80 shadow-2xs">
+                  <div className="space-y-0.5 text-center sm:text-left">
+                    <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-center sm:justify-start gap-1.5">
+                      <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Tryb Offline-First (Bez rejestracji)</span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-tight">
+                      Nie chcesz zakładać konta? Wszystkie dane i uprawy zapiszą się lokalnie w przeglądarce.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="register-continue-as-guest-btn"
+                    onClick={onContinueAsGuest}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 hover:text-emerald-700 dark:hover:text-emerald-300 border border-stone-300 dark:border-stone-600 font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <span>Kontynuuj jako gość</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
 
@@ -611,6 +649,31 @@ export const WelcomeModal: React.FC<Props> = ({
                   </button>
                 </div>
               </form>
+
+              {/* Offline-First / Continue as Guest Banner */}
+              <div className="pt-2 border-t border-stone-200 dark:border-stone-800">
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-stone-100/90 dark:bg-stone-800/70 border border-stone-200/80 dark:border-stone-700/80 shadow-2xs">
+                  <div className="space-y-0.5 text-center sm:text-left">
+                    <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-center sm:justify-start gap-1.5">
+                      <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                      <span>Tryb Offline-First</span>
+                    </div>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-tight">
+                      Przejdź do aplikacji bezpośrednio bez logowania.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    id="login-continue-as-guest-btn"
+                    onClick={onContinueAsGuest}
+                    className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 hover:text-emerald-700 dark:hover:text-emerald-300 border border-stone-300 dark:border-stone-600 font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
+                  >
+                    <span>Kontynuuj jako gość</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  </button>
+                </div>
+              </div>
             </div>
           )}
         </div>

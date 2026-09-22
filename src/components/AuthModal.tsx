@@ -14,6 +14,7 @@ import {
   Sparkles,
   ArrowRight,
   HelpCircle,
+  Sprout,
 } from 'lucide-react';
 import { UserAccount, UserBalconySpec, MyCropItem, getFloorCategoryLabel } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
@@ -24,6 +25,7 @@ import {
   removeKnownLocalAccount,
 } from '../lib/auth';
 import { signInWithGoogle } from '../lib/firebase';
+import { PasswordStrengthIndicator, PasswordMatchIndicator, evaluatePasswordMatch } from './PasswordStrengthIndicator';
 
 interface Props {
   isOpen: boolean;
@@ -340,6 +342,9 @@ export const AuthModal: React.FC<Props> = ({
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:focus:ring-emerald-500 transition"
                 />
               </div>
+              {mode === 'register' && (
+                <PasswordStrengthIndicator password={password} idPrefix="auth-reg-pwd" />
+              )}
             </div>
 
             {/* Confirm Password (only on register) */}
@@ -358,9 +363,19 @@ export const AuthModal: React.FC<Props> = ({
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="Powtórz hasło"
-                    className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:focus:ring-emerald-500 transition"
+                    className={`w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border rounded-2xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 transition ${
+                      confirmPassword
+                        ? evaluatePasswordMatch(password, confirmPassword, 4).borderColorClass
+                        : 'border-stone-200 dark:border-stone-700 focus:ring-emerald-600 dark:focus:ring-emerald-500'
+                    }`}
                   />
                 </div>
+                <PasswordMatchIndicator
+                  password={password}
+                  confirmPassword={confirmPassword}
+                  idPrefix="auth-reg-pwd-match"
+                  minLength={4}
+                />
               </div>
             )}
 
@@ -426,6 +441,19 @@ export const AuthModal: React.FC<Props> = ({
                 </>
               )}
             </button>
+
+            {/* Offline-First / Continue as Guest option */}
+            <div className="pt-1">
+              <button
+                type="button"
+                id="auth-modal-continue-guest-btn"
+                onClick={onClose}
+                className="w-full py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 hover:text-emerald-700 dark:hover:text-emerald-300 font-semibold text-xs transition flex items-center justify-center gap-2 border border-stone-200 dark:border-stone-700 cursor-pointer"
+              >
+                <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Kontynuuj jako gość (bez logowania)</span>
+              </button>
+            </div>
           </form>
 
           {/* Quick account switch if local accounts exist */}
