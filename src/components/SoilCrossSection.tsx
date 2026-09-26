@@ -2,6 +2,7 @@ import React from 'react';
 import { Layers, Droplets, ArrowDown } from 'lucide-react';
 import { Plant, SoilLayersInfo } from '../types';
 import { SoilShoppingGuideCard } from './SoilShoppingGuideCard';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   soilLayers?: SoilLayersInfo;
@@ -18,6 +19,9 @@ export const SoilCrossSection: React.FC<Props> = ({
   plant,
   showShoppingGuide = true,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const drainageCm = soilLayers?.drainage_cm ?? 3;
   const topMarginCm = soilLayers?.top_margin_cm ?? 2.5;
   const substrateCm = Math.max(10, potHeightCm - drainageCm - topMarginCm);
@@ -36,10 +40,10 @@ export const SoilCrossSection: React.FC<Props> = ({
           </div>
           <div>
             <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-              Schemat warstw podłoża w donicy
+              {isEn ? 'Pot Soil Layer Structure' : 'Schemat warstw podłoża w donicy'}
             </h4>
             <p className="text-[11px] text-stone-500 dark:text-stone-400">
-              Prawidłowy przekrój pionowy zapobiegający gniciu korzeni i przelaniu
+              {isEn ? 'Correct cross-section preventing root rot and waterlogging' : 'Prawidłowy przekrój pionowy zapobiegający gniciu korzeni i przelaniu'}
             </p>
           </div>
         </div>
@@ -53,8 +57,8 @@ export const SoilCrossSection: React.FC<Props> = ({
         {/* Kolumna 1: Schemat graficzny przekroju (5 kolumn na md) */}
         <div className="md:col-span-5 bg-white dark:bg-stone-900 p-3.5 rounded-xl border border-stone-200 dark:border-stone-800 shadow-2xs">
           <div className="text-[10px] uppercase font-bold text-stone-600 dark:text-stone-400 mb-2 tracking-wider flex items-center justify-between">
-            <span>Przekrój pionowy donicy</span>
-            <span>Wysokość: ~{totalHeight} cm</span>
+            <span>{isEn ? 'Pot Cross-Section' : 'Przekrój pionowy donicy'}</span>
+            <span>{isEn ? 'Height:' : 'Wysokość:'} ~{totalHeight} cm</span>
           </div>
 
           <div className="relative border-x-4 border-b-4 border-stone-700 dark:border-stone-600 rounded-b-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 flex flex-col justify-between shadow-inner">
@@ -65,7 +69,7 @@ export const SoilCrossSection: React.FC<Props> = ({
             >
               <div className="flex items-center gap-1.5">
                 <Droplets className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                <span>Margines na wodę</span>
+                <span>{isEn ? 'Watering Rim Margin' : 'Margines na wodę'}</span>
               </div>
               <span className="font-bold text-[10px] bg-white/80 dark:bg-stone-800 px-1.5 py-0.5 rounded text-sky-900 dark:text-sky-200">
                 {topMarginCm} cm
@@ -75,7 +79,7 @@ export const SoilCrossSection: React.FC<Props> = ({
             {/* Opcjonalna ściółka */}
             {soilLayers?.mulch_layer && soilLayers.mulch_layer !== 'Brak' && (
               <div className="bg-amber-100/90 dark:bg-amber-950/60 border-b border-amber-300 dark:border-amber-800 px-3 py-1 flex items-center justify-between text-[10px] text-amber-900 dark:text-amber-200 font-medium">
-                <span>Ściółka wierzchnia (mulcz)</span>
+                <span>{isEn ? 'Top Mulch Layer' : 'Ściółka wierzchnia (mulcz)'}</span>
                 <span className="text-[9px] bg-amber-200/80 dark:bg-amber-900 px-1 rounded">1-2 cm</span>
               </div>
             )}
@@ -87,9 +91,11 @@ export const SoilCrossSection: React.FC<Props> = ({
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <div className="text-xs font-bold text-amber-200">Główna mieszanka podłoża</div>
+                  <div className="text-xs font-bold text-amber-200">
+                    {isEn ? 'Main Potting Substrate' : 'Główna mieszanka podłoża'}
+                  </div>
                   <div className="text-[10px] text-stone-200 leading-snug mt-1 max-w-[180px]">
-                    {soilLayers?.substrate_mix ?? 'Ziemia ogrodnicza + perlit + biohumus'}
+                    {soilLayers?.substrate_mix ?? (isEn ? 'Gardening soil + perlite + worm castings' : 'Ziemia ogrodnicza + perlit + biohumus')}
                   </div>
                 </div>
                 <span className="font-bold text-[10px] bg-black/40 px-2 py-0.5 rounded text-amber-300 shrink-0">
@@ -99,7 +105,7 @@ export const SoilCrossSection: React.FC<Props> = ({
 
               {substrateLiters && (
                 <div className="text-[10px] text-stone-300 bg-black/40 px-2 py-0.5 rounded self-start mt-2">
-                  Objętość gleby: <strong>{substrateLiters} L</strong>
+                  {isEn ? 'Soil Volume:' : 'Objętość gleby:'} <strong>{substrateLiters} L</strong>
                 </div>
               )}
             </div>
@@ -107,8 +113,8 @@ export const SoilCrossSection: React.FC<Props> = ({
             {/* 3. Warstwa separacyjna (agrowłóknina / siatka) */}
             {soilLayers?.separator_recommended && (
               <div className="bg-stone-400 dark:bg-stone-700 py-0.5 px-3 flex items-center justify-between text-[9px] text-stone-900 dark:text-stone-100 font-semibold border-y border-stone-500">
-                <span>Agrowłóknina / siatka drenażowa</span>
-                <span className="text-[8px] uppercase tracking-wider">Filtr</span>
+                <span>{isEn ? 'Landscape fabric / mesh' : 'Agrowłóknina / siatka drenażowa'}</span>
+                <span className="text-[8px] uppercase tracking-wider">{isEn ? 'Filter' : 'Filtr'}</span>
               </div>
             )}
 
@@ -120,8 +126,12 @@ export const SoilCrossSection: React.FC<Props> = ({
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-amber-800 shrink-0" />
                 <div>
-                  <div className="text-xs font-bold text-stone-900 dark:text-stone-100">Drenaż (keramzyt)</div>
-                  <div className="text-[9px] text-stone-600 dark:text-stone-400">Otwory odpływowe na dnie</div>
+                  <div className="text-xs font-bold text-stone-900 dark:text-stone-100">
+                    {isEn ? 'Drainage (expanded clay)' : 'Drenaż (keramzyt)'}
+                  </div>
+                  <div className="text-[9px] text-stone-600 dark:text-stone-400">
+                    {isEn ? 'Drainage holes at the bottom' : 'Otwory odpływowe na dnie'}
+                  </div>
                 </div>
               </div>
               <div className="text-right">
@@ -137,7 +147,7 @@ export const SoilCrossSection: React.FC<Props> = ({
 
           <div className="flex items-center justify-center gap-2 mt-2.5 text-[10px] text-stone-500 dark:text-stone-400">
             <ArrowDown className="w-3 h-3 text-stone-400" />
-            <span>Woda odpływa swobodnie do podstawka</span>
+            <span>{isEn ? 'Water drains freely into the saucer' : 'Woda odpływa swobodnie do podstawka'}</span>
           </div>
         </div>
 
@@ -150,15 +160,17 @@ export const SoilCrossSection: React.FC<Props> = ({
                 <span className="w-4 h-4 rounded-full bg-amber-700 text-white text-[10px] flex items-center justify-center font-mono">
                   1
                 </span>
-                Dno: drenaż ({drainageCm} cm)
+                {isEn ? `Bottom: drainage (${drainageCm} cm)` : `Dno: drenaż (${drainageCm} cm)`}
               </span>
               <span className="text-[10px] font-semibold text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-950/60 border border-red-200 dark:border-red-800 px-2 py-0.5 rounded">
-                Obowiązkowe otwory
+                {isEn ? 'Drainage holes required' : 'Obowiązkowe otwory'}
               </span>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              <strong>{soilLayers?.drainage_material ?? 'Keramzyt ogrodniczy (frakcja 8-16 mm)'}</strong>.
-              Nigdy nie sadź bezpośrednio do donicy bez otworów w dnie! Stojąca woda odcina tlen od korzeni i w kilka dni prowadzi do zgnilizny korzeniowej.
+              <strong>{soilLayers?.drainage_material ?? (isEn ? 'Expanded clay pebbles (8-16 mm)' : 'Keramzyt ogrodniczy (frakcja 8-16 mm)')}</strong>.
+              {isEn
+                ? ' Never plant in pots without drainage holes! Standing water suffocates roots and quickly causes root rot.'
+                : ' Nigdy nie sadź bezpośrednio do donicy bez otworów w dnie! Stojąca woda odcina tlen od korzeni i w kilka dni prowadzi do zgnilizny korzeniowej.'}
             </p>
           </div>
 
@@ -169,12 +181,16 @@ export const SoilCrossSection: React.FC<Props> = ({
                 <span className="w-4 h-4 rounded-full bg-stone-700 dark:bg-stone-600 text-white text-[10px] flex items-center justify-center font-mono">
                   2
                 </span>
-                Przegroda filtrująca (siatka / agrowłóknina)
+                {isEn ? 'Filter Barrier (mesh / geotextile)' : 'Przegroda filtrująca (siatka / agrowłóknina)'}
               </span>
-              <span className="text-[10px] text-stone-500 dark:text-stone-400">Zalecana</span>
+              <span className="text-[10px] text-stone-500 dark:text-stone-400">
+                {isEn ? 'Recommended' : 'Zalecana'}
+              </span>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              Połóż kawałek agrowłókniny lub drobnej siatki na keramzycie. Zapobiegnie to przesypywaniu się ziemi między kulki drenażu i zatykaniu otworów odpływowych.
+              {isEn
+                ? 'Place a small piece of geotextile fleece or mesh on top of the clay pebbles. This prevents soil from washing into the drainage layer and clogging drainage holes.'
+                : 'Połóż kawałek agrowłókniny lub drobnej siatki na keramzycie. Zapobiegnie to przesypywaniu się ziemi między kulki drenażu i zatykaniu otworów odpływowych.'}
             </p>
           </div>
 
@@ -185,15 +201,17 @@ export const SoilCrossSection: React.FC<Props> = ({
                 <span className="w-4 h-4 rounded-full bg-stone-800 dark:bg-stone-700 text-white text-[10px] flex items-center justify-center font-mono">
                   3
                 </span>
-                Główna warstwa podłoża ({substrateCm} cm)
+                {isEn ? `Main Substrate Layer (${substrateCm} cm)` : `Główna warstwa podłoża (${substrateCm} cm)`}
               </span>
               <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded">
                 pH {soilLayers?.ph_range ?? '6.0-6.8'}
               </span>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              <strong>Mieszanka:</strong> {soilLayers?.substrate_mix ?? 'Ziemia kompostowa z perlitem i biohumusem'}.
-              Domieszka perlitu (15-25%) jest kluczowa w donicach – gwarantuje napowietrzenie i nie pozwala ziemi zbijać się w twardą bryłę.
+              <strong>{isEn ? 'Mix:' : 'Mieszanka:'}</strong> {soilLayers?.substrate_mix ?? (isEn ? 'Compost soil with perlite and worm castings' : 'Ziemia kompostowa z perlitem i biohumusem')}.
+              {isEn
+                ? ' Adding perlite (15-25%) is essential in containers – ensures optimal aeration and prevents soil compaction.'
+                : ' Domieszka perlitu (15-25%) jest kluczowa w donicach – gwarantuje napowietrzenie i nie pozwala ziemi zbijać się w twardą bryłę.'}
             </p>
           </div>
 
@@ -204,14 +222,16 @@ export const SoilCrossSection: React.FC<Props> = ({
                 <span className="w-4 h-4 rounded-full bg-sky-700 text-white text-[10px] flex items-center justify-center font-mono">
                   4
                 </span>
-                Margines na wodę ({topMarginCm} cm) i ściółka
+                {isEn ? `Watering Margin (${topMarginCm} cm) & Mulch` : `Margines na wodę (${topMarginCm} cm) i ściółka`}
               </span>
             </div>
             <p className="text-xs text-stone-600 dark:text-stone-400 leading-relaxed">
-              Zostaw <strong>{topMarginCm} cm</strong> wolnej przestrzeni od rantu donicy. Dzięki temu podczas podlewania woda nie przelewa się brudnym strumieniem na posadzkę balkonu.
+              {isEn
+                ? `Leave ${topMarginCm} cm space from the top rim so water doesn't overflow during watering.`
+                : `Zostaw ${topMarginCm} cm wolnej przestrzeni od rantu donicy. Dzięki temu podczas podlewania woda nie przelewa się brudnym strumieniem na posadzkę balkonu.`}
               {soilLayers?.mulch_layer && soilLayers.mulch_layer !== 'Brak' && (
                 <span className="block mt-1 text-amber-800 dark:text-amber-300">
-                  <strong>Ściółka:</strong> {soilLayers.mulch_layer}
+                  <strong>{isEn ? 'Mulch:' : 'Ściółka:'}</strong> {soilLayers.mulch_layer}
                 </span>
               )}
             </p>
@@ -227,3 +247,4 @@ export const SoilCrossSection: React.FC<Props> = ({
     </div>
   );
 };
+

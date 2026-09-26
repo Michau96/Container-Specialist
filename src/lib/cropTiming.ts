@@ -21,7 +21,7 @@ export interface PlantTimingInfo {
   nextWindowLabel?: string;
 }
 
-const MONTH_NAMES = [
+const MONTH_NAMES_PL = [
   '',
   'Styczeń',
   'Luty',
@@ -37,7 +37,7 @@ const MONTH_NAMES = [
   'Grudzień',
 ];
 
-const MONTH_NAMES_GENITIVE = [
+const MONTH_NAMES_GENITIVE_PL = [
   '',
   'stycznia',
   'lutego',
@@ -53,6 +53,22 @@ const MONTH_NAMES_GENITIVE = [
   'grudnia',
 ];
 
+const MONTH_NAMES_EN = [
+  '',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 /**
  * Returns the current calendar period ID (e.g. '09_2' for mid-September)
  */
@@ -63,20 +79,27 @@ export function getCalendarPeriodId(date: Date = new Date()): string {
 }
 
 /**
- * Converts a period ID (e.g. '09_2') into a human-readable Polish label
+ * Converts a period ID (e.g. '09_2') into a human-readable label
  */
-export function getPeriodHumanLabel(periodId: string): string {
+export function getPeriodHumanLabel(periodId: string, isEn: boolean = false): string {
+  if (!periodId) return '';
   const [mStr, hStr] = periodId.split('_');
   const month = parseInt(mStr, 10);
   const half = parseInt(hStr, 10);
-  const mName = MONTH_NAMES[month] || '';
+
+  if (isEn) {
+    const mName = MONTH_NAMES_EN[month] || '';
+    return half === 1 ? `1st half of ${mName}` : `2nd half of ${mName}`;
+  }
+
+  const mName = MONTH_NAMES_GENITIVE_PL[month] || MONTH_NAMES_PL[month] || '';
   return half === 1 ? `I połowa ${mName}` : `II połowa ${mName}`;
 }
 
 /**
  * Helper to turn a sorted list of period IDs into human-friendly ranges
  */
-function formatPeriodsToRanges(periodIds: string[]): string {
+export function formatPeriodsToRanges(periodIds: string[], isEn: boolean = false): string {
   if (!periodIds || periodIds.length === 0) return '';
 
   // Sort periods chronologically
@@ -86,7 +109,7 @@ function formatPeriodsToRanges(periodIds: string[]): string {
   const months = [...new Set(sorted.map((p) => parseInt(p.split('_')[0], 10)))].sort((a, b) => a - b);
 
   if (months.length === 0) return '';
-  if (months.length === 12) return 'Cały rok';
+  if (months.length === 12) return isEn ? 'All year round' : 'Cały rok';
 
   // Check if we have split windows (e.g. spring [3, 4] and autumn [8, 9])
   const chunks: number[][] = [];
@@ -104,28 +127,38 @@ function formatPeriodsToRanges(periodIds: string[]): string {
 
   const chunkLabels = chunks.map((chunk) => {
     if (chunk.length === 1) {
-      // Check if only first or second half
       const monthNum = chunk[0];
       const matchingPeriods = sorted.filter((p) => parseInt(p.split('_')[0], 10) === monthNum);
       if (matchingPeriods.length === 1) {
+        if (isEn) {
+          return matchingPeriods[0].endsWith('_1')
+            ? `Early ${MONTH_NAMES_EN[monthNum]}`
+            : `Late ${MONTH_NAMES_EN[monthNum]}`;
+        }
         return matchingPeriods[0].endsWith('_1')
-          ? `Początek ${MONTH_NAMES_GENITIVE[monthNum]}`
-          : `Koniec ${MONTH_NAMES_GENITIVE[monthNum]}`;
+          ? `Początek ${MONTH_NAMES_GENITIVE_PL[monthNum]}`
+          : `Koniec ${MONTH_NAMES_GENITIVE_PL[monthNum]}`;
       }
-      return MONTH_NAMES[monthNum];
+      return isEn ? MONTH_NAMES_EN[monthNum] : MONTH_NAMES_PL[monthNum];
     }
     const first = chunk[0];
     const last = chunk[chunk.length - 1];
 
-    // Check special Polish gardening milestone: May 15th (Zimna Zośka)
+    if (isEn) {
+      if (first === 5 && last === 5 && sorted.includes('05_2')) {
+        return '2nd half of May (after May 15th)';
+      }
+      return `${MONTH_NAMES_EN[first]} – ${MONTH_NAMES_EN[last]}`;
+    }
+
     if (first === 5 && last === 5 && sorted.includes('05_2')) {
       return 'Druga połowa Maja (po 15 maja)';
     }
 
-    return `${MONTH_NAMES[first]} – ${MONTH_NAMES[last]}`;
+    return `${MONTH_NAMES_PL[first]} – ${MONTH_NAMES_PL[last]}`;
   });
 
-  return chunkLabels.join(' oraz ');
+  return chunkLabels.join(isEn ? ' and ' : ' oraz ');
 }
 
 /**
@@ -140,7 +173,8 @@ export function getPlantTimingInfo(
     detailed_guide?: string;
     spacing_guide?: { sowing_type?: string };
   },
-  currentDate: Date = new Date()
+  currentDate: Date = new Date(),
+  isEn: boolean = false
 ): PlantTimingInfo {
   const currentPeriodId = getCalendarPeriodId(currentDate);
   const currentMonth = currentDate.getMonth() + 1;
@@ -175,24 +209,47 @@ export function getPlantTimingInfo(
   let sowingMethodLabel = '';
 
   if (isKielki) {
-    bestSowingLabel = 'Cały rok (uprawa ciągła w pojemnikach)';
-    sowingMethodLabel = 'Siew na tacki / do kiełkownicy (zbór w 5-10 dni)';
+    bestSowingLabel = isEn
+      ? 'All year round (continuous indoor trays)'
+      : 'Cały rok (uprawa ciągła w pojemnikach)';
+    sowingMethodLabel = isEn
+      ? 'Sow on trays / sprouter (harvest in 5-10 days)'
+      : 'Siew na tacki / do kiełkownicy (zbór w 5-10 dni)';
   } else if (indoorSowPeriods.length > 0 && outdoorSowPeriods.length > 0) {
-    bestSowingLabel = `${formatPeriodsToRanges(indoorSowPeriods)} (rozsada) / ${formatPeriodsToRanges(outdoorSowPeriods)} (wprost do donic)`;
-    sowingMethodLabel = 'Wysiew w domu na rozsadę lub późniejszy siew do donicy';
+    bestSowingLabel = isEn
+      ? `${formatPeriodsToRanges(indoorSowPeriods, true)} (seedlings) / ${formatPeriodsToRanges(outdoorSowPeriods, true)} (direct to pots)`
+      : `${formatPeriodsToRanges(indoorSowPeriods, false)} (rozsada) / ${formatPeriodsToRanges(outdoorSowPeriods, false)} (wprost do donic)`;
+    sowingMethodLabel = isEn
+      ? 'Sow indoors for seedlings or later sow directly into pots'
+      : 'Wysiew w domu na rozsadę lub późniejszy siew do donicy';
   } else if (indoorSowPeriods.length > 0) {
-    bestSowingLabel = `${formatPeriodsToRanges(indoorSowPeriods)} (rozsada domowa)`;
-    sowingMethodLabel = 'Wysiew w domu na parapecie do wielodoniczek';
+    bestSowingLabel = isEn
+      ? `${formatPeriodsToRanges(indoorSowPeriods, true)} (indoor seedlings)`
+      : `${formatPeriodsToRanges(indoorSowPeriods, false)} (rozsada domowa)`;
+    sowingMethodLabel = isEn
+      ? 'Sow indoors on windowsill into plug trays'
+      : 'Wysiew w domu na parapecie do wielodoniczek';
   } else if (outdoorSowPeriods.length > 0) {
-    bestSowingLabel = `${formatPeriodsToRanges(outdoorSowPeriods)} (wprost do donic)`;
-    sowingMethodLabel = 'Siew bezpośrednio do docelowej donicy na balkonie';
+    bestSowingLabel = isEn
+      ? `${formatPeriodsToRanges(outdoorSowPeriods, true)} (direct to pots)`
+      : `${formatPeriodsToRanges(outdoorSowPeriods, false)} (wprost do donic)`;
+    sowingMethodLabel = isEn
+      ? 'Sow directly into final balcony containers'
+      : 'Siew bezpośrednio do docelowej donicy na balkonie';
   } else if (isGrzyby) {
-    bestSowingLabel = 'Wiosna (Marzec – Maj) oraz Jesień (Wrzesień – Październik)';
-    sowingMethodLabel = 'Zaszczepienie gotowego podłoża grzybnią';
+    bestSowingLabel = isEn
+      ? 'Spring (March – May) and Autumn (September – October)'
+      : 'Wiosna (Marzec – Maj) oraz Jesień (Wrzesień – Październik)';
+    sowingMethodLabel = isEn
+      ? 'Inoculate prepared substrate block with mycelium'
+      : 'Zaszczepienie gotowego podłoża grzybnią';
   } else {
-    // For woody perennials or crops grown exclusively from cuttings/nursery pots
-    bestSowingLabel = 'Wiosna (Kwiecień – Maj) lub gotowe sadzonki';
-    sowingMethodLabel = 'Zalecany zakup gotowej sadzonki ze szkółki';
+    bestSowingLabel = isEn
+      ? 'Spring (April – May) or nursery seedlings'
+      : 'Wiosna (Kwiecień – Maj) lub gotowe sadzonki';
+    sowingMethodLabel = isEn
+      ? 'Recommended purchase of potted nursery seedlings'
+      : 'Zalecany zakup gotowej sadzonki ze szkółki';
   }
 
   // Calculate Transplanting Labels
@@ -200,118 +257,167 @@ export function getPlantTimingInfo(
   let transplantingNote = '';
 
   if (isKielki) {
-    bestTransplantingLabel = 'Nie dotyczy (uprawa bezpośrednia bez pikowania)';
-    transplantingNote = 'Mikrolistki ścina się prosto z tacki bez przesadzania.';
+    bestTransplantingLabel = isEn
+      ? 'Not applicable (direct tray growth without transplanting)'
+      : 'Nie dotyczy (uprawa bezpośrednia bez pikowania)';
+    transplantingNote = isEn
+      ? 'Microgreens are harvested straight from tray without repotting.'
+      : 'Mikrolistki ścina się prosto z tacki bez przesadzania.';
   } else if (transplantPeriods.length > 0) {
-    const formatted = formatPeriodsToRanges(transplantPeriods);
+    const formatted = formatPeriodsToRanges(transplantPeriods, isEn);
     if (transplantPeriods.includes('05_2') && transplantPeriods.length === 1) {
-      bestTransplantingLabel = 'Po 15 maja (po "Zimnej Zośce")';
+      bestTransplantingLabel = isEn
+        ? 'After May 15th (post-frost)'
+        : 'Po 15 maja (po "Zimnej Zośce")';
     } else {
       bestTransplantingLabel = formatted;
     }
 
     if (indoorSowPeriods.length > 0) {
-      transplantingNote = 'Hartuj rozsadę przez 5-7 dni przed wystawieniem na stałe na balkon.';
+      transplantingNote = isEn
+        ? 'Harden off seedlings for 5–7 days before placing permanently outdoors on the balcony.'
+        : 'Hartuj rozsadę przez 5-7 dni przed wystawieniem na stałe na balkon.';
     } else {
-      transplantingNote = 'Sadź do docelowego pojemnika z odpowiednim drenażem.';
+      transplantingNote = isEn
+        ? 'Plant into target containers with proper drainage.'
+        : 'Sadź do docelowego pojemnika z odpowiednim drenażem.';
     }
   } else if (outdoorSowPeriods.length > 0) {
-    bestTransplantingLabel = 'Nie wymaga przesadzania (siew wprost)';
-    transplantingNote = 'Wysiewaj bezpośrednio do docelowej donicy, przerywając siewki w rozstawie.';
+    bestTransplantingLabel = isEn
+      ? 'No transplanting needed (direct sow)'
+      : 'Nie wymaga przesadzania (siew wprost)';
+    transplantingNote = isEn
+      ? 'Sow directly into final container, thinning out excess seedlings.'
+      : 'Wysiewaj bezpośrednio do docelowej donicy, przerywając siewki w rozstawie.';
   } else if (isGrzyby) {
-    bestTransplantingLabel = 'Wiosna lub Jesień (temperatura 12-20°C w cieniu)';
-    transplantingNote = 'Wystawić wilgotną kostkę z grzybnią w zacienione miejsce.';
+    bestTransplantingLabel = isEn
+      ? 'Spring or Autumn (12–20°C in the shade)'
+      : 'Wiosna lub Jesień (temperatura 12-20°C w cieniu)';
+    transplantingNote = isEn
+      ? 'Place moist mycelium block in a sheltered, shady balcony spot.'
+      : 'Wystawić wilgotną kostkę z grzybnią w zacienione miejsce.';
   } else {
-    bestTransplantingLabel = 'Kwiecień – Maj oraz Wrzesień (sadzonki doniczkowane)';
-    transplantingNote = 'Rośliny wieloletnie w donicach można sadzić przez cały sezon wegetacyjny.';
+    bestTransplantingLabel = isEn
+      ? 'April – May and September (potted transplants)'
+      : 'Kwiecień – Maj oraz Wrzesień (sadzonki doniczkowane)';
+    transplantingNote = isEn
+      ? 'Potted perennial plants can be planted throughout the growing season.'
+      : 'Rośliny wieloletnie w donicach można sadzić przez cały sezon wegetacyjny.';
   }
 
   // 3. Determine status based on current date
   let status: PlantTimingInfo['status'] = 'growing_season';
-  let badgeLabel = '🌿 Sezon wegetacyjny';
+  let badgeLabel = isEn ? '🌿 Growing season' : '🌿 Sezon wegetacyjny';
   let badgeTone: PlantTimingInfo['badgeTone'] = 'stone';
   let badgeIcon = 'Calendar';
   let isGoodTimeToPlantNow = false;
   let dateExplanation = '';
 
-  const activePeriodHuman = getPeriodHumanLabel(currentPeriodId);
-  const formattedToday = `${currentDay} ${MONTH_NAMES_GENITIVE[currentMonth]}`;
+  const activePeriodHuman = getPeriodHumanLabel(currentPeriodId, isEn);
+  const formattedToday = isEn
+    ? `${MONTH_NAMES_EN[currentMonth]} ${currentDay}`
+    : `${currentDay} ${MONTH_NAMES_GENITIVE_PL[currentMonth]}`;
 
   if (isKielki) {
     status = 'year_round';
-    badgeLabel = '✨ Uprawa całoroczna (siej teraz)';
+    badgeLabel = isEn ? '✨ Year-round growing (sow now)' : '✨ Uprawa całoroczna (siej teraz)';
     badgeTone = 'emerald';
     badgeIcon = 'Sparkles';
     isGoodTimeToPlantNow = true;
-    dateExplanation = `Dziś jest ${formattedToday}. Mikrolistki i kiełki można wysiewać w dowolnym dniu roku – pierwsze zbiory już za 7-10 dni!`;
+    dateExplanation = isEn
+      ? `Today is ${formattedToday}. Microgreens and sprouts can be started any day of the year – first harvest in 7–10 days!`
+      : `Dziś jest ${formattedToday}. Mikrolistki i kiełki można wysiewać w dowolnym dniu roku – pierwsze zbiory już za 7-10 dni!`;
   } else if (currentAction === 'siew_donica' || currentAction === 'rozsada_dom') {
     status = 'sow_now';
-    badgeLabel = currentAction === 'siew_donica' ? '🌱 Idealny termin na siew wprost' : '🌱 Idealny termin na wysiew rozsady';
+    badgeLabel = isEn
+      ? currentAction === 'siew_donica'
+        ? '🌱 Perfect time for direct sowing'
+        : '🌱 Perfect time for seedling sowing'
+      : currentAction === 'siew_donica'
+      ? '🌱 Idealny termin na siew wprost'
+      : '🌱 Idealny termin na wysiew rozsady';
     badgeTone = 'emerald';
     badgeIcon = 'Sprout';
     isGoodTimeToPlantNow = true;
-    dateExplanation = `Dziś jest ${formattedToday} (${activePeriodHuman}). To optymalny kalendarzowy moment na wysiew (${
-      currentAction === 'siew_donica' ? 'wprost do donicy' : 'w domu na rozsadę'
-    })!`;
+    dateExplanation = isEn
+      ? `Today is ${formattedToday} (${activePeriodHuman}). Optimal calendar window for sowing (${
+          currentAction === 'siew_donica' ? 'directly into pots' : 'indoors for seedlings'
+        })!`
+      : `Dziś jest ${formattedToday} (${activePeriodHuman}). To optymalny kalendarzowy moment na wysiew (${
+          currentAction === 'siew_donica' ? 'wprost do donicy' : 'w domu na rozsadę'
+        })!`;
   } else if (currentAction === 'sadzenie_balkon' || currentAction === 'sadzenie') {
     status = 'transplant_now';
-    badgeLabel = '🪴 Świetny termin na sadzenie na balkon';
+    badgeLabel = isEn ? '🪴 Great time for planting on balcony' : '🪴 Świetny termin na sadzenie na balkon';
     badgeTone = 'emerald';
     badgeIcon = 'Sun';
     isGoodTimeToPlantNow = true;
-    dateExplanation = `Dziś jest ${formattedToday} (${activePeriodHuman}). Trwa optymalne okno na przesadzanie i wysadzanie sadzonek do docelowych donic balkonowych.`;
+    dateExplanation = isEn
+      ? `Today is ${formattedToday} (${activePeriodHuman}). Active window for potting and transplanting seedlings to final balcony containers.`
+      : `Dziś jest ${formattedToday} (${activePeriodHuman}). Trwa optymalne okno na przesadzanie i wysadzanie sadzonek do docelowych donic balkonowych.`;
   } else if (isGrzyby && (currentMonth === 9 || currentMonth === 10 || currentMonth === 4 || currentMonth === 5)) {
     status = 'sow_now';
-    badgeLabel = '🍄 Świetny termin na uprawę grzybów';
+    badgeLabel = isEn ? '🍄 Great window for mushroom cultivation' : '🍄 Świetny termin na uprawę grzybów';
     badgeTone = 'emerald';
     badgeIcon = 'Sprout';
     isGoodTimeToPlantNow = true;
-    dateExplanation = `Dziś jest ${formattedToday}. Umiarkowane temperatury i wysoka wilgotność sprzyjają doskonałemu owocowaniu boczniaków i pieczarek na balkonie.`;
+    dateExplanation = isEn
+      ? `Today is ${formattedToday}. Moderate temperatures and high humidity foster bountiful oyster and button mushroom flushes.`
+      : `Dziś jest ${formattedToday}. Umiarkowane temperatury i wysoka wilgotność sprzyjają doskonałemu owocowaniu boczniaków i pieczarek na balkonie.`;
   } else {
     // Check if the current action is harvest / maintenance or off-season
     if (currentAction === 'zbior') {
-      // In September/October, check if it's late for seeds
       if (allSowPeriods.length > 0) {
         const lastSowPeriod = allSowPeriods[allSowPeriods.length - 1];
         const [lastM] = lastSowPeriod.split('_').map((n) => parseInt(n, 10));
 
         if (currentMonth > lastM + 1) {
           status = 'too_late';
-          badgeLabel = '❄️ Za późno na siew nasion w tym roku';
+          badgeLabel = isEn ? '❄️ Too late for seeds this year' : '❄️ Za późno na siew nasion w tym roku';
           badgeTone = 'rose';
           badgeIcon = 'Clock';
           isGoodTimeToPlantNow = false;
-          dateExplanation = `Dziś jest ${formattedToday}. Okres wegetacji nasion minął (siew: ${bestSowingLabel}). Nasiona nie zdążą wydać plonu przed przymrozkami. Zaplanuj wysiew na wiosnę!`;
+          dateExplanation = isEn
+            ? `Today is ${formattedToday}. Sowing window has passed (sowing: ${bestSowingLabel}). Seeds won't mature before frosts. Plan for next spring!`
+            : `Dziś jest ${formattedToday}. Okres wegetacji nasion minął (siew: ${bestSowingLabel}). Nasiona nie zdążą wydać plonu przed przymrozkami. Zaplanuj wysiew na wiosnę!`;
         } else if (currentMonth === lastM || (currentMonth === lastM + 1 && currentDay <= 20)) {
           status = 'last_call';
-          badgeLabel = '🍂 Ostatni dzwonek na siew';
+          badgeLabel = isEn ? '🍂 Last call for sowing' : '🍂 Ostatni dzwonek na siew';
           badgeTone = 'amber';
           badgeIcon = 'AlertTriangle';
           isGoodTimeToPlantNow = true;
-          dateExplanation = `Dziś jest ${formattedToday}. To ostatni dzwonek na późny wysiew jesienny (np. pod agrowłókniną lub na zbiór wczesnowiosenny).`;
+          dateExplanation = isEn
+            ? `Today is ${formattedToday}. This is the final window for late autumn sowing (under fleece or for early spring harvest).`
+            : `Dziś jest ${formattedToday}. To ostatni dzwonek na późny wysiew jesienny (np. pod agrowłókniną lub na zbiór wczesnowiosenny).`;
         } else {
           status = 'growing_season';
-          badgeLabel = '🧺 Trwają zbiory • Kup gotową sadzonkę';
+          badgeLabel = isEn ? '🧺 Harvest in progress • Buy nursery plant' : '🧺 Trwają zbiory • Kup gotową sadzonkę';
           badgeTone = 'sky';
           badgeIcon = 'CheckCircle2';
           isGoodTimeToPlantNow = false;
-          dateExplanation = `Dziś jest ${formattedToday}. Rośliny w pełni owocują. Z nasion jest za późno, ale możesz jeszcze kupić owocującą lub uformowaną roślinę w doniczce.`;
+          dateExplanation = isEn
+            ? `Today is ${formattedToday}. Plants are in full harvest. Too late for seeds, but you can still buy an established potted plant.`
+            : `Dziś jest ${formattedToday}. Rośliny w pełni owocują. Z nasion jest za późno, ale możesz jeszcze kupić owocującą lub uformowaną roślinę w doniczce.`;
         }
       } else {
         status = 'growing_season';
-        badgeLabel = '🧺 Sezon zbiorów i owocowania';
+        badgeLabel = isEn ? '🧺 Harvest and fruiting season' : '🧺 Sezon zbiorów i owocowania';
         badgeTone = 'sky';
         badgeIcon = 'CheckCircle2';
         isGoodTimeToPlantNow = false;
-        dateExplanation = `Dziś jest ${formattedToday}. Rośliny owocują w donicach na balkonie.`;
+        dateExplanation = isEn
+          ? `Today is ${formattedToday}. Plants are actively fruiting in balcony containers.`
+          : `Dziś jest ${formattedToday}. Rośliny owocują w donicach na balkonie.`;
       }
     } else if (currentAction === 'pielegnacja' || currentAction === 'rosnie' || currentAction === 'kwitnie') {
       status = 'growing_season';
-      badgeLabel = '🌿 Sezon uprawy w toku';
+      badgeLabel = isEn ? '🌿 Active growing season' : '🌿 Sezon uprawy w toku';
       badgeTone = 'sky';
       badgeIcon = 'Calendar';
       isGoodTimeToPlantNow = false;
-      dateExplanation = `Dziś jest ${formattedToday}. Trwa okres intensywnego wzrostu. Na siew z nasion jest za późno, ale możesz posadzić dobrze ukorzenioną gotową sadzonkę.`;
+      dateExplanation = isEn
+        ? `Today is ${formattedToday}. Active period of vegetative growth. Too late for seeds, but well-rooted starter plants can be potted.`
+        : `Dziś jest ${formattedToday}. Trwa okres intensywnego wzrostu. Na siew z nasion jest za późno, ale możesz posadzić dobrze ukorzenioną gotową sadzonkę.`;
     } else if (
       currentAction === 'koniec_sezonu' ||
       currentAction === 'zimowanie' ||
@@ -320,39 +426,48 @@ export function getPlantTimingInfo(
       currentAction === 'odpoczynek'
     ) {
       status = 'dormancy';
-      badgeLabel = '❄️ Spoczynek zimowy (koniec sezonu)';
+      badgeLabel = isEn ? '❄️ Winter dormancy (season end)' : '❄️ Spoczynek zimowy (koniec sezonu)';
       badgeTone = 'stone';
       badgeIcon = 'Clock';
       isGoodTimeToPlantNow = false;
-      dateExplanation = `Dziś jest ${formattedToday}. Roślina kończy wegetację lub wchodzi w stan spoczynku zimowego. Zaplanuj siew na nadchodzącą wiosnę (${bestSowingLabel}).`;
+      dateExplanation = isEn
+        ? `Today is ${formattedToday}. Plants are completing their cycle or entering winter dormancy. Plan sowing for upcoming spring (${bestSowingLabel}).`
+        : `Dziś jest ${formattedToday}. Roślina kończy wegetację lub wchodzi w stan spoczynku zimowego. Zaplanuj siew na nadchodzącą wiosnę (${bestSowingLabel}).`;
     } else {
-      // If action is undefined for current period
       if (allSowPeriods.length > 0) {
         const firstSow = allSowPeriods[0];
         const [firstM] = firstSow.split('_').map((n) => parseInt(n, 10));
 
         if (currentMonth < firstM) {
           status = 'too_early';
-          badgeLabel = `⏳ Za wcześnie • Poczekaj do ${MONTH_NAMES_GENITIVE[firstM]}`;
+          badgeLabel = isEn
+            ? `⏳ Too early • Wait until ${MONTH_NAMES_EN[firstM]}`
+            : `⏳ Za wcześnie • Poczekaj do ${MONTH_NAMES_GENITIVE_PL[firstM]}`;
           badgeTone = 'stone';
           badgeIcon = 'Clock';
           isGoodTimeToPlantNow = false;
-          dateExplanation = `Dziś jest ${formattedToday}. Jest jeszcze za chłodno / za wcześnie na siew. Najbliższy termin wysiewu to ${bestSowingLabel}.`;
+          dateExplanation = isEn
+            ? `Today is ${formattedToday}. Still too cold / early for sowing. Next sowing window: ${bestSowingLabel}.`
+            : `Dziś jest ${formattedToday}. Jest jeszcze za chłodno / za wcześnie na siew. Najbliższy termin wysiewu to ${bestSowingLabel}.`;
         } else {
           status = 'too_late';
-          badgeLabel = '❄️ Za późno na siew nasion w tym roku';
+          badgeLabel = isEn ? '❄️ Too late for seeds this year' : '❄️ Za późno na siew nasion w tym roku';
           badgeTone = 'rose';
           badgeIcon = 'Clock';
           isGoodTimeToPlantNow = false;
-          dateExplanation = `Dziś jest ${formattedToday}. W tym roku termin wysiewu nasion już minął. Zaplanuj uprawę na kolejny sezon (${bestSowingLabel}).`;
+          dateExplanation = isEn
+            ? `Today is ${formattedToday}. Sowing window has passed for this season. Plan for next year (${bestSowingLabel}).`
+            : `Dziś jest ${formattedToday}. W tym roku termin wysiewu nasion już minął. Zaplanuj uprawę na kolejny sezon (${bestSowingLabel}).`;
         }
       } else {
         status = 'growing_season';
-        badgeLabel = '🪴 Gotowe sadzonki ze szkółki';
+        badgeLabel = isEn ? '🪴 Nursery potted plants' : '🪴 Gotowe sadzonki ze szkółki';
         badgeTone = 'stone';
         badgeIcon = 'Calendar';
         isGoodTimeToPlantNow = false;
-        dateExplanation = `Dziś jest ${formattedToday}. Najlepiej sadzić wyhodowane sadzonki ze szkółki ogrodniczej.`;
+        dateExplanation = isEn
+          ? `Today is ${formattedToday}. Best planted from developed potted nursery stock.`
+          : `Dziś jest ${formattedToday}. Najlepiej sadzić wyhodowane sadzonki ze szkółki ogrodniczej.`;
       }
     }
   }

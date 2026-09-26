@@ -13,6 +13,14 @@ import {
 } from 'lucide-react';
 import { CalendarResponse, CalendarActionItem, UserBalconySpec } from '../types';
 import { fetchCalendar, getCurrentPeriodId } from '../lib/api';
+import { useLanguage } from '../lib/LanguageContext';
+import { getPeriodHumanLabel } from '../lib/cropTiming';
+import {
+  getPlantName,
+  getTranslatedVarietyBadge,
+  getTranslatedVitamins,
+  getTranslatedPlantTip,
+} from '../lib/plantTranslations';
 
 interface Props {
   userSpec: UserBalconySpec;
@@ -29,6 +37,9 @@ export const CalendarView: React.FC<Props> = ({
   myCropIds = [],
   onNavigateToSearch,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const currentPeriodId = getCurrentPeriodId();
   const [calendarMode, setCalendarMode] = useState<'my_crops' | 'all'>(
     initialMode === 'my_crops' && myCropIds.length > 0 ? 'my_crops' : 'all'
@@ -61,31 +72,80 @@ export const CalendarView: React.FC<Props> = ({
     };
   }, [userSpec, selectedPeriodId, calendarMode, myCropIds.length]);
 
-  const months = [
-    { num: 1, name: 'Styczeń' },
-    { num: 2, name: 'Luty' },
-    { num: 3, name: 'Marzec' },
-    { num: 4, name: 'Kwiecień' },
-    { num: 5, name: 'Maj' },
-    { num: 6, name: 'Czerwiec' },
-    { num: 7, name: 'Lipiec' },
-    { num: 8, name: 'Sierpień' },
-    { num: 9, name: 'Wrzesień' },
-    { num: 10, name: 'Październik' },
-    { num: 11, name: 'Listopad' },
-    { num: 12, name: 'Grudzień' },
-  ];
+  const months = isEn
+    ? [
+        { num: 1, name: 'January' },
+        { num: 2, name: 'February' },
+        { num: 3, name: 'March' },
+        { num: 4, name: 'April' },
+        { num: 5, name: 'May' },
+        { num: 6, name: 'June' },
+        { num: 7, name: 'July' },
+        { num: 8, name: 'August' },
+        { num: 9, name: 'September' },
+        { num: 10, name: 'October' },
+        { num: 11, name: 'November' },
+        { num: 12, name: 'December' },
+      ]
+    : [
+        { num: 1, name: 'Styczeń' },
+        { num: 2, name: 'Luty' },
+        { num: 3, name: 'Marzec' },
+        { num: 4, name: 'Kwiecień' },
+        { num: 5, name: 'Maj' },
+        { num: 6, name: 'Czerwiec' },
+        { num: 7, name: 'Lipiec' },
+        { num: 8, name: 'Sierpień' },
+        { num: 9, name: 'Wrzesień' },
+        { num: 10, name: 'Październik' },
+        { num: 11, name: 'Listopad' },
+        { num: 12, name: 'Grudzień' },
+      ];
+
+  const getActionCategoryTitle = (label: string) => {
+    if (!isEn) return label;
+    if (label.includes('Wysiew w domu')) return 'Indoor Seedling Sowing';
+    if (label.includes('Siew wprost')) return 'Direct Sowing into Containers';
+    if (label.includes('Hartowanie')) return 'Hardening Off Seedlings';
+    if (label.includes('Sadzenie docelowe') || label.includes('Sadzenie')) return 'Potting / Planting Out on Balcony';
+    if (label.includes('pielęgnacja') || label.includes('Pielęgnacja')) return 'Care, Feeding & Watering';
+    if (label.includes('Zbiory') || label.includes('Zbiór')) return 'Harvesting Crops';
+    if (label.includes('Likwidacja')) return 'End of Season & Clearing';
+    if (label.includes('Przeniesienie donic')) return 'Moving Containers Indoors';
+    if (label.includes('Zabezpieczenie mrozoodporne')) return 'Winterizing Balcony Pots';
+    return label;
+  };
+
+  const getSeasonTipTranslation = (tip: string) => {
+    if (!isEn) return tip;
+    if (tip.includes('Planowanie sezonu')) return 'Season planning: stock up on seeds, expanded clay (leca), perlite, and check pot condition.';
+    if (tip.includes('drugiej połowie lutego')) return 'In mid-to-late February, you can start sowing hot chili peppers on a warm indoor windowsill.';
+    if (tip.includes('Marzec to czas')) return 'March is the time for starting tomato seeds indoors. Do not rush putting them outside!';
+    if (tip.includes('wczesną rzodkiewkę')) return 'In balcony boxes, you can now sow early radishes and spinach under fleece covers.';
+    if (tip.includes('odporne na chłód')) return "Sow cold-hardy herbs, 'Pariser Markt' baby carrots, and arugula.";
+    if (tip.includes('hartowanie')) return 'Late April: start gradual outdoor hardening off for tomato seedlings on warm afternoons.';
+    if (tip.includes('Zimnych Ogrodników') || tip.includes('Zimną Zośkę')) return 'BEWARE of late spring frosts (mid-May) — sudden freezing can damage tender seedlings!';
+    if (tip.includes('WIELKI START')) return 'GRAND START: From May 16th, safely move tomatoes, peppers, cucumbers, and basil to your balcony!';
+    if (tip.includes('drenażu')) return 'Drainage reminder: every container must have drainage holes and a 2–3 cm layer of expanded clay.';
+    if (tip.includes('nawadnianie') || tip.includes('przeschnąć')) return 'Monitor watering: on south-facing balconies, container soil can dry out in just 4 hours on hot days.';
+    if (tip.includes('Zasilaj rośliny')) return 'Feed plants with biohumus or potassium fertilizer every 10–14 days. Harvest salad greens and radishes continuously.';
+    if (tip.includes('Siewy poplonowe')) return 'Catch crops: replant emptied lettuce boxes with autumn spinach, corn salad, and radishes.';
+    if (tip.includes('Ostatnie zbiory')) return 'Final harvest: pick green tomatoes before autumn frosts and let them ripen on a windowsill next to apples.';
+    if (tip.includes('Zabezpieczenie na zimę')) return 'Winter prep: wrap pots with perennials (chives, kale) in burlap or bubble wrap and elevate on styrofoam.';
+    if (tip.includes('Zimowy jarmuż')) return 'Winter kale and corn salad can be harvested fresh even from under a dusting of snow.';
+    return tip;
+  };
 
   const getActionCategoryIcon = (actionLabel: string) => {
-    if (actionLabel.includes('rozsadę') || actionLabel.includes('domu'))
+    if (actionLabel.includes('rozsadę') || actionLabel.includes('domu') || actionLabel.toLowerCase().includes('seedling'))
       return <Home className="w-4 h-4 text-amber-600 dark:text-amber-400" />;
-    if (actionLabel.includes('Siew wprost') || actionLabel.includes('donicy'))
+    if (actionLabel.includes('Siew wprost') || actionLabel.includes('donicy') || actionLabel.toLowerCase().includes('sowing'))
       return <Sprout className="w-4 h-4 text-teal-600 dark:text-teal-400" />;
-    if (actionLabel.includes('Sadzenie') || actionLabel.includes('przesadzanie'))
+    if (actionLabel.includes('Sadzenie') || actionLabel.includes('przesadzanie') || actionLabel.toLowerCase().includes('planting'))
       return <Sun className="w-4 h-4 text-amber-500" />;
-    if (actionLabel.includes('Zbiory') || actionLabel.includes('Zbiór'))
+    if (actionLabel.includes('Zbiory') || actionLabel.includes('Zbiór') || actionLabel.toLowerCase().includes('harvest'))
       return <Scissors className="w-4 h-4 text-purple-600 dark:text-purple-400" />;
-    if (actionLabel.includes('Zimowanie') || actionLabel.includes('zabezpieczenie'))
+    if (actionLabel.includes('Zimowanie') || actionLabel.includes('zabezpieczenie') || actionLabel.toLowerCase().includes('winter'))
       return <Shield className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />;
     return <Droplets className="w-4 h-4 text-blue-600 dark:text-blue-400" />;
   };
@@ -100,11 +160,15 @@ export const CalendarView: React.FC<Props> = ({
           </div>
           <div>
             <div className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-              Wybór trybu kalendarza:
+              {isEn ? 'Calendar mode:' : 'Wybór trybu kalendarza:'}
             </div>
             <div className="text-sm font-semibold text-stone-200">
               {calendarMode === 'my_crops'
-                ? `Wyświetlasz zadania tylko dla ${myCropIds.length} ${myCropIds.length === 1 ? 'uprawy' : 'upraw'} z Twojego balkonu`
+                ? isEn
+                  ? `Showing tasks only for ${myCropIds.length} ${myCropIds.length === 1 ? 'crop' : 'crops'} on your balcony`
+                  : `Wyświetlasz zadania tylko dla ${myCropIds.length} ${myCropIds.length === 1 ? 'uprawy' : 'upraw'} z Twojego balkonu`
+                : isEn
+                ? 'Showing tasks for all available crops from the database'
                 : 'Wyświetlasz zadania dla wszystkich możliwych upraw z bazy wiedzy'}
             </div>
           </div>
@@ -120,7 +184,7 @@ export const CalendarView: React.FC<Props> = ({
                 : 'text-stone-400 hover:text-white'
             }`}
           >
-            <span>🌱 Moje uprawy</span>
+            <span>{isEn ? '🌱 My Crops' : '🌱 Moje uprawy'}</span>
             <span className="text-[11px] px-2 py-0.2 rounded-full bg-stone-900/60 text-emerald-300 font-bold border border-emerald-500/30">
               {myCropIds.length}
             </span>
@@ -135,7 +199,7 @@ export const CalendarView: React.FC<Props> = ({
                 : 'text-stone-400 hover:text-white'
             }`}
           >
-            <span>🌐 Wszystko co możliwe</span>
+            <span>{isEn ? '🌐 All crops' : '🌐 Wszystko co możliwe'}</span>
           </button>
         </div>
       </div>
@@ -145,7 +209,9 @@ export const CalendarView: React.FC<Props> = ({
           <div className="flex items-center gap-2">
             <Info className="w-5 h-5 text-amber-600 shrink-0" />
             <span>
-              Nie masz jeszcze dodanych roślin do "Moich upraw". Dodaj pierwsze rośliny z katalogu lub przełącz na "Wszystko co możliwe".
+              {isEn
+                ? 'You have not added any plants to "My Crops" yet. Add your first crops from the catalog or switch to "All crops".'
+                : 'Nie masz jeszcze dodanych roślin do "Moich upraw". Dodaj pierwsze rośliny z katalogu lub przełącz na "Wszystko co możliwe".'}
             </span>
           </div>
           {onNavigateToSearch && (
@@ -153,7 +219,7 @@ export const CalendarView: React.FC<Props> = ({
               onClick={onNavigateToSearch}
               className="px-3 py-1.5 bg-amber-800 text-white text-xs font-semibold rounded-lg hover:bg-amber-900 shrink-0 cursor-pointer"
             >
-              Szukaj upraw
+              {isEn ? 'Browse plants' : 'Szukaj upraw'}
             </button>
           )}
         </div>
@@ -165,16 +231,24 @@ export const CalendarView: React.FC<Props> = ({
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-stone-400 mb-1">
             <CalendarIcon className="w-4 h-4 text-stone-600 dark:text-stone-400" />
             <span>
-              {calendarMode === 'my_crops' ? 'Indywidualny terminarz Moich upraw' : 'Ogólny kalendarz 24 okresów uprawy'}
+              {calendarMode === 'my_crops'
+                ? (isEn ? 'Individual Schedule for My Crops' : 'Indywidualny terminarz Moich upraw')
+                : (isEn ? 'General 24-Period Growing Calendar' : 'Ogólny kalendarz 24 okresów uprawy')}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">
-            {calendarMode === 'my_crops' ? 'Co robić przy Twoich uprawach?' : 'Co robić na balkonie w donicach?'}
+            {calendarMode === 'my_crops'
+              ? (isEn ? 'What to do for your crops?' : 'Co robić przy Twoich uprawach?')
+              : (isEn ? 'What to do in balcony pots?' : 'Co robić na balkonie w donicach?')}
           </h2>
           <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 max-w-xl">
             {calendarMode === 'my_crops'
-              ? `Terminy prac dostosowane do ${myCropIds.length} roślin w Twoich pojemnikach.`
-              : 'Kalendarz uwzględnia aktualną datę oraz mikroklimat Twojego balkonu (piętro, ekspozycję i strefę mrozową Polski).'}
+              ? (isEn
+                  ? `Task dates tailored to ${myCropIds.length} plants in your containers.`
+                  : `Terminy prac dostosowane do ${myCropIds.length} roślin w Twoich pojemnikach.`)
+              : (isEn
+                  ? 'Calendar takes into account the current date and your balcony microclimate (floor, sun exposure, and climate zone).'
+                  : 'Kalendarz uwzględnia aktualną datę oraz mikroklimat Twojego balkonu (piętro, ekspozycję i strefę mrozową Polski).')}
           </p>
         </div>
 
@@ -191,7 +265,7 @@ export const CalendarView: React.FC<Props> = ({
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
               }`}
             >
-              Wszystkie
+              {isEn ? 'All' : 'Wszystkie'}
             </button>
             <button
               id="cal-group-veg"
@@ -202,7 +276,7 @@ export const CalendarView: React.FC<Props> = ({
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
               }`}
             >
-              <span>🥕</span> Warzywa
+              <span>🥕</span> {isEn ? 'Vegetables' : 'Warzywa'}
             </button>
             <button
               id="cal-group-fruit"
@@ -213,7 +287,7 @@ export const CalendarView: React.FC<Props> = ({
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
               }`}
             >
-              <span>🍓</span> Owoce
+              <span>🍓</span> {isEn ? 'Fruit' : 'Owoce'}
             </button>
             <button
               id="cal-group-herbs"
@@ -224,7 +298,7 @@ export const CalendarView: React.FC<Props> = ({
                   : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
               }`}
             >
-              <span>🌿</span> Zioła
+              <span>🌿</span> {isEn ? 'Herbs' : 'Zioła'}
             </button>
           </div>
 
@@ -236,7 +310,7 @@ export const CalendarView: React.FC<Props> = ({
                 className="px-3 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 <Clock className="w-3.5 h-3.5 text-stone-600 dark:text-stone-300" />
-                <span>Wróć do dzisiaj</span>
+                <span>{isEn ? 'Back to today' : 'Wróć do dzisiaj'}</span>
               </button>
             )}
 
@@ -248,7 +322,7 @@ export const CalendarView: React.FC<Props> = ({
                 onChange={(e) => setFilterSuitabilityOnly(e.target.checked)}
                 className="rounded text-stone-700 focus:ring-stone-500 w-3.5 h-3.5"
               />
-              <span>Dopasowane (&gt;75%)</span>
+              <span>{isEn ? 'Matched (>75%)' : 'Dopasowane (>75%)'}</span>
             </label>
           </div>
         </div>
@@ -257,9 +331,11 @@ export const CalendarView: React.FC<Props> = ({
       {/* 24-Period Timeline Selector */}
       <div className="bg-white dark:bg-stone-900 rounded-3xl p-4 sm:p-5 border border-stone-200 dark:border-stone-800 shadow-xs transition-colors">
         <div className="text-xs font-semibold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-3 flex items-center justify-between">
-          <span>Wybierz 2-tygodniowy okres z osi roku:</span>
+          <span>{isEn ? 'Select a 2-week period from the year axis:' : 'Wybierz 2-tygodniowy okres z osi roku:'}</span>
           <span className="text-[11px] text-stone-500 dark:text-stone-400 font-normal">
-            Podświetlony punkt = dziś ({currentPeriodId === selectedPeriodId ? 'aktywny okres' : 'przeglądasz inny okres'})
+            {isEn
+              ? `Highlighted point = today (${currentPeriodId === selectedPeriodId ? 'active period' : 'viewing other period'})`
+              : `Podświetlony punkt = dziś (${currentPeriodId === selectedPeriodId ? 'aktywny okres' : 'przeglądasz inny okres'})`}
           </span>
         </div>
 
@@ -299,7 +375,7 @@ export const CalendarView: React.FC<Props> = ({
                       {isP1Current && (
                         <span
                           className="w-1.5 h-1.5 rounded-full bg-amber-500 absolute top-1 right-1"
-                          title="Aktualny dzień"
+                          title={isEn ? 'Current date' : 'Aktualny dzień'}
                         />
                       )}
                     </button>
@@ -320,7 +396,7 @@ export const CalendarView: React.FC<Props> = ({
                       {isP2Current && (
                         <span
                           className="w-1.5 h-1.5 rounded-full bg-amber-500 absolute top-1 right-1"
-                          title="Aktualny dzień"
+                          title={isEn ? 'Current date' : 'Aktualny dzień'}
                         />
                       )}
                     </button>
@@ -337,18 +413,20 @@ export const CalendarView: React.FC<Props> = ({
         <div className="bg-stone-800 dark:bg-stone-900 text-white rounded-3xl p-5 sm:p-6 shadow-md border border-stone-700 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 text-xs font-semibold text-stone-300 uppercase tracking-wider mb-1">
-              <span>Przeglądany okres:</span>
+              <span>{isEn ? 'Browsing period:' : 'Przeglądany okres:'}</span>
               {calendarData.is_current_period && (
                 <span className="bg-amber-400 text-stone-950 px-2 py-0.5 rounded-full font-bold text-[10px]">
-                  Bieżący okres (dzisiaj)
+                  {isEn ? 'Current period (today)' : 'Bieżący okres (dzisiaj)'}
                 </span>
               )}
             </div>
             <h3 className="text-2xl font-bold text-white tracking-tight">
-              {calendarData.period.name}
+              {isEn ? getPeriodHumanLabel(calendarData.period.id, true) : calendarData.period.name}
             </h3>
             <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-xl">
-              Sprawdź poniżej listę rekomendowanych prac ogrodniczych i siewów dla tego okresu.
+              {isEn
+                ? 'Check the list of recommended gardening tasks and sowings for this period below.'
+                : 'Sprawdź poniżej listę rekomendowanych prac ogrodniczych i siewów dla tego okresu.'}
             </p>
           </div>
 
@@ -356,11 +434,11 @@ export const CalendarView: React.FC<Props> = ({
             <div className="sm:max-w-md w-full bg-stone-700/60 dark:bg-stone-800/80 rounded-2xl p-3.5 border border-stone-600/60 text-xs space-y-1.5">
               <div className="font-semibold text-stone-200 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>Wskazówki sezonowe dla donic:</span>
+                <span>{isEn ? 'Seasonal container tips:' : 'Wskazówki sezonowe dla donic:'}</span>
               </div>
               {calendarData.season_tips.map((tip, idx) => (
                 <div key={idx} className="text-stone-200 text-[11px] leading-relaxed">
-                  • {tip}
+                  • {getSeasonTipTranslation(tip)}
                 </div>
               ))}
             </div>
@@ -372,7 +450,9 @@ export const CalendarView: React.FC<Props> = ({
       {loading ? (
         <div className="text-center py-12 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800">
           <div className="inline-block animate-spin w-8 h-8 border-4 border-stone-700 dark:border-stone-300 border-t-transparent rounded-full mb-2" />
-          <p className="text-xs text-stone-500 dark:text-stone-400">Przeliczanie kalendarza dla wybranego okresu...</p>
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            {isEn ? 'Calculating calendar for selected period...' : 'Przeliczanie kalendarza dla wybranego okresu...'}
+          </p>
         </div>
       ) : calendarData && Object.keys(calendarData.actions_by_type).length > 0 ? (
         <div className="space-y-6">
@@ -399,10 +479,12 @@ export const CalendarView: React.FC<Props> = ({
                     </div>
                     <div>
                       <h4 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100">
-                        {actionLabel}
+                        {getActionCategoryTitle(actionLabel)}
                       </h4>
                       <span className="text-xs text-stone-500 dark:text-stone-400">
-                        Dotyczy {filteredItems.length} {filteredItems.length === 1 ? 'rośliny' : 'roślin'}
+                        {isEn
+                          ? `Applies to ${filteredItems.length} ${filteredItems.length === 1 ? 'plant' : 'plants'}`
+                          : `Dotyczy ${filteredItems.length} ${filteredItems.length === 1 ? 'rośliny' : 'roślin'}`}
                       </span>
                     </div>
                   </div>
@@ -419,7 +501,7 @@ export const CalendarView: React.FC<Props> = ({
                         ? 'bg-teal-50/40 dark:bg-teal-950/20 border-teal-200/80 dark:border-teal-900/40 hover:border-teal-400'
                         : 'bg-indigo-50/40 dark:bg-indigo-950/20 border-indigo-200/80 dark:border-indigo-900/40 hover:border-indigo-400';
 
-                      const groupLabel = isFruit ? 'Owoc' : isHerb ? 'Zioło' : 'Warzywo';
+                      const groupLabel = isFruit ? (isEn ? 'Fruit' : 'Owoc') : isHerb ? (isEn ? 'Herb' : 'Zioło') : (isEn ? 'Vegetable' : 'Warzywo');
                       const groupBadge = isFruit
                         ? 'bg-fuchsia-100 dark:bg-fuchsia-950 text-fuchsia-900 dark:text-fuchsia-200 border-fuchsia-200 dark:border-fuchsia-800'
                         : isHerb
@@ -451,7 +533,7 @@ export const CalendarView: React.FC<Props> = ({
                                   <span>{groupLabel}</span>
                                 </span>
                                 <h5 className="font-bold text-stone-900 dark:text-stone-100 text-sm tracking-tight">
-                                  {item.plant_name}
+                                  {getPlantName(item.plant_id || item.plant_name, language)}
                                 </h5>
                               </div>
                               <span
@@ -465,7 +547,7 @@ export const CalendarView: React.FC<Props> = ({
                             {Boolean(item.recommended_variety) && (
                               <div className="text-[11px] font-medium text-stone-700 dark:text-stone-300 bg-white/80 dark:bg-stone-800/80 px-2 py-1 rounded-lg border border-stone-200/60 dark:border-stone-700 mt-1 flex items-center justify-between">
                                 <span className="truncate">
-                                  Odmiana:{' '}
+                                  {isEn ? 'Variety: ' : 'Odmiana: '}
                                   <strong>
                                     {typeof item.recommended_variety === 'string'
                                       ? item.recommended_variety
@@ -474,9 +556,12 @@ export const CalendarView: React.FC<Props> = ({
                                 </span>
                                 {item.variety_badge && (
                                   <span className="text-[9px] font-bold text-amber-900 dark:text-amber-200 bg-amber-100 dark:bg-amber-950 px-1.5 py-0.2 rounded-md shrink-0 ml-1 border border-amber-200 dark:border-amber-800">
-                                    {typeof item.variety_badge === 'string'
-                                      ? item.variety_badge
-                                      : (item.variety_badge as any)?.badge || ''}
+                                    {getTranslatedVarietyBadge(
+                                      typeof item.variety_badge === 'string'
+                                        ? item.variety_badge
+                                        : (item.variety_badge as any)?.badge || '',
+                                      language
+                                    )}
                                   </span>
                                 )}
                               </div>
@@ -485,20 +570,20 @@ export const CalendarView: React.FC<Props> = ({
                             {/* Nutrition micro-pill */}
                             {item.nutrition && (
                               <div className="text-[10px] text-stone-600 dark:text-stone-400 mt-1.5 line-clamp-1">
-                                🌱 <span className="font-semibold text-stone-800 dark:text-stone-200">Witaminy:</span>{' '}
-                                {item.nutrition.vitamins}
+                                🌱 <span className="font-semibold text-stone-800 dark:text-stone-200">{isEn ? 'Vitamins:' : 'Witaminy:'}</span>{' '}
+                                {getTranslatedVitamins(item.nutrition.vitamins, language)}
                               </div>
                             )}
 
                             <p className="text-[11px] text-stone-600 dark:text-stone-400 line-clamp-2 mt-1.5 leading-relaxed">
-                              {item.tip}
+                              {getTranslatedPlantTip(item.plant_id, item.tip, language)}
                             </p>
                           </div>
 
                           <div className="mt-3 pt-2.5 border-t border-stone-200/60 dark:border-stone-700 flex items-center justify-between text-[11px] text-stone-600 dark:text-stone-400">
-                            <span>Donica: min. {item.pot_vol}L</span>
+                            <span>{isEn ? `Pot: min. ${item.pot_vol}L` : `Donica: min. ${item.pot_vol}L`}</span>
                             <span className="text-stone-900 dark:text-stone-100 font-semibold hover:underline">
-                              Zobacz poradnik →
+                              {isEn ? 'View guide →' : 'Zobacz poradnik →'}
                             </span>
                           </div>
                         </div>
@@ -513,12 +598,17 @@ export const CalendarView: React.FC<Props> = ({
       ) : (
         <div className="text-center py-12 bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 p-6">
           <Info className="w-8 h-8 text-stone-400 mx-auto mb-2" />
-          <h4 className="text-base font-semibold text-stone-800 dark:text-stone-200">Brak aktywnych prac w tym okresie</h4>
+          <h4 className="text-base font-semibold text-stone-800 dark:text-stone-200">
+            {isEn ? 'No active tasks in this period' : 'Brak aktywnych prac w tym okresie'}
+          </h4>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-md mx-auto">
-            W tym terminie wegetacja na balkonie odpoczywa lub trwa rutynowe podlewanie. Wybierz inny okres z osi czasu powyżej.
+            {isEn
+              ? 'During this period, vegetation on the balcony is dormant or routine watering applies. Choose another period from the timeline above.'
+              : 'W tym terminie wegetacja na balkonie odpoczywa lub trwa rutynowe podlewanie. Wybierz inny okres z osi czasu powyżej.'}
           </p>
         </div>
       )}
     </div>
   );
 };
+

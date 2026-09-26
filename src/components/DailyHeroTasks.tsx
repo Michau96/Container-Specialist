@@ -30,6 +30,7 @@ import {
   UserAccount,
 } from '../types';
 import { isWateringSuspended, getDaysRemainingInSuspension } from '../lib/rescueData';
+import { useLanguage } from '../lib/LanguageContext';
 
 export interface DailyTaskItem {
   id: string;
@@ -75,6 +76,8 @@ export const DailyHeroTasks: React.FC<Props> = ({
   onNavigateToSearch,
   onOpenRescueModal,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
   const storageKey = `balcony_daily_tasks_done_${todayStr}`;
 
@@ -104,17 +107,17 @@ export const DailyHeroTasks: React.FC<Props> = ({
   // Toggle state to review completed tasks inside the Empty State
   const [showCompletedList, setShowCompletedList] = useState<boolean>(false);
 
-  // Dynamic user name greeting (default to "Michale" as requested)
+  // Dynamic user name greeting
   const greetingName = useMemo(() => {
     if (currentUser?.username) {
       const trimmed = currentUser.username.trim();
       if (trimmed.toLowerCase() === 'michał' || trimmed.toLowerCase() === 'michal') {
-        return 'Michale';
+        return isEn ? 'Michael' : 'Michale';
       }
       return trimmed;
     }
-    return 'Michale';
-  }, [currentUser]);
+    return isEn ? 'Gardener' : 'Michale';
+  }, [currentUser, isEn]);
 
   // Generate dynamic, context-aware task cards
   const allTasks = useMemo<DailyTaskItem[]>(() => {
@@ -130,7 +133,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
       const cropKey = crop.id || `${crop.plantId}_${crop.selectedVariety || index}`;
       const rawVariety = crop.selectedVariety || plant?.top_varieties?.[0]?.name || plant?.varieties?.[0] || '';
       const variety = typeof rawVariety === 'string' ? rawVariety : (rawVariety as any)?.name || '';
-      const plantName = plant?.name || 'Roślina';
+      const plantName = plant?.name || (isEn ? 'Plant' : 'Roślina');
 
       // CHECK FOR ACTIVE RESCUE MODE FIRST
       if (crop.rescuePlan?.active) {
@@ -139,20 +142,30 @@ export const DailyHeroTasks: React.FC<Props> = ({
         const rescueTaskId = `rescue_${cropKey}_${todayStr}`;
         const isRescueDoneToday = genericCompletedTaskIds.includes(rescueTaskId);
 
+        const rescueTitle = isEn
+          ? `🚨 Rescue ${plantName.toLowerCase()}: ${crop.rescuePlan.issueTitle}`
+          : `🚨 Ratuj ${plantName.toLowerCase()}: ${crop.rescuePlan.issueTitle}`;
+        
+        const rescueSubtitle = isSuspended
+          ? isEn
+            ? `Watering schedule SUSPENDED (${daysLeft > 0 ? `${daysLeft} days left` : 'holding period'}). ${crop.rescuePlan.immediateAction}`
+            : `Harmonogram podlewania ZAWIESZONY (${daysLeft > 0 ? `jeszcze ${daysLeft} dni` : 'karencja'}). ${crop.rescuePlan.immediateAction}`
+          : isEn
+          ? `Water suspension ended. Follow steps: ${crop.rescuePlan.immediateAction}`
+          : `Karencja wstrzymania wody minęła. Wykonaj zalecenia: ${crop.rescuePlan.immediateAction}`;
+
         tasks.push({
           id: rescueTaskId,
           type: 'rescue',
           cropId: cropKey,
           plantId: crop.plantId,
-          title: `🚨 Ratuj ${plantName.toLowerCase()}: ${crop.rescuePlan.issueTitle}`,
-          subtitle: isSuspended
-            ? `Harmonogram podlewania ZAWIESZONY (${daysLeft > 0 ? `jeszcze ${daysLeft} dni` : 'karencja'}). ${crop.rescuePlan.immediateAction}`
-            : `Karencja wstrzymania wody minęła. Wykonaj zalecenia: ${crop.rescuePlan.immediateAction}`,
-          badge: '🚑 Tryb ratunkowy',
+          title: rescueTitle,
+          subtitle: rescueSubtitle,
+          badge: isEn ? '🚑 Rescue Mode' : '🚑 Tryb ratunkowy',
           badgeTone: 'rose',
           icon: crop.rescuePlan.issueIcon || '🚑',
           iconBg: 'from-rose-500/20 to-amber-500/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
-          actionText: isRescueDoneToday ? 'Kroki wykonane' : 'Kroki ratunkowe',
+          actionText: isRescueDoneToday ? (isEn ? 'Steps Done' : 'Kroki wykonane') : (isEn ? 'Rescue Steps' : 'Kroki ratunkowe'),
           isCompleted: isRescueDoneToday,
           crop,
           plant,
@@ -164,34 +177,50 @@ export const DailyHeroTasks: React.FC<Props> = ({
       const isWateredToday = crop.lastWateredDate === todayStr;
 
       // Specific watering advice tailored to plant
-      let waterSubtitle = 'Umiarkowana dawka wody u nasady łodygi (nie mocz liści).';
+      let waterSubtitle = isEn
+        ? 'Moderate water at root base (avoid wetting leaves).'
+        : 'Umiarkowana dawka wody u nasady łodygi (nie mocz liści).';
       let taskIcon = '💧';
-      if (plantName.toLowerCase().includes('pomidor')) {
+      if (plantName.toLowerCase().includes('pomidor') || plantName.toLowerCase().includes('tomato')) {
         taskIcon = '🍅';
-        waterSubtitle = `Obfite podlewanie podłoża u nasady (${crop.pot?.volumeL || 15}L donica). Rano lub pod wieczór.`;
-      } else if (plantName.toLowerCase().includes('bazyli') || plant?.plant_group === 'ziola') {
+        waterSubtitle = isEn
+          ? `Thorough root watering (${crop.pot?.volumeL || 15}L pot). Early morning or evening.`
+          : `Obfite podlewanie podłoża u nasady (${crop.pot?.volumeL || 15}L donica). Rano lub pod wieczór.`;
+      } else if (plantName.toLowerCase().includes('bazyli') || plantName.toLowerCase().includes('basil') || plant?.plant_group === 'ziola') {
         taskIcon = '🌿';
-        waterSubtitle = 'Zioła lubią lekko wilgotne, ciepłe podłoże. Zroś delikatnie glebę.';
-      } else if (plantName.toLowerCase().includes('truskawk')) {
+        waterSubtitle = isEn
+          ? 'Herbs prefer slightly damp, warm soil. Gently mist surface.'
+          : 'Zioła lubią lekko wilgotne, ciepłe podłoże. Zroś delikatnie glebę.';
+      } else if (plantName.toLowerCase().includes('truskawk') || plantName.toLowerCase().includes('strawberr')) {
         taskIcon = '🍓';
-        waterSubtitle = 'Stała wilgotność w strefie korzeniowej; podlewaj rano przed silnym słońcem.';
-      } else if (plantName.toLowerCase().includes('papryk')) {
+        waterSubtitle = isEn
+          ? 'Consistent moisture at root level; water early before midday sun.'
+          : 'Stała wilgotność w strefie korzeniowej; podlewaj rano przed silnym słońcem.';
+      } else if (plantName.toLowerCase().includes('papryk') || plantName.toLowerCase().includes('pepper') || plantName.toLowerCase().includes('chili')) {
         taskIcon = '🌶️';
-        waterSubtitle = 'Ciepła woda o temperaturze pokojowej. Unikaj przesuszenia bryły korzeniowej.';
+        waterSubtitle = isEn
+          ? 'Warm room-temperature water. Avoid completely drying out root ball.'
+          : 'Ciepła woda o temperaturze pokojowej. Unikaj przesuszenia bryły korzeniowej.';
       }
+
+      const waterTitle = isEn
+        ? `Water ${plantName.toLowerCase()}${variety ? ` (${variety})` : ''}`
+        : `Podlej ${plantName.toLowerCase()}${variety ? ` (${variety})` : ''}`;
 
       tasks.push({
         id: `water_${cropKey}`,
         type: 'water',
         cropId: cropKey,
         plantId: crop.plantId,
-        title: `Podlej ${plantName.toLowerCase()}${variety ? ` (${variety})` : ''}`,
+        title: waterTitle,
         subtitle: waterSubtitle,
-        badge: isWateredToday ? '✅ Podlane dzisiaj' : '💧 Podlewanie',
+        badge: isWateredToday
+          ? (isEn ? '✅ Watered Today' : '✅ Podlane dzisiaj')
+          : (isEn ? '💧 Watering' : '💧 Podlewanie'),
         badgeTone: isWateredToday ? 'emerald' : 'sky',
         icon: taskIcon,
         iconBg: 'from-sky-500/15 to-emerald-500/15 text-sky-700 dark:text-sky-300 border-sky-200 dark:border-sky-800',
-        actionText: isWateredToday ? 'Zrobione' : 'Oznacz jako podlane',
+        actionText: isWateredToday ? (isEn ? 'Done' : 'Zrobione') : (isEn ? 'Mark as Watered' : 'Oznacz jako podlane'),
         isCompleted: isWateredToday,
         crop,
         plant,
@@ -206,13 +235,15 @@ export const DailyHeroTasks: React.FC<Props> = ({
       tasks.push({
         id: ghTaskId,
         type: 'greenhouse',
-        title: 'Uchyl szklarnię balkonową',
-        subtitle: 'Wietrzenie zapobiega kondensacji i przegrzaniu powyżej 28°C w słoneczne godziny.',
-        badge: '🏡 Szklarnia',
+        title: isEn ? 'Ventilate balcony greenhouse' : 'Uchyl szklarnię balkonową',
+        subtitle: isEn
+          ? 'Ventilation prevents moisture condensation and overheating above 28°C during sunny hours.'
+          : 'Wietrzenie zapobiega kondensacji i przegrzaniu powyżej 28°C w słoneczne godziny.',
+        badge: isEn ? '🏡 Greenhouse' : '🏡 Szklarnia',
         badgeTone: 'amber',
         icon: '💨',
         iconBg: 'from-amber-500/15 to-orange-500/15 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
-        actionText: isGhDone ? 'Zrobione' : 'Przewietrzone',
+        actionText: isGhDone ? (isEn ? 'Done' : 'Zrobione') : (isEn ? 'Ventilated' : 'Przewietrzone'),
         isCompleted: isGhDone,
       });
     }
@@ -224,13 +255,15 @@ export const DailyHeroTasks: React.FC<Props> = ({
       tasks.push({
         id: fertTaskId,
         type: 'fertilize',
-        title: 'Zasil rośliny bio-humusem',
-        subtitle: 'Dobre warunki wilgotnościowe do dostarczenia organicznych mikroelementów.',
-        badge: '🌱 Odżywianie',
+        title: isEn ? 'Feed plants with bio-fertilizer' : 'Zasil rośliny bio-humusem',
+        subtitle: isEn
+          ? 'Optimal moisture conditions today to provide organic micronutrients.'
+          : 'Dobre warunki wilgotnościowe do dostarczenia organicznych mikroelementów.',
+        badge: isEn ? '🌱 Nutrition' : '🌱 Odżywianie',
         badgeTone: 'emerald',
         icon: '✨',
         iconBg: 'from-emerald-500/15 to-teal-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
-        actionText: isFertDone ? 'Zrobione' : 'Zasilone',
+        actionText: isFertDone ? (isEn ? 'Done' : 'Zrobione') : (isEn ? 'Fed' : 'Zasilone'),
         isCompleted: isFertDone,
       });
     }
@@ -238,22 +271,26 @@ export const DailyHeroTasks: React.FC<Props> = ({
     // 4. Balcony Microclimate & Pest inspection task
     const inspectTaskId = `inspect_microclimate_${todayStr}`;
     const isInspectDone = genericCompletedTaskIds.includes(inspectTaskId);
-    const floorLabel = userSpec.floor ? `${userSpec.floor}. piętro` : 'balkon';
+    const floorLabel = userSpec.floor
+      ? isEn ? `Floor ${userSpec.floor}` : `${userSpec.floor}. piętro`
+      : isEn ? 'balcony' : 'balkon';
     tasks.push({
       id: inspectTaskId,
       type: 'inspect',
-      title: `Przegląd liści i podłoża (${floorLabel})`,
-      subtitle: 'Sprawdź spodnią stronę liści pod kątem szkodników i wilgotność na głębokości 3 cm.',
-      badge: '🔍 Kontrola',
+      title: isEn ? `Check leaves and soil (${floorLabel})` : `Przegląd liści i podłoża (${floorLabel})`,
+      subtitle: isEn
+        ? 'Inspect underside of leaves for pests and check soil moisture at 3 cm depth.'
+        : 'Sprawdź spodnią stronę liści pod kątem szkodników i wilgotność na głębokości 3 cm.',
+      badge: isEn ? '🔍 Inspection' : '🔍 Kontrola',
       badgeTone: 'violet',
       icon: '🪴',
       iconBg: 'from-purple-500/15 to-pink-500/15 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
-      actionText: isInspectDone ? 'Zrobione' : 'Sprawdzone',
+      actionText: isInspectDone ? (isEn ? 'Done' : 'Zrobione') : (isEn ? 'Inspected' : 'Sprawdzone'),
       isCompleted: isInspectDone,
     });
 
     return tasks;
-  }, [crops, allPlants, todayStr, genericCompletedTaskIds, dailyRecommendation, userSpec]);
+  }, [crops, allPlants, todayStr, genericCompletedTaskIds, dailyRecommendation, userSpec, isEn]);
 
   // Split tasks into pending and completed
   const pendingTasks = useMemo(() => allTasks.filter((t) => !t.isCompleted), [allTasks]);
@@ -294,9 +331,9 @@ export const DailyHeroTasks: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider mb-1">
             <Sparkles className="w-4 h-4 text-amber-500 animate-pulse" />
-            <span>Codzienny rytuał balkonu</span>
+            <span>{isEn ? 'Daily Balcony Ritual' : 'Codzienny rytuał balkonu'}</span>
             <span className="text-stone-300 dark:text-stone-700">•</span>
-            <span>{userSpec.floor}. piętro</span>
+            <span>{isEn ? `Floor ${userSpec.floor}` : `${userSpec.floor}. piętro`}</span>
             {weather?.temperature !== undefined && (
               <>
                 <span className="text-stone-300 dark:text-stone-700">•</span>
@@ -305,11 +342,15 @@ export const DailyHeroTasks: React.FC<Props> = ({
             )}
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
-            <span>Twoje zadania na dziś, {greetingName} 👋</span>
+            <span>{isEn ? `Your tasks for today, ${greetingName} 👋` : `Twoje zadania na dziś, ${greetingName} 👋`}</span>
           </h2>
           <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 max-w-xl">
             {isAllCompleted
-              ? 'Wszystkie rośliny otrzymały dzisiejszą opiekę. Twój balkonowy ogród ma się świetnie!'
+              ? isEn
+                ? 'All plants received their care today. Your balcony garden is thriving!'
+                : 'Wszystkie rośliny otrzymały dzisiejszą opiekę. Twój balkonowy ogród ma się świetnie!'
+              : isEn
+              ? `${pendingTasks.length} ${pendingTasks.length === 1 ? 'task' : 'tasks'} remaining to keep your plants healthy and lush.`
               : `Pozostało ${pendingTasks.length} ${
                   pendingTasks.length === 1 ? 'zadanie' : pendingTasks.length < 5 ? 'zadania' : 'zadań'
                 } do wykonania, aby Twoje rośliny rosły zdrowo i obficie.`}
@@ -322,7 +363,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
             <div className="flex items-center justify-between text-xs font-bold text-stone-700 dark:text-stone-200 mb-1.5">
               <span className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Postęp zadań</span>
+                <span>{isEn ? 'Task progress' : 'Postęp zadań'}</span>
               </span>
               <span className="text-emerald-700 dark:text-emerald-400 font-extrabold">
                 {completedCount}/{totalCount}
@@ -343,10 +384,10 @@ export const DailyHeroTasks: React.FC<Props> = ({
         <div className="space-y-4">
           {/* Section Subtitle */}
           <div className="flex items-center justify-between text-xs font-bold text-stone-500 dark:text-stone-400 px-1">
-            <span>KARTY ZADAŃ DO WYKONANIA ({pendingTasks.length})</span>
+            <span>{isEn ? `TASKS TO COMPLETE (${pendingTasks.length})` : `KARTY ZADAŃ DO WYKONANIA (${pendingTasks.length})`}</span>
             {completedCount > 0 && (
               <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                ✓ {completedCount} wykonane
+                ✓ {isEn ? `${completedCount} completed` : `${completedCount} wykonane`}
               </span>
             )}
           </div>
@@ -404,7 +445,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
                         className="mt-2.5 w-full py-2 px-3 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/60 dark:hover:bg-rose-950/90 text-rose-900 dark:text-rose-200 border border-rose-300 dark:border-rose-800 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
                       >
                         <LifeBuoy className="w-4 h-4 text-rose-600 dark:text-rose-400 animate-pulse" />
-                        <span>Zobacz zalecenia ratunkowe</span>
+                        <span>{isEn ? 'View rescue steps' : 'Zobacz zalecenia ratunkowe'}</span>
                       </button>
                     )}
                   </div>
@@ -414,16 +455,16 @@ export const DailyHeroTasks: React.FC<Props> = ({
                 <button
                   onClick={() => handleToggleTask(task)}
                   className="w-full py-3 px-4 rounded-xl border-2 border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800/80 hover:bg-emerald-600 hover:border-emerald-600 text-stone-700 dark:text-stone-200 hover:text-white font-extrabold text-xs sm:text-sm shadow-2xs hover:shadow-sm transition-all duration-200 cursor-pointer active:scale-[0.98] flex items-center justify-between group/btn"
-                  title="Kliknij, aby oznaczyć zadanie jako wykonane"
+                  title={isEn ? 'Click to mark task as completed' : 'Kliknij, aby oznaczyć zadanie jako wykonane'}
                 >
                   <span className="flex items-center gap-2.5">
                     <span className="w-5 h-5 rounded-full border-2 border-stone-400 dark:border-stone-500 group-hover/btn:border-white group-hover/btn:bg-white/20 flex items-center justify-center transition-colors">
                       <Check className="w-3.5 h-3.5 text-white opacity-0 group-hover/btn:opacity-100 transition-opacity stroke-[3]" />
                     </span>
-                    <span>Oznacz jako zrobione</span>
+                    <span>{isEn ? 'Mark as done' : 'Oznacz jako zrobione'}</span>
                   </span>
                   <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-700 group-hover/btn:bg-emerald-700 group-hover/btn:text-emerald-100 transition-colors">
-                    Gotowe ✓
+                    {isEn ? 'Done ✓' : 'Gotowe ✓'}
                   </span>
                 </button>
               </div>
@@ -437,7 +478,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
                 onClick={() => setShowCompletedList((prev) => !prev)}
                 className="text-xs font-bold text-stone-500 dark:text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 inline-flex items-center gap-1.5 cursor-pointer py-1"
               >
-                <span>Ukończone dzisiaj ({completedCount})</span>
+                <span>{isEn ? `Completed today (${completedCount})` : `Ukończone dzisiaj (${completedCount})`}</span>
                 {showCompletedList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </button>
 
@@ -458,7 +499,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
                         onClick={() => handleToggleTask(task)}
                         className="text-[11px] font-bold text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer underline shrink-0"
                       >
-                        Cofnij
+                        {isEn ? 'Undo' : 'Cofnij'}
                       </button>
                     </div>
                   ))}
@@ -540,17 +581,17 @@ export const DailyHeroTasks: React.FC<Props> = ({
           <div className="max-w-xl mx-auto space-y-2">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 font-extrabold text-xs border border-emerald-300 dark:border-emerald-800">
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Misja wykonana • 100% zadowolonych roślin</span>
+              <span>{isEn ? 'Mission complete • 100% happy plants' : 'Misja wykonana • 100% zadowolonych roślin'}</span>
             </div>
 
             <h3 className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight">
-              Wszystko gotowe na dziś! Czas na relaks 🌿
+              {isEn ? 'All done for today! Time to relax 🌿' : 'Wszystko gotowe na dziś! Czas na relaks 🌿'}
             </h3>
 
             <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed max-w-lg mx-auto">
-              Świetna robota, {greetingName}! Wszystkie rośliny na Twoim {userSpec.floor}. piętrze zostały
-              podlane i zaopiekowane. Gleba ma odpowiednią wilgotność, a Twoje uprawy zdrowo rosną.
-              Zaparz kawę i ciesz się zielenią na balkonie! ☕
+              {isEn
+                ? `Great job, ${greetingName}! All crops on your floor have been watered and cared for. Soil moisture is optimal and your plants are growing nicely. Grab a coffee and enjoy the greenery on your balcony! ☕`
+                : `Świetna robota, ${greetingName}! Wszystkie rośliny na Twoim ${userSpec.floor}. piętrze zostały podlane i zaopiekowane. Gleba ma odpowiednią wilgotność, a Twoje uprawy zdrowo rosną. Zaparz kawę i ciesz się zielenią na balkonie! ☕`}
             </p>
           </div>
 
@@ -558,15 +599,15 @@ export const DailyHeroTasks: React.FC<Props> = ({
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-bold">
             <div className="px-3.5 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 text-stone-700 dark:text-stone-200 flex items-center gap-2 shadow-2xs">
               <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              <span>{completedCount} z {totalCount} zadań odhaczonych</span>
+              <span>{isEn ? `${completedCount} of ${totalCount} tasks completed` : `${completedCount} z ${totalCount} zadań odhaczonych`}</span>
             </div>
             <div className="px-3.5 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 text-stone-700 dark:text-stone-200 flex items-center gap-2 shadow-2xs">
               <Coffee className="w-4 h-4 text-amber-600" />
-              <span>Czas na relaks i spokój</span>
+              <span>{isEn ? 'Time to relax and unwind' : 'Czas na relaks i spokój'}</span>
             </div>
             <div className="px-3.5 py-2 rounded-xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700 text-stone-700 dark:text-stone-200 flex items-center gap-2 shadow-2xs">
               <Heart className="w-4 h-4 text-rose-500" />
-              <span>Balkon: 100% wigoru</span>
+              <span>{isEn ? 'Balcony: 100% vigor' : 'Balkon: 100% wigoru'}</span>
             </div>
           </div>
 
@@ -576,17 +617,17 @@ export const DailyHeroTasks: React.FC<Props> = ({
               onClick={() => setShowCompletedList((prev) => !prev)}
               className="px-4 py-2 bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 rounded-xl border border-stone-200 dark:border-stone-700 text-xs font-bold transition cursor-pointer shadow-2xs inline-flex items-center gap-1.5"
             >
-              <span>{showCompletedList ? 'Ukryj listę zadań' : 'Pokaż wykonane zadania'}</span>
+              <span>{showCompletedList ? (isEn ? 'Hide task list' : 'Ukryj listę zadań') : (isEn ? 'Show completed tasks' : 'Pokaż wykonane zadania')}</span>
               {showCompletedList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
             </button>
 
             <button
               onClick={handleResetTasks}
-              title="Przywróć stan zadań (przydatne do testów)"
+              title={isEn ? 'Reset tasks state' : 'Przywróć stan zadań (przydatne do testów)'}
               className="px-3.5 py-2 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 rounded-xl text-xs font-semibold transition cursor-pointer inline-flex items-center gap-1.5"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Resetuj zadania</span>
+              <span>{isEn ? 'Reset tasks' : 'Resetuj zadania'}</span>
             </button>
           </div>
 
@@ -594,7 +635,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
           {showCompletedList && (
             <div className="mt-4 pt-4 border-t border-emerald-200/60 dark:border-stone-800 max-w-lg mx-auto text-left space-y-2">
               <div className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider px-1">
-                Wykonane dzisiaj:
+                {isEn ? 'Completed today:' : 'Wykonane dzisiaj:'}
               </div>
               {completedTasks.map((task) => (
                 <div
@@ -611,7 +652,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
                     onClick={() => handleToggleTask(task)}
                     className="text-xs font-bold text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 cursor-pointer underline shrink-0"
                   >
-                    Cofnij
+                    {isEn ? 'Undo' : 'Cofnij'}
                   </button>
                 </div>
               ))}

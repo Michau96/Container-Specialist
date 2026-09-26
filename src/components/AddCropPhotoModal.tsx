@@ -6,6 +6,8 @@ import {
   compressImageFile,
 } from '../lib/cropPhotos';
 import { getCropTimelineInfo } from '../lib/cropGrowthPhases';
+import { useLanguage } from '../lib/LanguageContext';
+import { getPlantName } from '../lib/plantTranslations';
 import {
   X,
   Upload,
@@ -33,6 +35,8 @@ export const AddCropPhotoModal: React.FC<Props> = ({
   onSavePhoto,
   defaultPhaseId,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
   const [photoDate, setPhotoDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -63,7 +67,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
       setImagePreview(compressedDataUrl);
     } catch (err) {
       console.error('Error compressing image:', err);
-      setErrorMsg('Nie udało się przetworzyć zdjęcia. Wybierz inny plik JPG lub PNG.');
+      setErrorMsg(isEn ? 'Failed to process image. Please choose another JPG or PNG file.' : 'Nie udało się przetworzyć zdjęcia. Wybierz inny plik JPG lub PNG.');
     } finally {
       setIsProcessing(false);
     }
@@ -75,14 +79,14 @@ export const AddCropPhotoModal: React.FC<Props> = ({
       'https://images.unsplash.com/photo-1592417817098-8f3d6ef2399b?auto=format&fit=crop&w=800&q=80'
     );
     if (!caption) {
-      setCaption('Zdjęcie postępu – roślina zdrowo rośnie na balkonie.');
+      setCaption(isEn ? 'Growth progress photo – plant is thriving on balcony.' : 'Zdjęcie postępu – roślina zdrowo rośnie na balkonie.');
     }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!imagePreview) {
-      setErrorMsg('Wybierz lub zrób zdjęcie przed zapisaniem klatki.');
+      setErrorMsg(isEn ? 'Please choose or take a photo before saving.' : 'Wybierz lub zrób zdjęcie przed zapisaniem klatki.');
       return;
     }
 
@@ -117,20 +121,22 @@ export const AddCropPhotoModal: React.FC<Props> = ({
             </div>
             <div>
               <h3 className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-100">
-                Dodaj zdjęcie do osi czasu i Timelapse
+                {isEn ? 'Add photo to timeline & timelapse' : 'Dodaj zdjęcie do osi czasu i Timelapse'}
               </h3>
               <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                {plant.name} • Rekomendacja: 1 zdjęcie na 1–2 tygodnie
+                {getPlantName(plant, language)} • {isEn ? 'Recommended: 1 photo every 1–2 weeks' : 'Rekomendacja: 1 zdjęcie na 1–2 tygodnie'}
               </p>
             </div>
           </div>
 
           <button
+            id="close-add-photo-modal-btn"
             type="button"
             onClick={onClose}
-            className="p-1.5 text-stone-400 hover:text-stone-800 dark:hover:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+            aria-label="Zamknij"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
@@ -146,20 +152,20 @@ export const AddCropPhotoModal: React.FC<Props> = ({
           {/* 1. Upload / Capture Image Area */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-stone-800 dark:text-stone-200 block">
-              1. Zdjęcie rośliny (z aparatu lub pliku)
+              {isEn ? '1. Plant photo (camera or file)' : '1. Zdjęcie rośliny (z aparatu lub pliku)'}
             </label>
 
             {imagePreview ? (
               <div className="relative rounded-2xl overflow-hidden border-2 border-emerald-500 aspect-[4/3] bg-black flex items-center justify-center group">
                 <img
                   src={imagePreview}
-                  alt="Podgląd zdjęcia"
+                  alt={isEn ? 'Photo preview' : 'Podgląd zdjęcia'}
                   className="w-full h-full object-contain"
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                   <label className="px-4 py-2 rounded-xl bg-white text-stone-900 font-bold text-xs cursor-pointer shadow-md hover:bg-stone-100 transition">
-                    Zmień zdjęcie
+                    {isEn ? 'Change photo' : 'Zmień zdjęcie'}
                     <input
                       type="file"
                       accept="image/*"
@@ -173,7 +179,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
                     onClick={() => setImagePreview(null)}
                     className="px-4 py-2 rounded-xl bg-rose-600 text-white font-bold text-xs shadow-md hover:bg-rose-700 transition cursor-pointer"
                   >
-                    Usuń
+                    {isEn ? 'Delete' : 'Usuń'}
                   </button>
                 </div>
               </div>
@@ -184,17 +190,17 @@ export const AddCropPhotoModal: React.FC<Props> = ({
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs font-bold text-stone-800 dark:text-stone-200">
-                    Zrób zdjęcie aparatem lub przeciągnij plik
+                    {isEn ? 'Take photo or drag & drop file' : 'Zrób zdjęcie aparatem lub przeciągnij plik'}
                   </p>
                   <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                    Formaty JPG, PNG, WEBP (automatyczna optymalizacja rozmiaru)
+                    {isEn ? 'JPG, PNG, WEBP formats (auto compressed)' : 'Formaty JPG, PNG, WEBP (automatyczna optymalizacja rozmiaru)'}
                   </p>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap justify-center pt-1">
                   <label className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs">
                     <Camera className="w-4 h-4" />
-                    <span>Wybierz / Zrób zdjęcie</span>
+                    <span>{isEn ? 'Select / Take photo' : 'Wybierz / Zrób zdjęcie'}</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -210,7 +216,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
                     className="px-3 py-2 rounded-xl bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-200 text-xs font-semibold hover:bg-stone-300 transition cursor-pointer flex items-center gap-1"
                   >
                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Użyj zdjęcia demo</span>
+                    <span>{isEn ? 'Use demo photo' : 'Użyj zdjęcia demo'}</span>
                   </button>
                 </div>
               </div>
@@ -222,7 +228,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
             <div>
               <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1 mb-1">
                 <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Data wykonania zdjęcia</span>
+                <span>{isEn ? 'Photo capture date' : 'Data wykonania zdjęcia'}</span>
               </label>
               <input
                 type="date"
@@ -231,13 +237,13 @@ export const AddCropPhotoModal: React.FC<Props> = ({
                 className="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs font-semibold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-500 outline-hidden"
               />
               <span className="text-[10px] text-stone-500 dark:text-stone-400 mt-1 block">
-                Obliczony czas: <strong>Dzień {dayNumber}</strong> (Tydzień {weekNumber})
+                {isEn ? 'Calculated:' : 'Obliczony czas:'} <strong>{isEn ? `Day ${dayNumber}` : `Dzień ${dayNumber}`}</strong> ({isEn ? `Week ${weekNumber}` : `Tydzień ${weekNumber}`})
               </span>
             </div>
 
             <div>
               <label className="text-xs font-bold text-stone-800 dark:text-stone-200 block mb-1">
-                Faza fenologiczna
+                {isEn ? 'Phenological growth phase' : 'Faza fenologiczna'}
               </label>
               <select
                 value={currentPhase.id}
@@ -246,12 +252,12 @@ export const AddCropPhotoModal: React.FC<Props> = ({
               >
                 {timelineInfo.phases.map((phase) => (
                   <option key={phase.id} value={phase.id}>
-                    {phase.icon} {phase.name} (Dni {phase.dayStart}–{phase.dayEnd})
+                    {phase.icon} {phase.name} ({isEn ? `Days ${phase.dayStart}–${phase.dayEnd}` : `Dni ${phase.dayStart}–${phase.dayEnd}`})
                   </option>
                 ))}
               </select>
               <span className="text-[10px] text-emerald-700 dark:text-emerald-400 mt-1 block">
-                ✓ Przypisana do harmonogramu wzrostu
+                {isEn ? '✓ Linked to growth schedule' : '✓ Przypisana do harmonogramu wzrostu'}
               </span>
             </div>
           </div>
@@ -259,13 +265,13 @@ export const AddCropPhotoModal: React.FC<Props> = ({
           {/* 3. Podpis / Notatka z tego tygodnia */}
           <div>
             <label className="text-xs font-bold text-stone-800 dark:text-stone-200 block mb-1">
-              Podpis / spostrzeżenie z tego tygodnia (opcjonalnie)
+              {isEn ? 'Caption / Note for this week (optional)' : 'Podpis / spostrzeżenie z tego tygodnia (opcjonalnie)'}
             </label>
             <input
               type="text"
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              placeholder="np. Pierwsze pąki kwiatowe! / Przesadzono do donicy 15L"
+              placeholder={isEn ? 'e.g. First flower buds! / Repotted into 15L container' : 'np. Pierwsze pąki kwiatowe! / Przesadzono do donicy 15L'}
               maxLength={120}
               className="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:ring-2 focus:ring-emerald-500 outline-hidden"
             />
@@ -278,7 +284,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
               onClick={onClose}
               className="px-4 py-2.5 rounded-xl text-xs font-bold text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
             >
-              Anuluj
+              {isEn ? 'Cancel' : 'Anuluj'}
             </button>
             <button
               type="submit"
@@ -290,7 +296,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
               }`}
             >
               <Check className="w-4 h-4" />
-              <span>{isProcessing ? 'Przetwarzanie...' : 'Zapisz kadr do osi czasu'}</span>
+              <span>{isProcessing ? (isEn ? 'Processing...' : 'Przetwarzanie...') : (isEn ? 'Save photo to timeline' : 'Zapisz kadr do osi czasu')}</span>
             </button>
           </div>
         </form>
@@ -298,3 +304,4 @@ export const AddCropPhotoModal: React.FC<Props> = ({
     </div>
   );
 };
+

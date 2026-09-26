@@ -14,6 +14,7 @@ import {
   HelpCircle,
 } from 'lucide-react';
 import { DailyCropsRecommendation, WeatherData, UserBalconySpec } from '../types';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   recommendation: DailyCropsRecommendation;
@@ -30,6 +31,8 @@ export const DailyRecommendationCard: React.FC<Props> = ({
   cropsCount,
   layout = 'horizontal',
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const toggleSection = (section: string) => {
@@ -45,20 +48,21 @@ export const DailyRecommendationCard: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1">
             <Sparkles className="w-4 h-4" />
-            <span>Codzienny asystent balkonu • Dzisiejsze rekomendacje</span>
+            <span>{isEn ? 'Daily Balcony Assistant • Today\'s Recommendations' : 'Codzienny asystent balkonu • Dzisiejsze rekomendacje'}</span>
           </div>
           <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <span>O czym pamiętać dzisiaj w Twoich uprawach?</span>
+            <span>{isEn ? 'What to keep in mind today for your crops?' : 'O czym pamiętać dzisiaj w Twoich uprawach?'}</span>
           </h3>
           <p className="text-xs sm:text-sm text-emerald-200 mt-1 max-w-2xl leading-relaxed">
-            Spersonalizowane zalecenia pielęgnacyjne przeliczone na podstawie aktualnej pogody w regionie,
-            warunków na Twoim {userSpec.floor}. piętrze oraz {cropsCount} roślin w Twoich uprawach.
+            {isEn
+              ? `Personalized care advice calculated from live local weather, conditions on your ${userSpec.floor}th floor, and ${cropsCount} plants in your crops.`
+              : `Spersonalizowane zalecenia pielęgnacyjne przeliczone na podstawie aktualnej pogody w regionie, warunków na Twoim ${userSpec.floor}. piętrze oraz ${cropsCount} roślin w Twoich uprawach.`}
           </p>
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-center bg-emerald-900/60 px-3 py-1.5 rounded-xl border border-emerald-700/60 text-xs text-emerald-200">
           <Clock className="w-3.5 h-3.5 text-emerald-300" />
-          <span>Odświeżono: dzisiaj {recommendation.lastUpdated}</span>
+          <span>{isEn ? `Refreshed: today ${recommendation.lastUpdated}` : `Odświeżono: dzisiaj ${recommendation.lastUpdated}`}</span>
         </div>
       </div>
 
@@ -92,9 +96,9 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-sky-400 uppercase tracking-wider">
-                    Filar 1: Nawadnianie
+                    {isEn ? 'Pillar 1: Irrigation' : 'Filar 1: Nawadnianie'}
                   </div>
-                  <h4 className="text-base font-bold text-white">Podlewanie donic</h4>
+                  <h4 className="text-base font-bold text-white">{isEn ? 'Pot watering' : 'Podlewanie donic'}</h4>
                 </div>
               </div>
 
@@ -115,10 +119,10 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 )}
                 <span>
                   {watering.status === 'obfite'
-                    ? 'Podlej obficie'
+                    ? (isEn ? 'Water thoroughly' : 'Podlej obficie')
                     : watering.status === 'wstrzymaj'
-                    ? 'Wstrzymaj się'
-                    : 'Podlej po teście'}
+                    ? (isEn ? 'Hold watering' : 'Wstrzymaj się')
+                    : (isEn ? 'Water after check' : 'Podlej po teście')}
                 </span>
               </div>
             </div>
@@ -140,10 +144,10 @@ export const DailyRecommendationCard: React.FC<Props> = ({
 
           <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300 flex items-center justify-between">
             <span>
-              Aktualna wilgotność: <strong>{weather?.humidity ?? 60}%</strong>
+              {isEn ? 'Current humidity:' : 'Aktualna wilgotność:'} <strong>{weather?.humidity ?? 60}%</strong>
             </span>
             <span>
-              Opady: <strong>{weather?.precipitation ?? 0} mm</strong>
+              {isEn ? 'Rainfall:' : 'Opady:'} <strong>{weather?.precipitation ?? 0} mm</strong>
             </span>
           </div>
         </div>
@@ -161,9 +165,9 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-amber-400 uppercase tracking-wider">
-                    Filar 2: Zasilanie
+                    {isEn ? 'Pillar 2: Feeding' : 'Filar 2: Zasilanie'}
                   </div>
-                  <h4 className="text-base font-bold text-white">Nawożenie podłoża</h4>
+                  <h4 className="text-base font-bold text-white">{isEn ? 'Fertilization' : 'Nawożenie podłoża'}</h4>
                 </div>
               </div>
 
@@ -180,7 +184,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 ) : (
                   <XCircle className="w-3.5 h-3.5 text-emerald-300" />
                 )}
-                <span>{fertilizing.isGoodDay ? 'Dobry dzień na nawóz' : 'Pomiń dzisiaj'}</span>
+                <span>{fertilizing.isGoodDay ? (isEn ? 'Good day to feed' : 'Dobry dzień na nawóz') : (isEn ? 'Skip today' : 'Pomiń dzisiaj')}</span>
               </div>
             </div>
 
@@ -189,7 +193,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
 
             <div className="mt-3 text-xs text-emerald-200 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
               <span className="text-amber-400 font-bold block mb-0.5 text-[11px] uppercase tracking-wider">
-                Wskazówka dawkowania:
+                {isEn ? 'Dosage tip:' : 'Wskazówka dawkowania:'}
               </span>
               <p className="text-[11px] text-emerald-200 leading-relaxed">{fertilizing.dosageTip}</p>
             </div>
@@ -197,9 +201,9 @@ export const DailyRecommendationCard: React.FC<Props> = ({
 
           <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300 flex items-center justify-between">
             <span>
-              Temperatura: <strong>{weather?.temperature ?? 19}°C</strong>
+              {isEn ? 'Temperature:' : 'Temperatura:'} <strong>{weather?.temperature ?? 19}°C</strong>
             </span>
-            <span>Reguła: wilgotna bryła przed nawozem</span>
+            <span>{isEn ? 'Rule: moist soil before fertilizer' : 'Reguła: wilgotna bryła przed nawozem'}</span>
           </div>
         </div>
 
@@ -216,14 +220,16 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-teal-400 uppercase tracking-wider">
-                    Filar 3: Formowanie
+                    {isEn ? 'Pillar 3: Pruning' : 'Filar 3: Formowanie'}
                   </div>
-                  <h4 className="text-base font-bold text-white">Przycinanie i uszczykiwanie</h4>
+                  <h4 className="text-base font-bold text-white">{isEn ? 'Pruning & pinching' : 'Przycinanie i uszczykiwanie'}</h4>
                 </div>
               </div>
 
               <span className="text-[11px] font-semibold text-teal-300 bg-teal-950/80 px-2.5 py-0.5 rounded-full border border-teal-800/50">
-                {pruning.plantTasks.length} {pruning.plantTasks.length === 1 ? 'zadanie' : 'zadania'}
+                {isEn
+                  ? `${pruning.plantTasks.length} ${pruning.plantTasks.length === 1 ? 'task' : 'tasks'}`
+                  : `${pruning.plantTasks.length} ${pruning.plantTasks.length === 1 ? 'zadanie' : 'zadania'}`}
               </span>
             </div>
 
@@ -247,7 +253,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
           </div>
 
           <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300">
-            Narzędzie: używaj zdezynfekowanego nożyka lub ostrych nożyczek
+            {isEn ? 'Tool: use sanitized blade or clean shears' : 'Narzędzie: używaj zdezynfekowanego nożyka lub ostrych nożyczek'}
           </div>
         </div>
 
@@ -264,9 +270,9 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 </div>
                 <div>
                   <div className="text-[11px] font-bold text-purple-400 uppercase tracking-wider">
-                    Filar 4: Ochrona
+                    {isEn ? 'Pillar 4: Protection' : 'Filar 4: Ochrona'}
                   </div>
-                  <h4 className="text-base font-bold text-white">Oprysk profilaktyczny</h4>
+                  <h4 className="text-base font-bold text-white">{isEn ? 'Preventive spraying' : 'Oprysk profilaktyczny'}</h4>
                 </div>
               </div>
 
@@ -283,7 +289,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
                 ) : (
                   <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
                 )}
-                <span>{spraying.isGoodDay ? 'Dobry dzień na oprysk' : 'Zły moment na oprysk'}</span>
+                <span>{spraying.isGoodDay ? (isEn ? 'Good day for spray' : 'Dobry dzień na oprysk') : (isEn ? 'Poor time for spray' : 'Zły moment na oprysk')}</span>
               </div>
             </div>
 
@@ -293,7 +299,7 @@ export const DailyRecommendationCard: React.FC<Props> = ({
             {spraying.recommendedOrganicSolution && (
               <div className="mt-3 text-xs text-emerald-200 bg-stone-900/60 p-2.5 rounded-xl border border-stone-800">
                 <span className="text-purple-400 font-bold block mb-0.5 text-[11px] uppercase tracking-wider">
-                  Receptura ekologiczna:
+                  {isEn ? 'Organic recipe:' : 'Receptura ekologiczna:'}
                 </span>
                 <p className="text-[11px] text-emerald-200 leading-relaxed">
                   {spraying.recommendedOrganicSolution}
@@ -304,9 +310,9 @@ export const DailyRecommendationCard: React.FC<Props> = ({
 
           <div className="mt-4 pt-3 border-t border-stone-700/40 text-[11px] text-emerald-300 flex items-center justify-between">
             <span>
-              Wiatr na piętrze: <strong>{Math.round(weather?.balcony_advice?.adjusted_wind_at_floor ?? (weather?.wind_speed ?? 12))} km/h</strong>
+              {isEn ? 'Floor wind:' : 'Wiatr na piętrze:'} <strong>{Math.round(weather?.balcony_advice?.adjusted_wind_at_floor ?? (weather?.wind_speed ?? 12))} km/h</strong>
             </span>
-            <span>Wykonuj wieczorem po oblocie pszczół</span>
+            <span>{isEn ? 'Apply in the evening after bees return' : 'Wykonuj wieczorem po oblocie pszczół'}</span>
           </div>
         </div>
       </div>

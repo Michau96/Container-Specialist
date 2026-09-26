@@ -1,4 +1,4 @@
-import { UserAccount, UserBalconySpec, MyCropItem } from '../types';
+import { UserAccount, UserBalconySpec, MyCropItem, Language } from '../types';
 import { saveBalconyToFirestore, logoutFirebaseUser } from './firebase';
 
 const TOKEN_STORAGE_KEY = 'balkonowy_auth_token';
@@ -15,6 +15,7 @@ interface LocalAccountRecord {
   lastLoginAt: string;
   balconySpec: UserBalconySpec;
   myCrops?: MyCropItem[];
+  language?: Language;
 }
 
 // Simple deterministic hash for offline fallback storage
@@ -102,7 +103,8 @@ export async function registerAccount(
   username: string,
   password: string,
   balconySpec: UserBalconySpec,
-  myCrops?: MyCropItem[]
+  myCrops?: MyCropItem[],
+  language?: Language
 ): Promise<{ user: UserAccount; token: string; message: string }> {
   const trimmed = username.trim();
   if (!trimmed || trimmed.length < 2) {
@@ -111,6 +113,8 @@ export async function registerAccount(
   if (!password || password.length < 4) {
     throw new Error('Hasło musi zawierać minimum 4 znaki.');
   }
+
+  const chosenLang: Language = language === 'en' ? 'en' : 'pl';
 
   // 1. Try server-side registration first
   try {
@@ -122,6 +126,7 @@ export async function registerAccount(
         password,
         balconySpec,
         myCrops: myCrops || [],
+        language: chosenLang,
       }),
     });
 
@@ -150,6 +155,7 @@ export async function registerAccount(
       lastLoginAt: user.lastLoginAt || new Date().toISOString(),
       balconySpec: user.balconySpec,
       myCrops: user.myCrops,
+      language: user.language || chosenLang,
     };
     if (existingIndex >= 0) {
       localDb[existingIndex] = newRecord;
@@ -183,6 +189,7 @@ export async function registerAccount(
       lastLoginAt: now,
       balconySpec,
       myCrops: myCrops || [],
+      language: chosenLang,
     };
 
     const record: LocalAccountRecord = {
@@ -194,6 +201,7 @@ export async function registerAccount(
       lastLoginAt: now,
       balconySpec,
       myCrops: myCrops || [],
+      language: chosenLang,
     };
 
     localDb.push(record);
@@ -471,3 +479,57 @@ export async function logoutAccount(): Promise<void> {
     // ignore
   }
 }
+
+/**
+ * Update the user's preferred application language (persists to localStorage, local db, and server)
+ */
+export async function updateUserLanguage(language: Language): Promise<{ success: boolean; user?: UserAccount }> {
+  let currentUser = getStoredUser();
+  if (currentUser) {
+    currentUser = {
+      ...currentUser,
+      language,
+    };
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(currentUser));
+    } catch {
+      // ignore
+    }
+
+    // Update in local accounts db
+    const localDb = getLocalAccountsDb();
+    const idx = localDb.findIndex((a) => a.id === currentUser?.id);
+    if (idx >= 0) {
+      localDb[idx].language = language;
+      saveLocalAccountsDb(localDb);
+    }
+  }
+
+  // Attempt server update if user has an auth token
+  const token = getStoredToken();
+  if (token) {
+    try {
+      const res = await fetch('/api/auth/language', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ language }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+          return { success: true, user: data.user };
+        }
+      }
+    } catch (err) {
+      console.warn('Server language update failed, preserved locally:', err);
+    }
+  }
+
+  return { success: true, user: currentUser || undefined };
+}
+

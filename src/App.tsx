@@ -54,8 +54,12 @@ import { computeDailyRecommendation } from './lib/dailyRecommendations';
 import { getEffectivePlantRequirements } from './lib/varietyData';
 import { getPlantTimingInfo, getCalendarPeriodId, getPeriodHumanLabel } from './lib/cropTiming';
 import { getPlantLifestylePills } from './lib/plantLifestyle';
+import { useLanguage } from './lib/LanguageContext';
+import { getTranslatedPlant, getPlantGroupLabel } from './lib/plantTranslations';
 
 export default function App() {
+  const { language, t } = useLanguage();
+  const isEn = language === 'en';
   const [userSpec, setUserSpec] = useState<UserBalconySpec>(() => {
     const user = getStoredUser();
     return loadSavedSpec(user?.id);
@@ -122,10 +126,17 @@ export default function App() {
   const [plants, setPlants] = useState<Plant[]>(defaultPlants);
   const [loadingPlants, setLoadingPlants] = useState<boolean>(false);
 
+  const translatedPlants = useMemo(() => {
+    return plants.map((p) => getTranslatedPlant(p, language));
+  }, [plants, language]);
+
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(true);
 
   const [selectedPlant, setSelectedPlant] = useState<Plant | null>(null);
+  const activeSelectedPlant = useMemo(() => {
+    return selectedPlant ? getTranslatedPlant(selectedPlant, language) : null;
+  }, [selectedPlant, language]);
   const [selectedPotPlant, setSelectedPotPlant] = useState<Plant | null>(null);
 
   // Filters for recommendations
@@ -226,13 +237,17 @@ export default function App() {
           setCurrentUser(res.user);
         }
         setAccountToast({
-          message: `Ustawienia balkonu zostały przypisane do Twojego konta (${currentUser.username})!`,
+          message: isEn
+            ? `Balcony settings assigned to your account (${currentUser.username})!`
+            : `Ustawienia balkonu zostały przypisane do Twojego konta (${currentUser.username})!`,
           type: 'success',
         });
       });
     } else {
       setAccountToast({
-        message: 'Parametry balkonu zapisane w trybie gościa. Zarejestruj konto, aby zapisać je na stałe.',
+        message: isEn
+          ? 'Balcony parameters saved in guest mode. Register an account to persist them.'
+          : 'Parametry balkonu zapisane w trybie gościa. Zarejestruj konto, aby zapisać je na stałe.',
         type: 'info',
       });
     }
@@ -249,7 +264,11 @@ export default function App() {
     saveMyCrops(crops, user.id);
 
     setAccountToast({
-      message: message || `Witaj, ${user.username}! Twoje uprawy i specyfikacja balkonu zostały wczytane.`,
+      message:
+        message ||
+        (isEn
+          ? `Welcome, ${user.username}! Your crops and balcony specs have been loaded.`
+          : `Witaj, ${user.username}! Twoje uprawy i specyfikacja balkonu zostały wczytane.`),
       type: 'success',
     });
   };
@@ -286,7 +305,9 @@ export default function App() {
     saveMyCrops(cleanGuestCrops, undefined);
 
     setAccountToast({
-      message: `Wylogowano z konta ${formerName ? `"${formerName}"` : ''}. Jesteś teraz w trybie gościa.`,
+      message: isEn
+        ? `Logged out of account ${formerName ? `"${formerName}"` : ''}. You are now in guest mode.`
+        : `Wylogowano z konta ${formerName ? `"${formerName}"` : ''}. Jesteś teraz w trybie gościa.`,
       type: 'info',
     });
   };
@@ -417,29 +438,50 @@ export default function App() {
 
   // Group-filtered plants
   const groupFilteredPlants = useMemo(() => {
-    if (selectedGroup === 'wszystkie') return plants;
-    return plants.filter((p) => p.plant_group === selectedGroup);
-  }, [plants, selectedGroup]);
+    if (selectedGroup === 'wszystkie') return translatedPlants;
+    return translatedPlants.filter((p) => p.plant_group === selectedGroup);
+  }, [translatedPlants, selectedGroup]);
 
   // Counts for each group
   const groupCounts = useMemo(() => {
     return {
-      wszystkie: plants.length,
-      warzywa: plants.filter((p) => p.plant_group === 'warzywa').length,
-      owoce: plants.filter((p) => p.plant_group === 'owoce').length,
-      ziola: plants.filter((p) => p.plant_group === 'ziola').length,
-      ozdobne: plants.filter((p) => p.plant_group === 'ozdobne').length,
-      kielki: plants.filter((p) => p.plant_group === 'kielki').length,
-      grzyby: plants.filter((p) => p.plant_group === 'grzyby').length,
+      wszystkie: translatedPlants.length,
+      warzywa: translatedPlants.filter((p) => p.plant_group === 'warzywa').length,
+      owoce: translatedPlants.filter((p) => p.plant_group === 'owoce').length,
+      ziola: translatedPlants.filter((p) => p.plant_group === 'ziola').length,
+      ozdobne: translatedPlants.filter((p) => p.plant_group === 'ozdobne').length,
+      kielki: translatedPlants.filter((p) => p.plant_group === 'kielki').length,
+      grzyby: translatedPlants.filter((p) => p.plant_group === 'grzyby').length,
     };
-  }, [plants]);
+  }, [translatedPlants]);
 
   // Current real date and calendar period
   const todayDate = useMemo(() => new Date(), []);
   const currentPeriodId = useMemo(() => getCalendarPeriodId(todayDate), [todayDate]);
-  const currentPeriodName = useMemo(() => getPeriodHumanLabel(currentPeriodId), [currentPeriodId]);
+  const currentPeriodName = useMemo(
+    () => getPeriodHumanLabel(currentPeriodId, language === 'en'),
+    [currentPeriodId, language]
+  );
   const formattedToday = useMemo(() => {
     const day = todayDate.getDate();
+    if (language === 'en') {
+      const enMonths = [
+        '',
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December',
+      ];
+      return `${enMonths[todayDate.getMonth() + 1]} ${day}`;
+    }
     const months = [
       '',
       'stycznia',
@@ -456,7 +498,7 @@ export default function App() {
       'grudnia',
     ];
     return `${day} ${months[todayDate.getMonth() + 1]}`;
-  }, [todayDate]);
+  }, [todayDate, language]);
 
   // Timing statistics for current group
   const timingCounts = useMemo(() => {
@@ -474,6 +516,20 @@ export default function App() {
 
   // User-friendly lifestyle categories list (e.g. "Do sałatki", "Szybko rosnące", "Zero wysiłku")
   const lifestyleFilters = useMemo(() => {
+    if (language === 'en') {
+      return [
+        { id: 'all', label: 'All', icon: '' },
+        { id: 'do_salatki', label: 'For salads', icon: '🥗' },
+        { id: 'szybko_rosnace', label: 'Fast growing', icon: '⚡' },
+        { id: 'zero_wysilku', label: 'Zero effort', icon: '✨' },
+        { id: 'slodkie_zbiory', label: 'Sweet harvest', icon: '🍓' },
+        { id: 'aromatyczne', label: 'Aromatic herbs', icon: '🌿' },
+        { id: 'kompaktowa', label: 'Compact pots', icon: '🪴' },
+        { id: 'superfood', label: 'Superfood', icon: '💪' },
+        { id: 'piekne_kwiaty', label: 'Beautiful flowers', icon: '🌸' },
+        { id: 'dla_poczatkujacych', label: 'Beginner friendly', icon: '🌱' },
+      ];
+    }
     return [
       { id: 'all', label: 'Wszystkie', icon: '' },
       { id: 'do_salatki', label: 'Do sałatki', icon: '🥗' },
@@ -486,21 +542,25 @@ export default function App() {
       { id: 'piekne_kwiaty', label: 'Piękne kwiaty', icon: '🌸' },
       { id: 'dla_poczatkujacych', label: 'Dla początkujących', icon: '🌱' },
     ];
-  }, []);
+  }, [language]);
 
   // Filtered & Sorted recommendations
   const filteredPlants = useMemo(() => {
     return groupFilteredPlants
       .filter((p) => {
+        const query = searchQuery.toLowerCase();
+        const trans = getTranslatedPlant(p, language);
         const matchesSearch =
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.name.toLowerCase().includes(query) ||
+          trans.name.toLowerCase().includes(query) ||
           p.varieties.some((v) => {
             const str = typeof v === 'string' ? v : `${v?.name || ''} ${v?.features || ''}`;
-            return str.toLowerCase().includes(searchQuery.toLowerCase());
+            return str.toLowerCase().includes(query);
           }) ||
-          p.summary.toLowerCase().includes(searchQuery.toLowerCase());
+          p.summary.toLowerCase().includes(query) ||
+          trans.summary.toLowerCase().includes(query);
 
-        const plantPills = getPlantLifestylePills(p);
+        const plantPills = getPlantLifestylePills(p, language);
         const matchesCategory =
           selectedCategory === 'Wszystkie' ||
           selectedCategory === 'all' ||
@@ -539,9 +599,11 @@ export default function App() {
         if (sortOrder === 'difficulty') {
           return a.difficulty - b.difficulty;
         }
-        return a.name.localeCompare(b.name);
+        const nameA = getTranslatedPlant(a, language).name;
+        const nameB = getTranslatedPlant(b, language).name;
+        return nameA.localeCompare(nameB);
       });
-  }, [groupFilteredPlants, searchQuery, selectedCategory, timingFilter, sortOrder, todayDate]);
+  }, [groupFilteredPlants, searchQuery, selectedCategory, timingFilter, sortOrder, todayDate, language]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 to-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors relative overflow-x-hidden"><div className="absolute top-0 right-0 -mr-32 -mt-32 w-[32rem] h-[32rem] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" /><div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[40rem] h-[40rem] bg-teal-100/20 dark:bg-teal-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
@@ -578,7 +640,7 @@ export default function App() {
         {activeTab === 'my_crops' && (
           <MyCropsView
             myCrops={myCrops}
-            allPlants={plants}
+            allPlants={translatedPlants}
             weather={weather}
             userSpec={userSpec}
             dailyRecommendation={dailyRecommendation}
@@ -604,10 +666,12 @@ export default function App() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Katalog: Szukaj nowych upraw do donic
+                    {isEn ? 'Catalog: Discover New Container Crops' : 'Katalog: Szukaj nowych upraw do donic'}
                   </h3>
                   <p className="text-xs text-stone-500 dark:text-stone-400">
-                    Kliknij przycisk „+ Dodaj do Moich upraw” przy dowolnej roślinie, aby przenieść ją do osobistego terminarza.
+                    {isEn
+                      ? 'Click "+ Add to My Crops" next to any plant to transfer it to your personal schedule.'
+                      : 'Kliknij przycisk „+ Dodaj do Moich upraw” przy dowolnej roślinie, aby przenieść ją do osobistego terminarza.'}
                   </p>
                 </div>
               </div>
@@ -618,13 +682,13 @@ export default function App() {
                   className="flex-1 sm:flex-none px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <Sprout className="w-4 h-4" />
-                  <span>Przejdź do Moich upraw ({myCrops.length})</span>
+                  <span>{isEn ? `Go to My Crops (${myCrops.length})` : `Przejdź do Moich upraw (${myCrops.length})`}</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('calendar')}
                   className="flex-1 sm:flex-none px-3.5 py-2 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-300 dark:border-stone-700 rounded-xl text-xs font-semibold transition flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  <span>Pełny kalendarz</span>
+                  <span>{isEn ? 'Full calendar' : 'Pełny kalendarz'}</span>
                   <ArrowRight className="w-3.5 h-3.5 text-stone-500" />
                 </button>
               </div>
@@ -636,25 +700,39 @@ export default function App() {
                 <div>
                   <div className="flex items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider mb-1">
                     <Sparkles className="w-4 h-4 text-amber-500" />
-                    <span>Dopasowane do Twojego balkonu</span>
+                    <span>{isEn ? 'Tailored to your balcony' : 'Dopasowane do Twojego balkonu'}</span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">
-                    {selectedGroup === 'wszystkie' && 'Wszystkie rekomendacje do uprawy w donicach'}
-                    {selectedGroup === 'warzywa' && 'Warzywa w donicach na balkonie'}
-                    {selectedGroup === 'owoce' && 'Owoce w donicach na balkonie'}
-                    {selectedGroup === 'ziola' && 'Świeże zioła w donicach na balkonie'}
-                    {selectedGroup === 'ozdobne' && 'Rośliny ozdobne i kwiaty w donicach na balkonie'}
-                    {selectedGroup === 'kielki' && 'Mikrolistki i kiełki w pojemnikach'}
-                    {selectedGroup === 'grzyby' && 'Grzyby uprawne w pojemnikach'}
+                    {selectedGroup === 'wszystkie' && (isEn ? 'All container crop recommendations' : 'Wszystkie rekomendacje do uprawy w donicach')}
+                    {selectedGroup === 'warzywa' && (isEn ? 'Vegetables in balcony pots' : 'Warzywa w donicach na balkonie')}
+                    {selectedGroup === 'owoce' && (isEn ? 'Fruits in balcony pots' : 'Owoce w donicach na balkonie')}
+                    {selectedGroup === 'ziola' && (isEn ? 'Fresh herbs in balcony pots' : 'Świeże zioła w donicach na balkonie')}
+                    {selectedGroup === 'ozdobne' && (isEn ? 'Flowers and ornamentals in balcony pots' : 'Rośliny ozdobne i kwiaty w donicach na balkonie')}
+                    {selectedGroup === 'kielki' && (isEn ? 'Microgreens and sprouts in containers' : 'Mikrolistki i kiełki w pojemnikach')}
+                    {selectedGroup === 'grzyby' && (isEn ? 'Cultivated mushrooms in containers' : 'Grzyby uprawne w pojemnikach')}
                   </h2>
                   <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
-                    Każda uprawa została przeliczona pod kątem Twojej ekspozycji (
-                    <strong className="text-stone-800 dark:text-stone-200">{userSpec.orientation}</strong>), piętra (
-                    <strong className="text-stone-800 dark:text-stone-200">{getFloorCategoryLabel(userSpec.floor)}</strong>),
-                    wielkości donic oraz strefy mrozowej regionu{' '}
-                    <strong className="text-stone-800 dark:text-stone-200">
-                      {POLAND_REGIONS[userSpec.region]?.name.split('(')[0]}
-                    </strong>.
+                    {isEn ? (
+                      <>
+                        Every crop has been tailored to your exposure (
+                        <strong className="text-stone-800 dark:text-stone-200">{userSpec.orientation}</strong>), floor (
+                        <strong className="text-stone-800 dark:text-stone-200">{getFloorCategoryLabel(userSpec.floor)}</strong>),
+                        pot sizes, and hardiness zone of region{' '}
+                        <strong className="text-stone-800 dark:text-stone-200">
+                          {POLAND_REGIONS[userSpec.region]?.name.split('(')[0]}
+                        </strong>.
+                      </>
+                    ) : (
+                      <>
+                        Każda uprawa została przeliczona pod kątem Twojej ekspozycji (
+                        <strong className="text-stone-800 dark:text-stone-200">{userSpec.orientation}</strong>), piętra (
+                        <strong className="text-stone-800 dark:text-stone-200">{getFloorCategoryLabel(userSpec.floor)}</strong>),
+                        wielkości donic oraz strefy mrozowej regionu{' '}
+                        <strong className="text-stone-800 dark:text-stone-200">
+                          {POLAND_REGIONS[userSpec.region]?.name.split('(')[0]}
+                        </strong>.
+                      </>
+                    )}
                   </p>
                 </div>
 
@@ -665,8 +743,12 @@ export default function App() {
                       {groupFilteredPlants.filter((p) => (p.suitability?.score ?? 0) >= 80).length}
                     </div>
                     <div className="text-xs">
-                      <div className="font-bold text-emerald-950 dark:text-emerald-200">Potwierdzone jako optymalne</div>
-                      <div className="text-stone-500 dark:text-stone-400 text-[11px]">&gt;80% dopasowania do donic</div>
+                      <div className="font-bold text-emerald-950 dark:text-emerald-200">
+                        {isEn ? 'Confirmed as optimal' : 'Potwierdzone jako optymalne'}
+                      </div>
+                      <div className="text-stone-500 dark:text-stone-400 text-[11px]">
+                        {isEn ? '>80% container match' : '>80% dopasowania do donic'}
+                      </div>
                     </div>
                   </div>
 
@@ -675,9 +757,9 @@ export default function App() {
                     type="button"
                     onClick={() => setIsFiltersExpanded((prev) => !prev)}
                     className="p-2 sm:px-3 sm:py-2.5 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                    title={isFiltersExpanded ? 'Zwiń panele grup roślin' : 'Pokaż pełne panele grup roślin'}
+                    title={isFiltersExpanded ? (isEn ? 'Collapse plant group panels' : 'Zwiń panele grup roślin') : (isEn ? 'Show full plant group panels' : 'Pokaż pełne panele grup roślin')}
                   >
-                    <span className="hidden sm:inline">{isFiltersExpanded ? 'Zwiń grupy' : 'Rozwiń grupy'}</span>
+                    <span className="hidden sm:inline">{isFiltersExpanded ? (isEn ? 'Collapse groups' : 'Zwiń grupy') : (isEn ? 'Expand groups' : 'Rozwiń grupy')}</span>
                     {isFiltersExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                 </div>
@@ -687,16 +769,16 @@ export default function App() {
               {!isFiltersExpanded && (
                 <div className="mt-4 pt-3 border-t border-stone-150 dark:border-stone-800 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
                   <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1">
-                    Grupa:
+                    {isEn ? 'Group:' : 'Grupa:'}
                   </span>
                   {[
-                    { id: 'wszystkie', label: 'Wszystkie', icon: '🪴', count: groupCounts.wszystkie },
-                    { id: 'warzywa', label: 'Warzywa', icon: '🥕', count: groupCounts.warzywa },
-                    { id: 'owoce', label: 'Owoce', icon: '🍓', count: groupCounts.owoce },
-                    { id: 'ziola', label: 'Zioła', icon: '🌿', count: groupCounts.ziola },
-                    { id: 'ozdobne', label: 'Ozdobne', icon: '🌸', count: groupCounts.ozdobne },
-                    { id: 'kielki', label: 'Kiełki', icon: '🌱', count: groupCounts.kielki },
-                    { id: 'grzyby', label: 'Grzyby', icon: '🍄', count: groupCounts.grzyby },
+                    { id: 'wszystkie', label: isEn ? 'All' : 'Wszystkie', icon: '🪴', count: groupCounts.wszystkie },
+                    { id: 'warzywa', label: isEn ? 'Vegetables' : 'Warzywa', icon: '🥕', count: groupCounts.warzywa },
+                    { id: 'owoce', label: isEn ? 'Fruits' : 'Owoce', icon: '🍓', count: groupCounts.owoce },
+                    { id: 'ziola', label: isEn ? 'Herbs' : 'Zioła', icon: '🌿', count: groupCounts.ziola },
+                    { id: 'ozdobne', label: isEn ? 'Flowers' : 'Ozdobne', icon: '🌸', count: groupCounts.ozdobne },
+                    { id: 'kielki', label: isEn ? 'Sprouts' : 'Kiełki', icon: '🌱', count: groupCounts.kielki },
+                    { id: 'grzyby', label: isEn ? 'Mushrooms' : 'Grzyby', icon: '🍄', count: groupCounts.grzyby },
                   ].map((g) => (
                     <button
                       key={g.id}
@@ -719,7 +801,7 @@ export default function App() {
               {isFiltersExpanded && (
                 <div className="mt-5 pt-4 border-t border-stone-100 dark:border-stone-800">
                   <div className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2.5">
-                    Wybierz grupę roślin:
+                    {isEn ? 'Select plant group:' : 'Wybierz grupę roślin:'}
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5">
                     {/* Wszystkie */}
@@ -745,7 +827,7 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Wszystkie</div>
+                        <div className="font-bold text-sm">{isEn ? 'All' : 'Wszystkie'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'wszystkie'
@@ -753,7 +835,7 @@ export default function App() {
                               : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Pełna baza donicowa
+                          {isEn ? 'Full container database' : 'Pełna baza donicowa'}
                         </div>
                       </div>
                     </button>
@@ -781,13 +863,13 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Warzywa</div>
+                        <div className="font-bold text-sm">{isEn ? 'Vegetables' : 'Warzywa'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'warzywa' ? 'text-indigo-200' : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Pomidory, papryki, sałaty...
+                          {isEn ? 'Tomatoes, peppers, lettuces...' : 'Pomidory, papryki, sałaty...'}
                         </div>
                       </div>
                     </button>
@@ -815,13 +897,13 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Owoce</div>
+                        <div className="font-bold text-sm">{isEn ? 'Fruits' : 'Owoce'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'owoce' ? 'text-fuchsia-200' : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Truskawki, borówki, maliny...
+                          {isEn ? 'Strawberries, berries, raspberries...' : 'Truskawki, borówki, maliny...'}
                         </div>
                       </div>
                     </button>
@@ -849,13 +931,13 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Zioła</div>
+                        <div className="font-bold text-sm">{isEn ? 'Herbs' : 'Zioła'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'ziola' ? 'text-teal-200' : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Bazylia, mięta, tymianek...
+                          {isEn ? 'Basil, mint, thyme...' : 'Bazylia, mięta, tymianek...'}
                         </div>
                       </div>
                     </button>
@@ -883,13 +965,13 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Ozdobne</div>
+                        <div className="font-bold text-sm">{isEn ? 'Flowers' : 'Ozdobne'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'ozdobne' ? 'text-violet-200' : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Pelargonie, lawenda, bratki...
+                          {isEn ? 'Geraniums, lavender, pansies...' : 'Pelargonie, lawenda, bratki...'}
                         </div>
                       </div>
                     </button>
@@ -917,13 +999,13 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Mikrolistki i kiełki</div>
+                        <div className="font-bold text-sm">{isEn ? 'Microgreens & Sprouts' : 'Mikrolistki i kiełki'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'kielki' ? 'text-sky-200' : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Rzeżucha, rzodkiewka, słonecznik...
+                          {isEn ? 'Cress, radish, sunflower...' : 'Rzeżucha, rzodkiewka, słonecznik...'}
                         </div>
                       </div>
                     </button>
@@ -951,7 +1033,7 @@ export default function App() {
                         </span>
                       </div>
                       <div className="mt-2.5">
-                        <div className="font-bold text-sm">Grzyby uprawne</div>
+                        <div className="font-bold text-sm">{isEn ? 'Mushrooms' : 'Grzyby uprawne'}</div>
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'grzyby'
@@ -959,7 +1041,7 @@ export default function App() {
                               : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
-                          Boczniaki, pieczarki, soplówka...
+                          {isEn ? 'Oyster, button, lion\'s mane...' : 'Boczniaki, pieczarki, soplówka...'}
                         </div>
                       </div>
                     </button>
@@ -977,14 +1059,18 @@ export default function App() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-bold text-sm text-emerald-100">
-                          Bieżący termin: {formattedToday}
+                          {isEn ? `Current timing: ${formattedToday}` : `Bieżący termin: ${formattedToday}`}
                         </span>
                         <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-emerald-800 text-emerald-200 border border-emerald-700">
                           {currentPeriodName}
                         </span>
                       </div>
                       <p className="text-xs text-emerald-200/80 mt-0.5 truncate">
-                        Dla <strong>{timingCounts.goodNow}</strong> {timingCounts.goodNow === 1 ? 'uprawy' : 'upraw'} w tej kategorii przypada teraz idealny termin!
+                        {isEn ? (
+                          <>For <strong>{timingCounts.goodNow}</strong> {timingCounts.goodNow === 1 ? 'crop' : 'crops'} in this category now is the ideal time!</>
+                        ) : (
+                          <>Dla <strong>{timingCounts.goodNow}</strong> {timingCounts.goodNow === 1 ? 'uprawy' : 'upraw'} w tej kategorii przypada teraz idealny termin!</>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -997,7 +1083,7 @@ export default function App() {
                         className="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-stone-950 font-bold text-xs rounded-xl transition shadow-2xs cursor-pointer flex items-center gap-1.5"
                       >
                         <Sprout className="w-3.5 h-3.5" />
-                        <span>Filtruj termin teraz ({timingCounts.goodNow})</span>
+                        <span>{isEn ? `Filter favorable now (${timingCounts.goodNow})` : `Filtruj termin teraz (${timingCounts.goodNow})`}</span>
                       </button>
                     ) : (
                       <button
@@ -1005,13 +1091,13 @@ export default function App() {
                         onClick={() => setTimingFilter('all')}
                         className="px-3 py-1.5 bg-white/20 hover:bg-white/30 text-white font-medium text-xs rounded-xl transition cursor-pointer"
                       >
-                        Pokaż wszystkie
+                        {isEn ? 'Show all' : 'Pokaż wszystkie'}
                       </button>
                     )}
 
                     <button
                       onClick={() => setShowSeasonalityBanner(false)}
-                      title="Ukryj ten baner"
+                      title={isEn ? 'Hide this banner' : 'Ukryj ten baner'}
                       className="p-1.5 rounded-lg text-emerald-300 hover:text-white hover:bg-emerald-800/50 transition cursor-pointer"
                     >
                       <X className="w-4 h-4" />
@@ -1031,7 +1117,15 @@ export default function App() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder={
-                      selectedGroup === 'owoce'
+                      isEn
+                        ? selectedGroup === 'owoce'
+                          ? 'Search fruit (e.g. strawberry, blueberry)...'
+                          : selectedGroup === 'ziola'
+                          ? 'Search herb (e.g. basil, mint, rosemary)...'
+                          : selectedGroup === 'ozdobne'
+                          ? 'Search flower / ornamental (e.g. geranium, lavender)...'
+                          : 'Search plant or variety (e.g. tomato, Vilma, radish)...'
+                        : selectedGroup === 'owoce'
                         ? 'Szukaj owocu (np. truskawka, borówka, poziomka)...'
                         : selectedGroup === 'ziola'
                         ? 'Szukaj zioła (np. bazylia, mięta, rozmaryn)...'
@@ -1044,9 +1138,9 @@ export default function App() {
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
                     >
-                      Wyczyść
+                      {isEn ? 'Clear' : 'Wyczyść'}
                     </button>
                   )}
                 </div>
@@ -1064,10 +1158,10 @@ export default function App() {
                           ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs font-bold'
                           : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                       }`}
-                      title="Przyjazny zwięzły widok kafelków z możliwością rozwijania każdego z osobna"
+                      title={isEn ? 'Concise card view with expandable sections' : 'Przyjazny zwięzły widok kafelków z możliwością rozwijania każdego z osobna'}
                     >
                       <LayoutGrid className="w-3.5 h-3.5" />
-                      <span>🌿 Zwięzły</span>
+                      <span>{isEn ? '🌿 Compact' : '🌿 Zwięzły'}</span>
                     </button>
                     <button
                       id="view-mode-detailed-btn"
@@ -1078,26 +1172,26 @@ export default function App() {
                           ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs font-bold'
                           : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
                       }`}
-                      title="Szczegółowy widok analityczny ze wszystkimi tabelami i wytycznymi na wierzchu"
+                      title={isEn ? 'Detailed analytical view with all parameters visible' : 'Szczegółowy widok analityczny ze wszystkimi tabelami i wytycznymi na wierzchu'}
                     >
                       <SlidersHorizontal className="w-3.5 h-3.5" />
-                      <span>📋 Szczegółowy</span>
+                      <span>{isEn ? '📋 Detailed' : '📋 Szczegółowy'}</span>
                     </button>
                   </div>
 
                   {/* Sort selector */}
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-stone-500 dark:text-stone-400 font-medium hidden sm:inline">Sortuj:</span>
+                    <span className="text-stone-500 dark:text-stone-400 font-medium hidden sm:inline">{isEn ? 'Sort:' : 'Sortuj:'}</span>
                     <select
                       id="sort-plants-select"
                       value={sortOrder}
                       onChange={(e) => setSortOrder(e.target.value as any)}
                       className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-500"
                     >
-                      <option value="timing_first">🌱 Najlepszy termin teraz</option>
-                      <option value="score">Dopasowanie (%)</option>
-                      <option value="difficulty">Trudność w donicy</option>
-                      <option value="name">Alfabetycznie (A-Z)</option>
+                      <option value="timing_first">{isEn ? '🌱 Best timing now' : '🌱 Najlepszy termin teraz'}</option>
+                      <option value="score">{isEn ? 'Balcony match (%)' : 'Dopasowanie (%)'}</option>
+                      <option value="difficulty">{isEn ? 'Container difficulty' : 'Trudność w donicy'}</option>
+                      <option value="name">{isEn ? 'Alphabetical (A-Z)' : 'Alfabetycznie (A-Z)'}</option>
                     </select>
                   </div>
                 </div>
@@ -1107,7 +1201,7 @@ export default function App() {
               <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 text-xs">
                 <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span>Termin (dziś):</span>
+                  <span>{isEn ? 'Timing (today):' : 'Termin (dziś):'}</span>
                 </span>
 
                 <button
@@ -1119,7 +1213,7 @@ export default function App() {
                       : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                 >
-                  Wszystkie terminy
+                  {isEn ? 'All timing' : 'Wszystkie terminy'}
                 </button>
 
                 <button
@@ -1132,7 +1226,7 @@ export default function App() {
                   }`}
                 >
                   <span>🌱</span>
-                  <span>Dobry termin teraz ({timingCounts.goodNow})</span>
+                  <span>{isEn ? `Good timing now (${timingCounts.goodNow})` : `Dobry termin teraz (${timingCounts.goodNow})`}</span>
                 </button>
 
                 <button
@@ -1145,7 +1239,7 @@ export default function App() {
                   }`}
                 >
                   <span>🌾</span>
-                  <span>Siew teraz / całoroczne ({timingCounts.sowNow})</span>
+                  <span>{isEn ? `Sow now / Year-round (${timingCounts.sowNow})` : `Siew teraz / całoroczne (${timingCounts.sowNow})`}</span>
                 </button>
 
                 {timingCounts.transplantNow > 0 && (
@@ -1159,7 +1253,7 @@ export default function App() {
                     }`}
                   >
                     <span>🪴</span>
-                    <span>Sadzenie na balkon ({timingCounts.transplantNow})</span>
+                    <span>{isEn ? `Plant to balcony (${timingCounts.transplantNow})` : `Sadzenie na balkon (${timingCounts.transplantNow})`}</span>
                   </button>
                 )}
               </div>
@@ -1167,7 +1261,7 @@ export default function App() {
               {/* Friendly Lifestyle Needs Pills (Replaces dry botanical families) */}
               <div className="flex items-center gap-1.5 mt-2.5 overflow-x-auto pb-1 text-xs border-t border-stone-150 dark:border-stone-800/70 pt-2.5 scrollbar-none">
                 <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1">
-                  Potrzeba:
+                  {isEn ? 'Lifestyle:' : 'Potrzeba:'}
                 </span>
                 {lifestyleFilters.map((cat) => {
                   const isActive =
@@ -1197,7 +1291,9 @@ export default function App() {
             {loadingPlants ? (
               <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800">
                 <div className="inline-block animate-spin w-8 h-8 border-4 border-stone-700 dark:border-stone-300 border-t-transparent rounded-full mb-2" />
-                <p className="text-xs text-stone-500 dark:text-stone-400">Przeliczanie bazy wiedzy o donicach...</p>
+                <p className="text-xs text-stone-500 dark:text-stone-400">
+                  {isEn ? 'Recalculating container knowledge base...' : 'Przeliczanie bazy wiedzy o donicach...'}
+                </p>
               </div>
             ) : filteredPlants.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1223,12 +1319,18 @@ export default function App() {
               <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-6">
                 <Info className="w-8 h-8 text-stone-400 mx-auto mb-2" />
                 <h3 className="text-base font-semibold text-stone-800 dark:text-stone-200">
-                  {searchQuery ? 'Brak wyników wyszukiwania' : 'Brak pozycji w tej kategorii'}
+                  {searchQuery
+                    ? (isEn ? 'No search results found' : 'Brak wyników wyszukiwania')
+                    : (isEn ? 'No items in this category' : 'Brak pozycji w tej kategorii')}
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto">
                   {searchQuery
-                    ? `Żadna roślina nie spełnia kryteriów wyszukiwania "${searchQuery}". Spróbuj zresetować filtry.`
-                    : 'Brak roślin w wybranej podkategorii. Zmień filtry lub wybierz inną grupę.'}
+                    ? (isEn
+                        ? `No plant matches search "${searchQuery}". Try resetting filters.`
+                        : `Żadna roślina nie spełnia kryteriów wyszukiwania "${searchQuery}". Spróbuj zresetować filtry.`)
+                    : (isEn
+                        ? 'No plants found in selected subcategory. Adjust filters or choose another group.'
+                        : 'Brak roślin w wybranej podkategorii. Zmień filtry lub wybierz inną grupę.')}
                 </p>
                 <button
                   onClick={() => {
@@ -1238,7 +1340,7 @@ export default function App() {
                   }}
                   className="mt-4 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl text-xs font-semibold hover:bg-stone-800 dark:hover:bg-stone-200 transition cursor-pointer"
                 >
-                  Pokaż wszystkie rośliny ({plants.length})
+                  {isEn ? `Show all plants (${plants.length})` : `Pokaż wszystkie rośliny (${plants.length})`}
                 </button>
               </div>
             )}
@@ -1248,8 +1350,8 @@ export default function App() {
         {/* Tab 3: Kalkulator wymiarów donic i szkicownik rozstawy */}
         {activeTab === 'calculator' && (
           <PotCalculator
-            plants={plants}
-            initialPlant={selectedPotPlant || plants[0]}
+            plants={translatedPlants}
+            initialPlant={selectedPotPlant ? getTranslatedPlant(selectedPotPlant, language) : translatedPlants[0]}
             onSelectPlant={(plant) => setSelectedPlant(plant)}
           />
         )}
@@ -1268,13 +1370,13 @@ export default function App() {
 
       {/* Detail Modal for Selected Plant */}
       <PlantDetailModal
-        plant={selectedPlant}
+        plant={activeSelectedPlant}
         onClose={() => setSelectedPlant(null)}
         onOpenPotCalc={handleOpenPotCalcForPlant}
-        isMyCrop={selectedPlant ? myCropIds.includes(selectedPlant.id) : false}
+        isMyCrop={activeSelectedPlant ? myCropIds.includes(activeSelectedPlant.id) : false}
         cropCount={
-          selectedPlant
-            ? myCrops.filter((c) => c.plantId === selectedPlant.id).reduce((acc, c) => acc + (c.potCount || 1), 0)
+          activeSelectedPlant
+            ? myCrops.filter((c) => c.plantId === activeSelectedPlant.id).reduce((acc, c) => acc + (c.potCount || 1), 0)
             : 0
         }
         onRequestAddVariety={(p, varName, _varBadge) => {
@@ -1286,7 +1388,7 @@ export default function App() {
       {/* Forced Variety & Multiple Pot Selection Modal */}
       {varietyPickerPlant && (
         <SelectVarietyModal
-          plant={varietyPickerPlant.plant}
+          plant={getTranslatedPlant(varietyPickerPlant.plant, language)}
           isOpen={true}
           initialVarietyName={varietyPickerPlant.initialVariety}
           onClose={() => setVarietyPickerPlant(null)}
@@ -1398,15 +1500,20 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-left">
           <div>
             <div className="font-semibold text-stone-700 dark:text-stone-300">
-              <strong>Donicowy Specjalista</strong> • Poradnik uprawy warzyw, owoców, ziół i roślin ozdobnych w donicach
+              <strong>{isEn ? 'Container Specialist' : 'Donicowy Specjalista'}</strong> •{' '}
+              {isEn
+                ? 'Guide to growing vegetables, fruits, herbs and flowers in containers'
+                : 'Poradnik uprawy warzyw, owoców, ziół i roślin ozdobnych w donicach'}
             </div>
             <p className="text-[11px] text-stone-400 dark:text-stone-500 mt-1 max-w-2xl leading-relaxed">
-              Aplikacja czerpie wiedzę ze zweryfikowanych źródeł agrotechnicznych i ogrodniczych. Ze względu na zróżnicowane mikroklimaty balkonów dane mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.
+              {isEn
+                ? 'The application gathers knowledge from verified agrotechnical and horticultural sources. Due to diverse balcony microclimates, double-checking local conditions is recommended.'
+                : 'Aplikacja czerpie wiedzę ze zweryfikowanych źródeł agrotechnicznych i ogrodniczych. Ze względu na zróżnicowane mikroklimaty balkonów dane mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.'}
             </p>
           </div>
           <div className="text-[11px] text-stone-400 dark:text-stone-500 text-center sm:text-right shrink-0">
-            <div>Dane pogodowe: Open-Meteo API</div>
-            <div>Strefy klimatyczne: IMGW / Działkowiec</div>
+            <div>{isEn ? 'Weather data: Open-Meteo API' : 'Dane pogodowe: Open-Meteo API'}</div>
+            <div>{isEn ? 'Climate zones: IMGW / Horticultural standards' : 'Strefy klimatyczne: IMGW / Działkowiec'}</div>
           </div>
         </div>
       </footer>

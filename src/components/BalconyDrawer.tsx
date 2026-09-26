@@ -29,6 +29,7 @@ import {
   CareTime,
 } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface BalconyDrawerProps {
   isOpen: boolean;
@@ -39,7 +40,7 @@ interface BalconyDrawerProps {
   onOpenAuth?: () => void;
 }
 
-const BALCONY_TYPE_LABELS: Record<BalconyType, { label: string; desc: string }> = {
+const BALCONY_TYPE_LABELS_PL: Record<BalconyType, { label: string; desc: string }> = {
   open_rail: {
     label: 'Ażurowa barierka',
     desc: 'Wysoka przewiewność i dobre doświetlenie donic dolnych.',
@@ -58,7 +59,26 @@ const BALCONY_TYPE_LABELS: Record<BalconyType, { label: string; desc: string }> 
   },
 };
 
-const ROOFING_LABELS: Record<RoofingType, { label: string; desc: string }> = {
+const BALCONY_TYPE_LABELS_EN: Record<BalconyType, { label: string; desc: string }> = {
+  open_rail: {
+    label: 'Open Railing',
+    desc: 'High airflow and excellent light reaching bottom pots.',
+  },
+  solid_wall: {
+    label: 'Solid Concrete Wall',
+    desc: 'Good wind protection, shaded lower zone.',
+  },
+  loggia: {
+    label: 'Recessed Loggia',
+    desc: 'Warmest microclimate, walls store and radiate solar warmth.',
+  },
+  french: {
+    label: 'French Balcony',
+    desc: 'Compact space for railing planters or windowsill boxes.',
+  },
+};
+
+const ROOFING_LABELS_PL: Record<RoofingType, { label: string; desc: string }> = {
   covered: {
     label: 'Zadaszony',
     desc: 'Chroni przed gwałtownym gradem i ulewami; wymaga regularnego podlewania.',
@@ -69,7 +89,18 @@ const ROOFING_LABELS: Record<RoofingType, { label: string; desc: string }> = {
   },
 };
 
-const CARE_TIME_LABELS: Record<CareTime, { label: string; tag: string }> = {
+const ROOFING_LABELS_EN: Record<RoofingType, { label: string; desc: string }> = {
+  covered: {
+    label: 'Covered / Overhang',
+    desc: 'Protects from hail and downpours; requires intentional watering.',
+  },
+  uncovered: {
+    label: 'Open / Uncovered',
+    desc: 'Maximum overhead sunlight and natural rainwater hydration.',
+  },
+};
+
+const CARE_TIME_LABELS_PL: Record<CareTime, { label: string; tag: string }> = {
   daily: {
     label: 'Codziennie (10–15 min)',
     tag: 'Wymagające uprawy (pomidory, bakłażany)',
@@ -84,6 +115,21 @@ const CARE_TIME_LABELS: Record<CareTime, { label: string; tag: string }> = {
   },
 };
 
+const CARE_TIME_LABELS_EN: Record<CareTime, { label: string; tag: string }> = {
+  daily: {
+    label: 'Daily (10–15 min)',
+    tag: 'Demanding crops (tomatoes, eggplants)',
+  },
+  few_days: {
+    label: 'Every 2–3 days',
+    tag: 'Balanced herb & vegetable garden',
+  },
+  weekends: {
+    label: 'Mainly on weekends',
+    tag: 'Self-sufficient crops with water reservoirs',
+  },
+};
+
 export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
   isOpen,
   onClose,
@@ -92,6 +138,13 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
   currentUser,
   onOpenAuth,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
+  const balconyTypeLabels = isEn ? BALCONY_TYPE_LABELS_EN : BALCONY_TYPE_LABELS_PL;
+  const roofingLabels = isEn ? ROOFING_LABELS_EN : ROOFING_LABELS_PL;
+  const careTimeLabels = isEn ? CARE_TIME_LABELS_EN : CARE_TIME_LABELS_PL;
+
   // Close drawer on ESC key
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -144,6 +197,19 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
     const isSouth = orient.includes('S');
     const isNorth = orient === 'N' || orient === 'NE' || orient === 'NW';
 
+    if (isEn) {
+      if (isSouth && isHigh) {
+        return 'Abundant sunshine and strong wind gusts. Pots dry out quickly – choose heavier containers and mulch soil.';
+      }
+      if (isSouth) {
+        return 'Ideal heat-loving zone – exceptional conditions for tomatoes, peppers, eggplants, and Mediterranean herbs.';
+      }
+      if (isNorth) {
+        return 'Gentle, cool microclimate without sun scorch risk. Perfect for lettuces, radishes, mint, chives, and wild strawberries.';
+      }
+      return 'Balanced exposure – steady morning or afternoon sunlight supporting most vegetables, herbs, and strawberries.';
+    }
+
     if (isSouth && isHigh) {
       return 'Dużo słońca i silniejsze porywy wiatru. Donice szybciej przesychają – warto wybierać cięższe pojemniki i ściółkować podłoże.';
     }
@@ -171,7 +237,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
         id="balcony-spec-drawer"
         role="dialog"
         aria-modal="true"
-        aria-label="Parametry Twojego balkonu"
+        aria-label={isEn ? 'Your Balcony Specifications' : 'Parametry Twojego balkonu'}
         className="relative w-full max-w-md bg-[#FAF8F5] dark:bg-stone-900 h-full shadow-2xl border-l border-stone-200/90 dark:border-stone-800 z-10 flex flex-col justify-between overflow-hidden animate-in slide-in-from-right duration-300"
       >
         {/* Top Header */}
@@ -182,13 +248,13 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-stone-900 dark:text-stone-100 tracking-tight flex items-center gap-2">
-                <span>Mój balkon</span>
+                <span>{isEn ? 'My Balcony' : 'Mój balkon'}</span>
                 <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
-                  Parametry
+                  {isEn ? 'Settings' : 'Parametry'}
                 </span>
               </h2>
               <p className="text-xs text-stone-500 dark:text-stone-400">
-                Mikroklimat i warunki uprawowe
+                {isEn ? 'Microclimate and growing conditions' : 'Mikroklimat i warunki uprawowe'}
               </p>
             </div>
           </div>
@@ -197,10 +263,11 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
             id="close-balcony-drawer-btn"
             type="button"
             onClick={onClose}
-            className="p-2 rounded-xl text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
-            title="Zamknij panel (Esc)"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+            title={isEn ? 'Close panel (Esc)' : 'Zamknij panel (Esc)'}
+            aria-label={isEn ? 'Close panel' : 'Zamknij panel'}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
@@ -216,11 +283,11 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
                   </div>
                   <div>
                     <div className="text-xs font-semibold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
-                      <span>Konto: {currentUser.username}</span>
+                      <span>{isEn ? 'Account:' : 'Konto:'} {currentUser.username}</span>
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="text-[11px] text-stone-500 dark:text-stone-400">
-                      Ustawienia przypisane do Twojego profilu
+                      {isEn ? 'Settings linked to your profile' : 'Ustawienia przypisane do Twojego profilu'}
                     </div>
                   </div>
                 </div>
@@ -229,7 +296,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-xs text-stone-600 dark:text-stone-300">
                   <User className="w-4 h-4 text-stone-400 shrink-0" />
-                  <span>Tryb gościa (zapisane lokalnie)</span>
+                  <span>{isEn ? 'Guest mode (saved locally)' : 'Tryb gościa (zapisane lokalnie)'}</span>
                 </div>
                 {onOpenAuth && (
                   <button
@@ -240,7 +307,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
                     }}
                     className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer"
                   >
-                    Zapisz na koncie
+                    {isEn ? 'Save to account' : 'Zapisz na koncie'}
                   </button>
                 )}
               </div>
@@ -251,7 +318,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
           <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-teal-500/10 dark:from-emerald-950/30 dark:to-teal-950/20 border border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs">
             <div className="flex items-center gap-2 text-xs font-bold text-emerald-900 dark:text-emerald-300 mb-1.5">
               <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span>Analiza mikroklimatu Twojego balkonu</span>
+              <span>{isEn ? 'Balcony Microclimate Assessment' : 'Analiza mikroklimatu Twojego balkonu'}</span>
             </div>
             <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
               {getMicroclimateSummary()}
@@ -261,7 +328,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
           {/* Key Parameters Cards Grid */}
           <div className="space-y-3">
             <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 uppercase tracking-wider">
-              Główne parametry uprawy
+              {isEn ? 'Primary growing parameters' : 'Główne parametry uprawy'}
             </div>
 
             {/* 1. Wystawa słoneczna */}
@@ -271,7 +338,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
-                  Wystawa słoneczna (Kierunek)
+                  {isEn ? 'Solar Exposure (Direction)' : 'Wystawa słoneczna (Kierunek)'}
                 </div>
                 <div className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
                   <span>{orientationDisplay}</span>
@@ -296,13 +363,19 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
-                  Kondygnacja i wiatr
+                  {isEn ? 'Floor & Wind Exposure' : 'Kondygnacja i wiatr'}
                 </div>
                 <div className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                  {userSpec.floor === 0 ? 'Parter' : `${userSpec.floor}. piętro`} — {floorCategory}
+                  {userSpec.floor === 0 ? (isEn ? 'Ground floor' : 'Parter') : (isEn ? `Floor ${userSpec.floor}` : `${userSpec.floor}. piętro`)} — {floorCategory}
                 </div>
                 <p className="text-xs text-stone-600 dark:text-stone-400 mt-0.5">
-                  {userSpec.floor >= 7
+                  {isEn
+                    ? userSpec.floor >= 7
+                      ? 'High wind zone. Sturdy planter brackets and heavy base pots recommended.'
+                      : userSpec.floor >= 4
+                      ? 'Moderately high wind exposure.'
+                      : 'Gentle ground microclimate sheltered by surrounding buildings.'
+                    : userSpec.floor >= 7
                     ? 'Strefa silnego wiatru. Wskazane solidne mocowanie skrzynek i donice o szerokiej podstawie.'
                     : userSpec.floor >= 4
                     ? 'Umiarkowanie wysoka ekspozycja wiatrowa.'
@@ -318,13 +391,13 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
-                  Lokalizacja i strefa USDA
+                  {isEn ? 'Location & Hardiness Zone' : 'Lokalizacja i strefa USDA'}
                 </div>
                 <div className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                  {regionInfo ? regionInfo.name.split('(')[0].trim() : 'Polska'}
+                  {regionInfo ? regionInfo.name.split('(')[0].trim() : (isEn ? 'Poland' : 'Polska')}
                   {regionInfo?.zone && (
                     <span className="ml-2 text-xs font-normal text-emerald-700 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                      Strefa {regionInfo.zone}
+                      {isEn ? 'Zone ' : 'Strefa '}{regionInfo.zone}
                     </span>
                   )}
                 </div>
@@ -341,20 +414,20 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
               <div className="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[11px] font-medium text-stone-500 dark:text-stone-400 mb-1">
                   <Shield className="w-3.5 h-3.5 text-stone-500" />
-                  <span>Konstrukcja</span>
+                  <span>{isEn ? 'Structure' : 'Konstrukcja'}</span>
                 </div>
                 <div className="text-xs font-bold text-stone-900 dark:text-stone-100">
-                  {BALCONY_TYPE_LABELS[userSpec.balcony_type]?.label || userSpec.balcony_type}
+                  {balconyTypeLabels[userSpec.balcony_type]?.label || userSpec.balcony_type}
                 </div>
               </div>
 
               <div className="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-[11px] font-medium text-stone-500 dark:text-stone-400 mb-1">
                   <Umbrella className="w-3.5 h-3.5 text-stone-500" />
-                  <span>Zadaszenie</span>
+                  <span>{isEn ? 'Roofing' : 'Zadaszenie'}</span>
                 </div>
                 <div className="text-xs font-bold text-stone-900 dark:text-stone-100">
-                  {ROOFING_LABELS[userSpec.roofing]?.label || userSpec.roofing}
+                  {roofingLabels[userSpec.roofing]?.label || userSpec.roofing}
                 </div>
               </div>
             </div>
@@ -366,10 +439,10 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[11px] font-medium text-stone-500 dark:text-stone-400">
-                  Dostępny czas na pielęgnację
+                  {isEn ? 'Available care time' : 'Dostępny czas na pielęgnację'}
                 </div>
                 <div className="text-xs font-bold text-stone-900 dark:text-stone-100">
-                  {CARE_TIME_LABELS[userSpec.care_time]?.label || userSpec.care_time}
+                  {careTimeLabels[userSpec.care_time]?.label || userSpec.care_time}
                 </div>
               </div>
             </div>
@@ -388,7 +461,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
             className="w-full py-3 px-4 bg-emerald-800 hover:bg-emerald-900 active:scale-[0.99] text-white rounded-2xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-md"
           >
             <Settings className="w-4 h-4" />
-            <span>Zmień parametry balkonu</span>
+            <span>{isEn ? 'Edit Balcony Settings' : 'Zmień parametry balkonu'}</span>
           </button>
 
           <button
@@ -396,10 +469,11 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
             onClick={onClose}
             className="w-full py-2.5 px-4 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-semibold transition cursor-pointer"
           >
-            Zamknij panel
+            {isEn ? 'Close panel' : 'Zamknij panel'}
           </button>
         </div>
       </aside>
     </div>
   );
 };
+

@@ -16,6 +16,7 @@ import {
   CostCalculationParams,
   CropCostSummary,
 } from '../lib/cropCostEstimates';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props extends CostCalculationParams {
   className?: string;
@@ -29,6 +30,9 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
   onSowingMethodChange,
   ...calcParams
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const [scenario, setScenario] = useState<'full' | 'have_pot' | 'seeds_only'>('full');
   const [showDetails, setShowDetails] = useState<boolean>(!isCompact);
   const [showTips, setShowTips] = useState<boolean>(false);
@@ -72,14 +76,14 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                Szacunkowy koszt założenia uprawy
+                {isEn ? 'Estimated Setup Cost' : 'Szacunkowy koszt założenia uprawy'}
               </h3>
               <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700">
-                Orientacyjnie
+                {isEn ? 'Approximate' : 'Orientacyjnie'}
               </span>
             </div>
             <p className="text-[11px] text-stone-600 dark:text-stone-400">
-              Nasiona / sadzonka + donica + ziemia warzywna + drenaż
+              {isEn ? 'Seeds / seedling + pot + potting soil + drainage' : 'Nasiona / sadzonka + donica + ziemia warzywna + drenaż'}
             </p>
           </div>
         </div>
@@ -89,14 +93,16 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
           <div className="text-right">
             <div className="text-[10px] text-stone-500 font-semibold uppercase tracking-wider">
               {scenario === 'full'
-                ? 'Koszt całości od zera'
+                ? (isEn ? 'Full setup from scratch' : 'Koszt całości od zera')
                 : scenario === 'have_pot'
-                ? 'Gdy masz już donicę'
-                : 'Sam materiał siewny'}
+                ? (isEn ? 'Already have pot' : 'Gdy masz już donicę')
+                : (isEn ? 'Seeds only' : 'Sam materiał siewny')}
             </div>
             <div className="text-sm sm:text-base font-extrabold text-amber-900 dark:text-amber-300">
-              ok. {displayedMin} – {displayedMax} zł
-              <span className="text-xs font-medium text-stone-500 ml-1">(śr. ~{displayedAvg} zł)</span>
+              {isEn ? `approx. ${displayedMin} – ${displayedMax} PLN` : `ok. ${displayedMin} – ${displayedMax} zł`}
+              <span className="text-xs font-medium text-stone-500 ml-1">
+                ({isEn ? `avg. ~${displayedAvg} PLN` : `śr. ~${displayedAvg} zł`})
+              </span>
             </div>
           </div>
         </div>
@@ -106,10 +112,10 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
         {/* Scenarios / Quick Presets */}
         <div className="space-y-1.5">
           <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider flex items-center justify-between">
-            <span>Wariant kalkulacji kosztów:</span>
+            <span>{isEn ? 'Cost calculation scenario:' : 'Wariant kalkulacji kosztów:'}</span>
             {onSowingMethodChange && (
               <div className="flex items-center gap-1 normal-case text-stone-600 dark:text-stone-400 font-medium">
-                <span>Metoda:</span>
+                <span>{isEn ? 'Method:' : 'Metoda:'}</span>
                 <button
                   type="button"
                   onClick={() => onSowingMethodChange('nasiona')}
@@ -119,7 +125,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
                       : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
                   }`}
                 >
-                  🌱 Z nasion
+                  {isEn ? '🌱 From Seed' : '🌱 Z nasion'}
                 </button>
                 <button
                   type="button"
@@ -130,7 +136,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
                       : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
                   }`}
                 >
-                  🌿 Gotowa rozsada
+                  {isEn ? '🌿 Seedling' : '🌿 Gotowa rozsada'}
                 </button>
               </div>
             )}
@@ -147,11 +153,13 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               }`}
             >
               <div>
-                <div className="text-xs font-bold">1. Od zera (komplet)</div>
-                <div className="text-[10px] text-stone-500 dark:text-stone-400">Donica + ziemia + nasiona</div>
+                <div className="text-xs font-bold">{isEn ? '1. From scratch (Full)' : '1. Od zera (komplet)'}</div>
+                <div className="text-[10px] text-stone-500 dark:text-stone-400">
+                  {isEn ? 'Pot + soil + seeds' : 'Donica + ziemia + nasiona'}
+                </div>
               </div>
               <span className="text-xs font-extrabold text-amber-900 dark:text-amber-300">
-                {costSummary.totalMin}–{costSummary.totalMax} zł
+                {costSummary.totalMin}–{costSummary.totalMax} {isEn ? 'PLN' : 'zł'}
               </span>
             </button>
 
@@ -165,11 +173,13 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               }`}
             >
               <div>
-                <div className="text-xs font-bold">2. Mam już donicę</div>
-                <div className="text-[10px] text-stone-500 dark:text-stone-400">Tylko ziemia + nasiona</div>
+                <div className="text-xs font-bold">{isEn ? '2. Already have pot' : '2. Mam już donicę'}</div>
+                <div className="text-[10px] text-stone-500 dark:text-stone-400">
+                  {isEn ? 'Soil + seeds only' : 'Tylko ziemia + nasiona'}
+                </div>
               </div>
               <span className="text-xs font-extrabold text-amber-900 dark:text-amber-300">
-                {costSummary.starterOnlyMin}–{costSummary.starterOnlyMax} zł
+                {costSummary.starterOnlyMin}–{costSummary.starterOnlyMax} {isEn ? 'PLN' : 'zł'}
               </span>
             </button>
 
@@ -183,11 +193,13 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               }`}
             >
               <div>
-                <div className="text-xs font-bold">3. Tylko siew/sadzonka</div>
-                <div className="text-[10px] text-stone-500 dark:text-stone-400">Mam ziemię i donicę</div>
+                <div className="text-xs font-bold">{isEn ? '3. Seeds / plant only' : '3. Tylko siew/sadzonka'}</div>
+                <div className="text-[10px] text-stone-500 dark:text-stone-400">
+                  {isEn ? 'Already have pot & soil' : 'Mam ziemię i donicę'}
+                </div>
               </div>
               <span className="text-xs font-extrabold text-amber-900 dark:text-amber-300">
-                {costSummary.seedsOnlyMin}–{costSummary.seedsOnlyMax} zł
+                {costSummary.seedsOnlyMin}–{costSummary.seedsOnlyMax} {isEn ? 'PLN' : 'zł'}
               </span>
             </button>
           </div>
@@ -198,7 +210,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
               <Receipt className="w-3.5 h-3.5 text-stone-500" />
-              <span>Szczegółowe rozbicie pozycji (co za ile):</span>
+              <span>{isEn ? 'Itemized breakdown:' : 'Szczegółowe rozbicie pozycji (co za ile):'}</span>
             </span>
             <button
               type="button"
@@ -207,12 +219,12 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
             >
               {showDetails ? (
                 <>
-                  <span>Zwiń listę</span>
+                  <span>{isEn ? 'Collapse list' : 'Zwiń listę'}</span>
                   <ChevronUp className="w-3.5 h-3.5" />
                 </>
               ) : (
                 <>
-                  <span>Pokaż listę ({activeItems.length})</span>
+                  <span>{isEn ? `Show list (${activeItems.length})` : `Pokaż listę (${activeItems.length})`}</span>
                   <ChevronDown className="w-3.5 h-3.5" />
                 </>
               )}
@@ -239,7 +251,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
                           </span>
                           {item.optional && (
                             <span className="text-[9px] text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-900/40 px-1 py-0.2 rounded font-semibold">
-                              Opcjonalnie
+                              {isEn ? 'Optional' : 'Opcjonalnie'}
                             </span>
                           )}
                         </div>
@@ -252,8 +264,8 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
                     <div className="sm:text-right shrink-0 self-end sm:self-center pl-7 sm:pl-0">
                       <span className="text-xs font-extrabold text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-stone-200 dark:border-stone-700 shadow-2xs">
                         {item.totalRange.min === item.totalRange.max
-                          ? `${item.totalRange.min} zł`
-                          : `${item.totalRange.min} – ${item.totalRange.max} zł`}
+                          ? `${item.totalRange.min} ${isEn ? 'PLN' : 'zł'}`
+                          : `${item.totalRange.min} – ${item.totalRange.max} ${isEn ? 'PLN' : 'zł'}`}
                       </span>
                     </div>
                   </div>
@@ -263,7 +275,9 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
               {/* Total footer summary */}
               <div className="p-3 bg-stone-100 dark:bg-stone-800/70 rounded-xl border border-stone-200 dark:border-stone-700/80 flex items-center justify-between text-xs">
                 <span className="font-bold text-stone-800 dark:text-stone-200">
-                  Łączna suma orientacyjna ({scenario === 'full' ? 'komplet' : scenario === 'have_pot' ? 'bez donicy' : 'tylko nasiona'}):
+                  {isEn
+                    ? `Estimated Total (${scenario === 'full' ? 'complete' : scenario === 'have_pot' ? 'without pot' : 'seeds only'}):`
+                    : `Łączna suma orientacyjna (${scenario === 'full' ? 'komplet' : scenario === 'have_pot' ? 'bez donicy' : 'tylko nasiona'}):`}
                 </span>
                 <span className="text-sm font-black text-emerald-800 dark:text-emerald-300">
                   {displayedMin} – {displayedMax} PLN
@@ -278,7 +292,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
           <Info className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
           <div className="space-y-1">
             <div className="font-bold text-[11px] text-amber-900 dark:text-amber-100">
-              Informacja o szacunkach kosztowych:
+              {isEn ? 'Cost estimate disclaimer:' : 'Informacja o szacunkach kosztowych:'}
             </div>
             <p className="text-[11px] leading-relaxed text-amber-900/90 dark:text-amber-200/90">
               {costSummary.disclaimer}
@@ -294,7 +308,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
             className="text-[11px] font-semibold text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200 flex items-center gap-1.5 cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span>{showTips ? 'Ukryj wskazówki oszczędnościowe' : 'Jak zoptymalizować koszty uprawy? (Porady)'}</span>
+            <span>{showTips ? (isEn ? 'Hide budget optimization tips' : 'Ukryj wskazówki oszczędnościowe') : (isEn ? 'How to optimize growing costs? (Tips)' : 'Jak zoptymalizować koszty uprawy? (Porady)')}</span>
             {showTips ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
           </button>
 
@@ -302,7 +316,7 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
             <div className="mt-2 p-3 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs space-y-1.5">
               <div className="font-bold text-[11px] text-emerald-900 dark:text-emerald-200 flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Praktyczne sposoby na obniżenie kosztów:</span>
+                <span>{isEn ? 'Practical ways to lower costs:' : 'Praktyczne sposoby na obniżenie kosztów:'}</span>
               </div>
               <ul className="list-disc pl-4 space-y-1 text-[11px] text-emerald-950 dark:text-emerald-200/90">
                 {costSummary.savingTips.map((tip, idx) => (
@@ -316,3 +330,4 @@ export const CropCostEstimatorCard: React.FC<Props> = ({
     </div>
   );
 };
+

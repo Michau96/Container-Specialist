@@ -13,6 +13,7 @@ import { Plant, PotShape, LegacyPotMaterial, SupportType } from '../types';
 import { SoilCrossSection } from './SoilCrossSection';
 import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 import { POT_MATERIAL_OPTIONS } from '../lib/potSupportEvaluations';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface PotResultStepProps {
   currentPlant: Plant;
@@ -81,8 +82,41 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
   onBackToConfig,
   onSelectPlant,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const isPotSuitable = isVolOk && isDepthOk;
-  const materialLabel = POT_MATERIAL_OPTIONS.find((o) => o.key === material)?.label || material;
+  const getMaterialLabel = (key: LegacyPotMaterial) => {
+    if (isEn) {
+      switch (key) {
+        case 'plastic':
+          return 'Plastic / Synthetic';
+        case 'terracotta':
+          return 'Terracotta / Ceramic';
+        case 'wood':
+          return 'Natural wood';
+        case 'fabric':
+          return 'Fabric / Smart Pot';
+        case 'ceramic':
+          return 'Glazed ceramic';
+        default:
+          return key;
+      }
+    }
+    return POT_MATERIAL_OPTIONS.find((o) => o.key === key)?.label || key;
+  };
+  const materialLabel = getMaterialLabel(material);
+
+  const totalPlants = capacityInfo.recommendedCount * potCount;
+  const plantsUnitText = isEn
+    ? totalPlants === 1
+      ? 'plant'
+      : 'plants'
+    : totalPlants === 1
+    ? 'sztukę'
+    : totalPlants < 5
+    ? 'sztuki'
+    : 'sztuk';
 
   return (
     <div className="space-y-6">
@@ -94,7 +128,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 text-xs font-bold text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700 transition cursor-pointer self-start sm:self-center"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Wróć do konfiguracji (Krok 1)</span>
+          <span>{isEn ? 'Back to Config (Step 1)' : 'Wróć do konfiguracji (Krok 1)'}</span>
         </button>
 
         <div className="flex flex-wrap items-center gap-2 text-[11px]">
@@ -127,8 +161,8 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           <div className="text-xs sm:text-sm font-extrabold uppercase tracking-wider flex items-center justify-between">
             <span>
               {isPotSuitable
-                ? 'POTWIERDZONE: DONICA SPEŁNIA WYMAGANIA'
-                : 'DONICA NIE SPEŁNIA WYMAGAŃ (ZA MAŁA)'}
+                ? (isEn ? 'CONFIRMED: CONTAINER MEETS REQUIREMENTS' : 'POTWIERDZONE: DONICA SPEŁNIA WYMAGANIA')
+                : (isEn ? 'CONTAINER DOES NOT MEET REQUIREMENTS (TOO SMALL)' : 'DONICA NIE SPEŁNIA WYMAGAŃ (ZA MAŁA)')}
             </span>
             <span
               className={`text-[10px] px-2 py-0.5 rounded font-bold border ${
@@ -137,32 +171,36 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                   : 'bg-red-100 dark:bg-red-900 border-red-300 dark:border-red-700 text-red-900 dark:text-red-100'
               }`}
             >
-              {isPotSuitable ? 'Zalecana do uprawy' : 'Wymaga korekty'}
+              {isPotSuitable ? (isEn ? 'Recommended for cultivation' : 'Zalecana do uprawy') : (isEn ? 'Adjustment required' : 'Wymaga korekty')}
             </span>
           </div>
 
           <p className="text-xs leading-relaxed font-medium">
-            Twoja donica ma <strong>{volumeLiters}L</strong> oraz głębokość <strong>{heightCm} cm</strong>.
-            Dla <strong>{currentPlant.name}</strong> wymagana jest objętość min. {minPlantVol}L (zalecana {recPlantVol}L) oraz głębokość min. {minDepth} cm.
+            {isEn
+              ? `Your pot has ${volumeLiters}L volume and ${heightCm} cm depth. For ${currentPlant.name}, min. ${minPlantVol}L (rec. ${recPlantVol}L) volume and min. ${minDepth} cm depth are required.`
+              : `Twoja donica ma ${volumeLiters}L oraz głębokość ${heightCm} cm. Dla ${currentPlant.name} wymagana jest objętość min. ${minPlantVol}L (zalecana ${recPlantVol}L) oraz głębokość min. ${minDepth} cm.`}
           </p>
 
           {isPotSuitable ? (
             <div className="pt-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
-              💡 Rekomendacja: W {potCount > 1 ? `${potCount} takich donicach` : 'tej donicy'} możesz posadzić łącznie{' '}
-              <strong>
-                {capacityInfo.recommendedCount * potCount}{' '}
-                {capacityInfo.recommendedCount * potCount === 1
-                  ? 'sztukę'
-                  : capacityInfo.recommendedCount * potCount < 5
-                  ? 'sztuki'
-                  : 'sztuk'}
-              </strong>{' '}
-              w optymalnej rozstawie co <strong>{spacingCm} cm</strong>.
+              {isEn ? (
+                <>
+                  💡 Recommendation: In {potCount > 1 ? `${potCount} such containers` : 'this container'}, you can plant a total of{' '}
+                  <strong>{totalPlants} {plantsUnitText}</strong> with optimal spacing of <strong>{spacingCm} cm</strong>.
+                </>
+              ) : (
+                <>
+                  💡 Rekomendacja: W {potCount > 1 ? `${potCount} takich donicach` : 'tej donicy'} możesz posadzić łącznie{' '}
+                  <strong>{totalPlants} {plantsUnitText}</strong> w optymalnej rozstawie co <strong>{spacingCm} cm</strong>.
+                </>
+              )}
             </div>
           ) : (
             <div className="pt-2 text-xs font-semibold text-red-900 dark:text-red-200 space-y-1">
               <p>
-                ⚠️ Pojemnik jest za mały dla tej rośliny – system korzeniowy ulegnie skarłowaceniu, a podłoże na balkonie będzie przesychać w ciągu kilku godzin.
+                {isEn
+                  ? '⚠️ Container is too small for this plant – root system will be stunted, and balcony soil will dry out within hours.'
+                  : '⚠️ Pojemnik jest za mały dla tej rośliny – system korzeniowy ulegnie skarłowaceniu, a podłoże na balkonie będzie przesychać w ciągu kilku godzin.'}
               </p>
               <div className="pt-1">
                 <button
@@ -171,7 +209,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                   className="inline-flex items-center gap-1.5 text-xs font-bold text-red-800 dark:text-red-300 hover:underline cursor-pointer"
                 >
                   <RotateCcw className="w-3.5 h-3.5" />
-                  <span>Kliknij tutaj, aby wrócić i zwiększyć wymiary donicy</span>
+                  <span>{isEn ? 'Click here to return and increase pot dimensions' : 'Kliknij tutaj, aby wrócić i zwiększyć wymiary donicy'}</span>
                 </button>
               </div>
             </div>
@@ -191,7 +229,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           }`}
         >
           <Compass className="w-4 h-4" />
-          <span>Szkic z góry (rozstawa)</span>
+          <span>{isEn ? 'Top 2D Spacing Layout' : 'Szkic z góry (rozstawa)'}</span>
         </button>
 
         <button
@@ -204,7 +242,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           }`}
         >
           <Layers className="w-4 h-4" />
-          <span>Przekrój podłoża ({volumeLiters}L)</span>
+          <span>{isEn ? `Soil Layers (${volumeLiters}L)` : `Przekrój podłoża (${volumeLiters}L)`}</span>
         </button>
 
         <button
@@ -217,7 +255,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           }`}
         >
           <Coins className="w-4 h-4" />
-          <span>Szacunek kosztów (PLN)</span>
+          <span>{isEn ? 'Cost Estimates (PLN)' : 'Szacunek kosztów (PLN)'}</span>
         </button>
       </div>
 
@@ -227,10 +265,10 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between text-xs text-stone-600 dark:text-stone-400 gap-2">
             <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
               <span>📐</span>
-              <span>Zielona makieta rozmieszczenia ({capacityInfo.dimensionText})</span>
+              <span>{isEn ? `2D Spacing Mockup (${capacityInfo.dimensionText})` : `Zielona makieta rozmieszczenia (${capacityInfo.dimensionText})`}</span>
             </span>
             <span className="text-[11px] bg-white dark:bg-stone-800 px-2.5 py-1 rounded-lg border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-semibold self-start sm:self-auto">
-              Zalecana rozstawa: <strong>{spacingCm} cm</strong>
+              {isEn ? 'Recommended spacing:' : 'Zalecana rozstawa:'} <strong>{spacingCm} cm</strong>
             </span>
           </div>
 
@@ -239,7 +277,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
             <svg
               viewBox="0 0 400 180"
               className="w-full h-48 drop-shadow-sm select-none"
-              aria-label="Rzut z góry rozmieszczenia sadzonek w donicy"
+              aria-label={isEn ? 'Top view of crop arrangement in pot' : 'Rzut z góry rozmieszczenia sadzonek w donicy'}
             >
               {/* Tło i obrys donicy */}
               {shape === 'rectangular' ? (
@@ -299,7 +337,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                     className="text-stone-700 dark:text-stone-200"
                     fontWeight="bold"
                   >
-                    Długość: {lengthCm} cm
+                    {isEn ? `Length: ${lengthCm} cm` : `Długość: ${lengthCm} cm`}
                   </text>
 
                   {/* Szerokość W */}
@@ -359,7 +397,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                     className="text-stone-700 dark:text-stone-200"
                     fontWeight="bold"
                   >
-                    Średnica: ⌀ {diameterCm} cm
+                    {isEn ? `Diameter: ⌀ ${diameterCm} cm` : `Średnica: ⌀ ${diameterCm} cm`}
                   </text>
                 </g>
               )}
@@ -408,22 +446,22 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                 <span className="w-3.5 h-3.5 rounded-full bg-[#2e7d32] border border-green-300 inline-block" />
                 <span>
                   {currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
-                    ? 'Gniazdo siewu (2–3 nasiona)'
-                    : 'Punkt siewu / sadzonka'}
+                    ? (isEn ? 'Sowing cluster (2–3 seeds)' : 'Gniazdo siewu (2–3 nasiona)')
+                    : (isEn ? 'Planting point / seedling' : 'Punkt siewu / sadzonka')}
                 </span>
               </div>
               {currentPlant.spacing_guide?.requires_bamboo_stake && (
                 <div className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-amber-500 border border-amber-800 inline-block" />
                   <span className="font-semibold text-amber-800 dark:text-amber-300">
-                    🎋 Palik bambusowy (niezbędny)
+                    🎋 {isEn ? 'Bamboo stake (essential)' : 'Palik bambusowy (niezbędny)'}
                   </span>
                 </div>
               )}
               {supports === 'trellis' && (
                 <div className="flex items-center gap-1.5">
                   <span className="w-4 h-1 bg-sky-500 inline-block" />
-                  <span>Kratka na tylnej ściance</span>
+                  <span>{isEn ? 'Back wall trellis' : 'Kratka na tylnej ściance'}</span>
                 </div>
               )}
             </div>
@@ -432,9 +470,11 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           {/* Instrukcja agrotechniczna dla wybranej rośliny */}
           <div className="w-full bg-white dark:bg-stone-900 p-4 sm:p-5 rounded-xl border border-stone-200 dark:border-stone-700 text-xs space-y-3">
             <div className="flex items-center justify-between font-bold text-stone-800 dark:text-stone-200 pb-2 border-b border-stone-100 dark:border-stone-800">
-              <span>Instrukcja agrotechniczna: {currentPlant.name}</span>
+              <span>{isEn ? `Growing Guide: ${currentPlant.name}` : `Instrukcja agrotechniczna: ${currentPlant.name}`}</span>
               <span className="text-stone-600 dark:text-stone-300 font-semibold">
-                Głębokość siewu: {plantingDepth > 0 ? `${plantingDepth} cm` : 'powierzchniowo'}
+                {isEn
+                  ? `Sowing depth: ${plantingDepth > 0 ? `${plantingDepth} cm` : 'surface'}`
+                  : `Głębokość siewu: ${plantingDepth > 0 ? `${plantingDepth} cm` : 'powierzchniowo'}`}
               </span>
             </div>
 
@@ -443,7 +483,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
               <div className="flex items-center justify-between">
                 <div className="font-bold text-[11px] flex items-center gap-1.5 text-stone-900 dark:text-stone-100">
                   <span>🌱</span>
-                  <span>Metoda siewu w schemacie:</span>
+                  <span>{isEn ? 'Sowing method in layout:' : 'Metoda siewu w schemacie:'}</span>
                 </div>
                 <span
                   className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
@@ -452,7 +492,17 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                       : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
                   }`}
                 >
-                  {currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                  {isEn
+                    ? currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                      ? 'Cluster sowing (cluster)'
+                      : currentPlant.spacing_guide?.sowing_type === 'pojedynczo'
+                      ? 'Single seed sowing'
+                      : currentPlant.spacing_guide?.sowing_type === 'rzutowo'
+                      ? 'Broadcast sowing'
+                      : currentPlant.spacing_guide?.sowing_type === 'grzybnia'
+                      ? 'Mycelium inoculation'
+                      : 'Single seedling planting'
+                    : currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
                     ? 'Siew gniazdowy (gniazdowo)'
                     : currentPlant.spacing_guide?.sowing_type === 'pojedynczo'
                     ? 'Siew pojedynczy (pojedynczo)'
@@ -465,7 +515,13 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
               </div>
 
               <p className="text-[11px] text-stone-700 dark:text-stone-300 leading-relaxed font-medium">
-                {currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                {isEn
+                  ? currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
+                    ? '👉 SOW IN CLUSTERS: place 2–3 seeds in each hole. After sprouting, thin out to leave the 1 strongest seedling.'
+                    : currentPlant.spacing_guide?.sowing_type === 'pojedynczo'
+                    ? '👉 SOW INDIVIDUALLY: place 1 seed (or plant 1 seedling) at each designated point without subsequent thinning.'
+                    : currentPlant.spacing_guide?.sowing_type_details || plantingMethod
+                  : currentPlant.spacing_guide?.sowing_type === 'gniazdowo'
                   ? '👉 Siać GNIAZDOWO: w każdym punkcie siewu umieszczaj po 2–3 nasiona w jednym dołku. Po wykiełkowaniu wykonaj selekcję (przerywkę), zostawiając 1 najsilniejszą siewkę.'
                   : currentPlant.spacing_guide?.sowing_type === 'pojedynczo'
                   ? '👉 Siać POJEDYNCZO: wysiewaj punktowo po 1 nasionku (lub sadź 1 sadzonkę) w każdym wyznaczonym punkcie bez potrzeby późniejszej przerywki.'
@@ -479,21 +535,23 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
                 <div className="font-bold text-[11px] flex items-center justify-between mb-1">
                   <span className="flex items-center gap-1.5 text-amber-900 dark:text-amber-200">
                     <span>🎋</span>
-                    <span>Palik bambusowy:</span>
+                    <span>{isEn ? 'Bamboo Stake:' : 'Palik bambusowy:'}</span>
                   </span>
                   <span className="text-[10px] font-extrabold uppercase bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded border border-amber-400 dark:border-amber-700">
-                    Niezbędny do uprawy
+                    {isEn ? 'Essential for growth' : 'Niezbędny do uprawy'}
                   </span>
                 </div>
                 <p className="text-[11px] leading-relaxed font-medium">
-                  {currentPlant.spacing_guide?.bamboo_stake_desc ||
-                    'Wbij palik bambusowy w dno donicy już na etapie sadzenia/siewu, aby nie uszkodzić korzeni. Pędy podwiązuj elastycznym sznurkiem w ósemkę.'}
+                  {isEn
+                    ? 'Insert a bamboo stake into the bottom of the pot at planting time to avoid damaging root system. Tie shoots with soft garden twine in a figure-eight.'
+                    : currentPlant.spacing_guide?.bamboo_stake_desc ||
+                      'Wbij palik bambusowy w dno donicy już na etapie sadzenia/siewu, aby nie uszkodzić korzeni. Pędy podwiązuj elastycznym sznurkiem w ósemkę.'}
                 </p>
               </div>
             )}
 
             <div className="text-[11px] text-stone-600 dark:text-stone-400 leading-relaxed">
-              <strong>Zalecana podpora:</strong> {requiredSupports}.
+              <strong>{isEn ? 'Recommended support:' : 'Zalecana podpora:'}</strong> {requiredSupports}.
             </div>
           </div>
         </div>
@@ -540,7 +598,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-600 text-xs font-bold text-stone-700 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition flex items-center justify-center gap-2 cursor-pointer"
         >
           <RotateCcw className="w-4 h-4" />
-          <span>Zmień parametry donicy (Krok 1)</span>
+          <span>{isEn ? 'Change pot settings (Step 1)' : 'Zmień parametry donicy (Krok 1)'}</span>
         </button>
 
         {onSelectPlant && (
@@ -550,7 +608,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-bold hover:bg-stone-800 dark:hover:bg-stone-200 transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
-            <span>Zobacz profil rośliny: {currentPlant.name}</span>
+            <span>{isEn ? `View plant profile: ${currentPlant.name}` : `Zobacz profil rośliny: ${currentPlant.name}`}</span>
           </button>
         )}
       </div>

@@ -21,6 +21,8 @@ import {
   isWateringSuspended,
   getDaysRemainingInSuspension,
 } from '../lib/rescueData';
+import { useLanguage } from '../lib/LanguageContext';
+import { getPlantName } from '../lib/plantTranslations';
 
 interface RescueFlowModalProps {
   isOpen: boolean;
@@ -41,6 +43,8 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
   onDismissPlan,
   onUpdateCrop,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
   const [selectedIssueId, setSelectedIssueId] = useState<string | null>(
     crop.rescuePlan?.active ? crop.rescuePlan.issueId : null
   );
@@ -71,7 +75,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
 
   const handleConfirmActivation = () => {
     if (!selectedIssueId) return;
-    const newPlan = createRescuePlan(selectedIssueId, plant.name);
+    const newPlan = createRescuePlan(selectedIssueId, getPlantName(plant, language));
     if (newPlan) {
       onActivatePlan(newPlan);
       setIsChangingIssue(false);
@@ -103,7 +107,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
     crop.selectedVariety ||
     plant.top_varieties?.[0]?.name ||
     (typeof plant.varieties?.[0] === 'string' ? plant.varieties?.[0] : (plant.varieties?.[0] as any)?.name) ||
-    'Standardowa';
+    (isEn ? 'Standard' : 'Standardowa');
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
@@ -121,26 +125,28 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-base sm:text-lg text-stone-900 dark:text-stone-100 tracking-tight">
-                  Tryb Ratunkowy: Pogotowie Roślinne
+                  {isEn ? 'Rescue Mode: Plant First Aid' : 'Tryb Ratunkowy: Pogotowie Roślinne'}
                 </h3>
                 {activePlan && !isChangingIssue && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800">
-                    Aktywny
+                    {isEn ? 'Active' : 'Aktywny'}
                   </span>
                 )}
               </div>
               <p className="text-xs text-stone-500 dark:text-stone-400 truncate">
-                Pacjent: <strong>{plant.name}</strong> ({cropVariety}) {crop.customPotName ? `• ${crop.customPotName}` : ''}
+                {isEn ? 'Plant:' : 'Pacjent:'} <strong>{getPlantName(plant, language)}</strong> ({cropVariety}) {crop.customPotName ? `• ${crop.customPotName}` : ''}
               </p>
             </div>
           </div>
 
           <button
+            id="close-rescue-modal-btn"
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-200/60 dark:hover:bg-stone-800 transition cursor-pointer"
-            aria-label="Zamknij"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+            title={isEn ? 'Close' : 'Zamknij'}
+            aria-label={isEn ? 'Close' : 'Zamknij'}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
@@ -158,7 +164,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                     </span>
                     <div>
                       <div className="text-[11px] font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
-                        Zdiagnozowany problem • {activePlan.symptomBadge}
+                        {isEn ? `Diagnosed Issue • ${activePlan.symptomBadge}` : `Zdiagnozowany problem • ${activePlan.symptomBadge}`}
                       </div>
                       <h4 className="text-lg sm:text-xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight">
                         {activePlan.issueTitle}
@@ -172,7 +178,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                       className="px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5"
                     >
                       <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
-                      <span>Zmień diagnozę</span>
+                      <span>{isEn ? 'Change diagnosis' : 'Zmień diagnozę'}</span>
                     </button>
                   </div>
                 </div>
@@ -184,19 +190,19 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                   </div>
                   <div className="text-xs space-y-0.5">
                     <div className="font-bold text-rose-900 dark:text-rose-200 flex items-center gap-2 flex-wrap">
-                      <span>Normalny harmonogram podlewania: ZAWIESZONY</span>
+                      <span>{isEn ? 'Standard Watering Schedule: SUSPENDED' : 'Normalny harmonogram podlewania: ZAWIESZONY'}</span>
                       {activePlan.suspendedWateringUntil && (
                         <span className="text-[11px] font-normal px-2 py-0.2 rounded-md bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
                           {isSuspended
-                            ? `Jeszcze ${remainingDays} ${remainingDays === 1 ? 'dzień' : 'dni'} (do ${activePlan.suspendedWateringUntil})`
-                            : 'Okres karencji minął'}
+                            ? (isEn ? `${remainingDays} ${remainingDays === 1 ? 'day' : 'days'} remaining (until ${activePlan.suspendedWateringUntil})` : `Jeszcze ${remainingDays} ${remainingDays === 1 ? 'dzień' : 'dni'} (do ${activePlan.suspendedWateringUntil})`)
+                            : (isEn ? 'Suspension period expired' : 'Okres karencji minął')}
                         </span>
                       )}
                     </div>
                     <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
                       {isSuspended
-                        ? 'Podlewanie w tym stanie zablokowałoby dostęp tlenu do korzeni i pogłębiło chorobę. Zastosuj się do poniższych kroków ratunkowych.'
-                        : 'Okres całkowitego wstrzymania wody dobiegł końca. Sprawdź palcem wilgotność gleby na 3 cm – jeśli sucho, możesz wznowić delikatne podlewanie.'}
+                        ? (isEn ? 'Watering in this condition would starve roots of oxygen and worsen root rot. Follow the rescue steps below.' : 'Podlewanie w tym stanie zablokowałoby dostęp tlenu do korzeni i pogłębiło chorobę. Zastosuj się do poniższych kroków ratunkowych.')
+                        : (isEn ? 'Water suspension period has ended. Test soil moisture 3cm deep with your finger – if dry, resume gentle bottom watering.' : 'Okres całkowitego wstrzymania wody dobiegł końca. Sprawdź palcem wilgotność gleby na 3 cm – jeśli sucho, możesz wznowić delikatne podlewanie.')}
                     </p>
                   </div>
                 </div>
@@ -206,7 +212,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
               <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-800 space-y-2">
                 <div className="flex items-center gap-2 text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
                   <Sparkles className="w-4 h-4 text-amber-500" />
-                  <span>Diagnoza i przyczyna na balkonie</span>
+                  <span>{isEn ? 'Diagnosis & cause on balcony' : 'Diagnoza i przyczyna na balkonie'}</span>
                 </div>
                 <div className="text-sm font-semibold text-stone-900 dark:text-stone-100">
                   {activePlan.diagnosis}
@@ -221,10 +227,10 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                 <div className="flex items-center justify-between">
                   <h5 className="font-bold text-sm text-stone-900 dark:text-stone-100 flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                    <span>Jednoetapowy plan ratunkowy (Kroki do wykonania):</span>
+                    <span>{isEn ? 'Rescue action plan (Steps to complete):' : 'Jednoetapowy plan ratunkowy (Kroki do wykonania):'}</span>
                   </h5>
                   <span className="text-xs text-stone-500 dark:text-stone-400">
-                    Zaznacz wykonane
+                    {isEn ? 'Check when done' : 'Zaznacz wykonane'}
                   </span>
                 </div>
 
@@ -262,7 +268,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
               <div className="p-3.5 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/80 flex items-start gap-3">
                 <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div className="text-xs space-y-0.5">
-                  <div className="font-bold text-amber-900 dark:text-amber-200">Czego unikać:</div>
+                  <div className="font-bold text-amber-900 dark:text-amber-200">{isEn ? 'What to avoid:' : 'Czego unikać:'}</div>
                   <p className="text-stone-700 dark:text-stone-300 leading-relaxed">
                     {activePlan.whatToAvoid}
                   </p>
@@ -273,7 +279,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
               <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-850 border border-stone-200 dark:border-stone-800 flex items-center gap-3 text-xs text-stone-600 dark:text-stone-400">
                 <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <strong className="text-stone-800 dark:text-stone-200 font-semibold">Oczekiwana poprawa:</strong>{' '}
+                  <strong className="text-stone-800 dark:text-stone-200 font-semibold">{isEn ? 'Expected recovery:' : 'Oczekiwana poprawa:'}</strong>{' '}
                   {activePlan.recoveryTimeline}
                 </div>
               </div>
@@ -285,7 +291,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                   onClick={onClose}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 font-semibold text-xs transition cursor-pointer"
                 >
-                  Zamknij okno
+                  {isEn ? 'Close window' : 'Zamknij okno'}
                 </button>
 
                 <button
@@ -294,7 +300,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                   className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white font-bold text-sm transition shadow-sm cursor-pointer flex items-center justify-center gap-2"
                 >
                   <CheckCircle2 className="w-4 h-4 text-emerald-200" />
-                  <span>Roślina wyzdrowiała – wznów normalny harmonogram</span>
+                  <span>{isEn ? 'Plant recovered – resume normal care' : 'Roślina wyzdrowiała – wznów normalny harmonogram'}</span>
                 </button>
               </div>
             </div>
@@ -306,11 +312,12 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                 <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div className="text-xs space-y-1">
                   <div className="font-bold text-amber-950 dark:text-amber-200">
-                    Wybierz objaw, który zaobserwowałeś na roślinie:
+                    {isEn ? 'Select symptom observed on your plant:' : 'Wybierz objaw, który zaobserwowałeś na roślinie:'}
                   </div>
                   <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
-                    Aplikacja natychmiast zawiesi standardowy harmonogram podlewania dla tej donicy i
-                    przygotuje dedykowany, jednoetapowy plan ratunkowy skrojony pod specyfikę balkonu.
+                    {isEn
+                      ? 'The app will immediately suspend standard watering for this pot and provide an actionable emergency recovery plan tailored to balcony conditions.'
+                      : 'Aplikacja natychmiast zawiesi standardowy harmonogram podlewania dla tej donicy i przygotuje dedykowany, jednoetapowy plan ratunkowy skrojony pod specyfikę balkonu.'}
                   </p>
                 </div>
               </div>
@@ -318,12 +325,12 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
               {/* CATEGORY FILTER PILLS */}
               <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
                 {[
-                  { id: 'all', label: 'Wszystkie objawy' },
-                  { id: 'water', label: '💧 Woda i przelanie' },
-                  { id: 'disease', label: '🍄 Mączniak i grzyb' },
-                  { id: 'sun', label: '☀️ Upał i słońce' },
-                  { id: 'pest', label: '🐛 Szkodniki' },
-                  { id: 'soil', label: '🪴 Podłoże i pleśń' },
+                  { id: 'all', label: isEn ? 'All Symptoms' : 'Wszystkie objawy' },
+                  { id: 'water', label: isEn ? '💧 Water & Overwatering' : '💧 Woda i przelanie' },
+                  { id: 'disease', label: isEn ? '🍄 Mildew & Fungus' : '🍄 Mączniak i grzyb' },
+                  { id: 'sun', label: isEn ? '☀️ Heat & Sun Scorch' : '☀️ Upał i słońce' },
+                  { id: 'pest', label: isEn ? '🐛 Pests' : '🐛 Szkodniki' },
+                  { id: 'soil', label: isEn ? '🪴 Soil & Mold' : '🪴 Podłoże i pleśń' },
                 ].map((cat) => (
                   <button
                     key={cat.id}
@@ -400,12 +407,12 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
 
                         <div className="pt-2 border-t border-stone-150 dark:border-stone-800/80 flex items-center justify-between text-[11px]">
                           <span className="font-medium text-stone-500 dark:text-stone-400">
-                            Zawieszenie podlewania:
+                            {isEn ? 'Watering suspension:' : 'Zawieszenie podlewania:'}
                           </span>
                           <span className="font-bold text-rose-700 dark:text-rose-400">
                             {issue.suspendedWateringDays > 0
-                              ? `⏸️ ${issue.suspendedWateringDays} ${issue.suspendedWateringDays === 1 ? 'dzień' : 'dni'}`
-                              : '💧 Nawadnianie podsiąkowe'}
+                              ? (isEn ? `⏸️ ${issue.suspendedWateringDays} ${issue.suspendedWateringDays === 1 ? 'day' : 'days'}` : `⏸️ ${issue.suspendedWateringDays} ${issue.suspendedWateringDays === 1 ? 'dzień' : 'dni'}`)
+                              : (isEn ? '💧 Bottom watering' : '💧 Nawadnianie podsiąkowe')}
                           </span>
                         </div>
                       </div>
@@ -421,19 +428,19 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                     <div className="flex items-center gap-2.5">
                       <span className="text-2xl">{previewIssue.icon}</span>
                       <h4 className="font-extrabold text-base text-stone-900 dark:text-stone-100">
-                        Proponowany plan ratunkowy: {previewIssue.title}
+                        {isEn ? `Recommended rescue plan: ${previewIssue.title}` : `Proponowany plan ratunkowy: ${previewIssue.title}`}
                       </h4>
                     </div>
                     <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-200 border border-rose-300 dark:border-rose-800">
                       {previewIssue.suspendedWateringDays > 0
-                        ? `Podlewanie wstrzymane na ${previewIssue.suspendedWateringDays} dni`
-                        : 'Nawadnianie podsiąkowe'}
+                        ? (isEn ? `Watering suspended for ${previewIssue.suspendedWateringDays} days` : `Podlewanie wstrzymane na ${previewIssue.suspendedWateringDays} dni`)
+                        : (isEn ? 'Bottom watering' : 'Nawadnianie podsiąkowe')}
                     </span>
                   </div>
 
                   <div className="text-xs space-y-1 bg-white dark:bg-stone-900 p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800">
                     <div className="font-bold text-stone-800 dark:text-stone-200">
-                      Rozpoznanie: {previewIssue.diagnosis}
+                      {isEn ? 'Diagnosis:' : 'Rozpoznanie:'} {previewIssue.diagnosis}
                     </div>
                     <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
                       {previewIssue.cause}
@@ -443,7 +450,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                   {/* IMMEDIATE RESCUE STEPS */}
                   <div className="space-y-2">
                     <div className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
-                      Natychmiastowe kroki ratunkowe:
+                      {isEn ? 'Immediate rescue steps:' : 'Natychmiastowe kroki ratunkowe:'}
                     </div>
                     <ol className="space-y-1.5 text-xs text-stone-800 dark:text-stone-200">
                       {previewIssue.steps.map((step, idx) => (
@@ -459,7 +466,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
 
                   {/* WARNING */}
                   <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-900 dark:text-rose-200">
-                    <strong>Czego nie robić:</strong> {previewIssue.whatToAvoid}
+                    <strong>{isEn ? 'What not to do:' : 'Czego nie robić:'}</strong> {previewIssue.whatToAvoid}
                   </div>
 
                   {/* CONFIRMATION BUTTON */}
@@ -470,7 +477,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                         onClick={() => setIsChangingIssue(false)}
                         className="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 text-xs font-semibold hover:bg-stone-100 dark:hover:bg-stone-800 transition"
                       >
-                        Anuluj zmianę
+                        {isEn ? 'Cancel change' : 'Anuluj zmianę'}
                       </button>
                     )}
                     <button
@@ -479,7 +486,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                       className="w-full sm:w-auto px-6 py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-[0.99] text-white font-bold text-sm transition shadow-md cursor-pointer flex items-center justify-center gap-2.5"
                     >
                       <LifeBuoy className="w-5 h-5 text-white" />
-                      <span>Aktywuj tryb ratunkowy i zawieś podlewanie</span>
+                      <span>{isEn ? 'Activate rescue mode & suspend watering' : 'Aktywuj tryb ratunkowy i zawieś podlewanie'}</span>
                     </button>
                   </div>
                 </div>
@@ -491,3 +498,4 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
     </div>
   );
 };
+

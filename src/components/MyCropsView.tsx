@@ -60,6 +60,7 @@ import { getPlantGreenhouseInfo, getGreenhouseDailyCareTip } from '../lib/greenh
 import { isWateringSuspended, getDaysRemainingInSuspension } from '../lib/rescueData';
 import { getPlantVisual } from '../lib/plantImages';
 import { SAMPLE_TOMATO_TIMELAPSE, getPhotoCadenceInfo } from '../lib/cropPhotos';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   myCrops: MyCropItem[];
@@ -133,6 +134,9 @@ export const MyCropsView: React.FC<Props> = ({
   onNavigateToSearch,
   onSwitchToFullCalendar,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   // Main view tab inside MyCropsView
   const [activeSection, setActiveSection] = useState<'crops' | 'daily' | 'calendar'>('crops');
 
@@ -278,18 +282,20 @@ export const MyCropsView: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider mb-1">
             <Sprout className="w-4 h-4" />
-            <span>Twoja strefa balkonowa</span>
+            <span>{isEn ? 'Your balcony zone' : 'Twoja strefa balkonowa'}</span>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
             <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight">
-              Moje uprawy
+              {isEn ? 'My Crops' : 'Moje uprawy'}
             </h2>
             <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800">
-              {myCrops.length} {myCrops.length === 1 ? 'roślina' : myCrops.length < 5 ? 'rośliny' : 'roślin'}
+              {myCrops.length} {myCrops.length === 1 ? (isEn ? 'plant' : 'roślina') : myCrops.length < 5 ? (isEn ? 'plants' : 'rośliny') : (isEn ? 'plants' : 'roślin')}
             </span>
           </div>
           <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1 max-w-2xl leading-relaxed">
-            Śledź stan swoich donic, fazy rozwoju i zaplanowane prace w jednym przejrzystym miejscu.
+            {isEn
+              ? 'Track the status of your pots, growth phases, and scheduled tasks in one clear dashboard.'
+              : 'Śledź stan swoich donic, fazy rozwoju i zaplanowane prace w jednym przejrzystym miejscu.'}
           </p>
         </div>
 
@@ -305,7 +311,7 @@ export const MyCropsView: React.FC<Props> = ({
               }`}
             >
               <Sprout className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Rośliny ({myCrops.length})</span>
+              <span>{isEn ? 'Plants' : 'Rośliny'} ({myCrops.length})</span>
             </button>
             <button
               onClick={() => setActiveSection('daily')}
@@ -316,7 +322,7 @@ export const MyCropsView: React.FC<Props> = ({
               }`}
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              <span>Zalecenia dnia</span>
+              <span>{isEn ? 'Daily Tips' : 'Zalecenia dnia'}</span>
             </button>
             <button
               onClick={() => setActiveSection('calendar')}
@@ -327,7 +333,7 @@ export const MyCropsView: React.FC<Props> = ({
               }`}
             >
               <Calendar className="w-3.5 h-3.5 text-sky-500" />
-              <span>Harmonogram</span>
+              <span>{isEn ? 'Schedule' : 'Harmonogram'}</span>
             </button>
           </div>
 
@@ -337,7 +343,7 @@ export const MyCropsView: React.FC<Props> = ({
             className="px-4 py-2 bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer hover:shadow-md"
           >
             <Plus className="w-4 h-4" />
-            <span>Dodaj roślinę</span>
+            <span>{isEn ? 'Add plant' : 'Dodaj roślinę'}</span>
           </button>
         </div>
       </div>
@@ -350,10 +356,12 @@ export const MyCropsView: React.FC<Props> = ({
           </div>
           <div>
             <h4 className="text-2xl font-black text-stone-800 dark:text-stone-100 tracking-tight">
-              Zacznij swój balkonowy ogród! 🌱
+              {isEn ? 'Start your balcony garden! 🌱' : 'Zacznij swój balkonowy ogród! 🌱'}
             </h4>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
-              Twój balkon ma duży potencjał. Dodaj swoją pierwszą uprawę wybierając jedną z najłatwiejszych i najchętniej wybieranych roślin poniżej.
+              {isEn
+                ? 'Your balcony has great potential. Add your first crop by selecting one of the easiest and most popular plants below.'
+                : 'Twój balkon ma duży potencjał. Dodaj swoją pierwszą uprawę wybierając jedną z najłatwiejszych i najchętniej wybieranych roślin poniżej.'}
             </p>
           </div>
 
@@ -377,7 +385,7 @@ export const MyCropsView: React.FC<Props> = ({
               onClick={onNavigateToSearch}
               className="mt-4 px-6 py-3 bg-emerald-700 dark:bg-emerald-600 text-white dark:text-white rounded-2xl text-sm font-bold hover:bg-emerald-800 dark:hover:bg-emerald-700 shadow-sm hover:shadow-md transition cursor-pointer inline-flex items-center gap-2"
             >
-              Przeglądaj pełny katalog roślin
+              {isEn ? 'Browse full plant catalog' : 'Przeglądaj pełny katalog roślin'}
             </button>
           </div>
         </div>
@@ -410,8 +418,8 @@ export const MyCropsView: React.FC<Props> = ({
               {/* Horizontal Plant Carousel / Selector Pills (Wide & Breathable) */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-xs font-bold text-stone-500 dark:text-stone-400 px-1 uppercase tracking-wider">
-                  <span>Wybierz roślinę do podglądu</span>
-                  <span>{myCrops.length} {myCrops.length === 1 ? 'pozycja' : 'pozycje'}</span>
+                  <span>{isEn ? 'Select crop to preview' : 'Wybierz roślinę do podglądu'}</span>
+                  <span>{myCrops.length} {myCrops.length === 1 ? (isEn ? 'item' : 'pozycja') : (isEn ? 'items' : 'pozycje')}</span>
                 </div>
 
                 <div className="flex items-center gap-2.5 overflow-x-auto pb-2 pt-1 no-scrollbar">
@@ -425,7 +433,7 @@ export const MyCropsView: React.FC<Props> = ({
                     const varietyName =
                       typeof rawCropVariety === 'string'
                         ? rawCropVariety
-                        : (rawCropVariety as any)?.name || 'Standardowa';
+                        : (rawCropVariety as any)?.name || (isEn ? 'Standard' : 'Standardowa');
                     const potCount = crop.potCount || crop.pot?.quantity || 1;
 
                     return (
@@ -466,7 +474,7 @@ export const MyCropsView: React.FC<Props> = ({
                         <div className="min-w-0 pr-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-xs truncate max-w-[130px] sm:max-w-[180px]">
-                              {plant?.name || 'Roślina'}
+                              {plant?.name || (isEn ? 'Crop' : 'Roślina')}
                             </span>
                             {crop.rescuePlan?.active && (
                               <span
@@ -475,9 +483,9 @@ export const MyCropsView: React.FC<Props> = ({
                                     ? 'bg-rose-900 text-rose-200 border border-rose-700'
                                     : 'bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800'
                                 }`}
-                                title="Aktywny tryb ratunkowy dla tej uprawy"
+                                title={isEn ? 'Active rescue mode for this crop' : 'Aktywny tryb ratunkowy dla tej uprawy'}
                               >
-                                🛟 Ratunek
+                                {isEn ? '🛟 Rescue' : '🛟 Ratunek'}
                               </span>
                             )}
                             {crop.inGreenhouse && (
@@ -487,9 +495,9 @@ export const MyCropsView: React.FC<Props> = ({
                                     ? 'bg-emerald-900 text-emerald-200 border border-emerald-700'
                                     : 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800'
                                 }`}
-                                title="Uprawa w szklarni balkonowej"
+                                title={isEn ? 'Growing in balcony greenhouse' : 'Uprawa w szklarni balkonowej'}
                               >
-                                🏡 Szklarnia
+                                {isEn ? '🏡 Greenhouse' : '🏡 Szklarnia'}
                               </span>
                             )}
                             {potCount > 1 && (
@@ -521,7 +529,7 @@ export const MyCropsView: React.FC<Props> = ({
                     className="px-3.5 py-2.5 rounded-2xl border border-dashed border-stone-300 dark:border-stone-700 text-stone-500 hover:text-emerald-700 hover:border-emerald-400 dark:hover:text-emerald-400 bg-white/50 dark:bg-stone-900/50 text-xs font-semibold transition shrink-0 flex items-center gap-1.5 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
-                    <span>Dodaj kolejną</span>
+                    <span>{isEn ? '+ Add another' : 'Dodaj kolejną'}</span>
                   </button>
                 </div>
               </div>
@@ -557,21 +565,21 @@ export const MyCropsView: React.FC<Props> = ({
                           </h3>
                           {(selectedCrop.potCount || 1) > 1 && (
                             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
-                              {selectedCrop.potCount}x w uprawie
+                              {selectedCrop.potCount}x {isEn ? 'in cultivation' : 'w uprawie'}
                             </span>
                           )}
                         </div>
 
                         <div className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 flex items-center gap-2 flex-wrap font-medium">
                           <span>
-                            Odmiana:{' '}
+                            {isEn ? 'Variety:' : 'Odmiana:'}{' '}
                             <strong className="text-stone-800 dark:text-stone-200 font-semibold">
                               {selectedCrop.selectedVariety ||
                                 selectedPlant.top_varieties?.[0]?.name ||
                                 (typeof selectedPlant.varieties?.[0] === 'string'
                                   ? selectedPlant.varieties?.[0]
                                   : (selectedPlant.varieties?.[0] as any)?.name) ||
-                                'Standardowa'}
+                                (isEn ? 'Standard' : 'Standardowa')}
                             </strong>
                           </span>
                           {selectedCrop.customPotName && (
@@ -586,7 +594,7 @@ export const MyCropsView: React.FC<Props> = ({
                             <>
                               <span className="text-stone-300 dark:text-stone-700">•</span>
                               <span className="text-emerald-800 dark:text-emerald-300 font-semibold">
-                                🏡 W szklarni
+                                {isEn ? '🏡 In greenhouse' : '🏡 W szklarni'}
                               </span>
                             </>
                           )}
@@ -601,11 +609,11 @@ export const MyCropsView: React.FC<Props> = ({
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
                               </span>
                               <span>
-                                🚨 Tryb ratunkowy: {selectedCrop.rescuePlan?.issueTitle}
+                                {isEn ? '🚨 Rescue Mode:' : '🚨 Tryb ratunkowy:'} {selectedCrop.rescuePlan?.issueTitle}
                               </span>
                               {isSelectedCropWateringSuspended && (
                                 <span className="text-[10px] font-semibold text-rose-800 dark:text-rose-200 bg-rose-200/80 dark:bg-rose-900 px-1.5 py-0.2 rounded-md">
-                                  Podlewanie wstrzymane ({selectedCropSuspensionDaysRemaining} {selectedCropSuspensionDaysRemaining === 1 ? 'dzień' : 'dni'})
+                                  {isEn ? 'Watering paused' : 'Podlewanie wstrzymane'} ({selectedCropSuspensionDaysRemaining} {selectedCropSuspensionDaysRemaining === 1 ? (isEn ? 'day' : 'dzień') : (isEn ? 'days' : 'dni')})
                                 </span>
                               )}
                             </div>
@@ -616,13 +624,13 @@ export const MyCropsView: React.FC<Props> = ({
                                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                               </span>
                               <span>
-                                Zdrowy wzrost • Faza:{' '}
+                                {isEn ? 'Healthy Growth • Phase:' : 'Zdrowy wzrost • Faza:'}{' '}
                                 <strong className="font-bold text-stone-900 dark:text-stone-100">
-                                  {timelineInfo?.currentPhase.name || 'Wzrost'}
+                                  {timelineInfo?.currentPhase.name || (isEn ? 'Growth' : 'Wzrost')}
                                 </strong>
                               </span>
                               <span className="text-[11px] font-normal text-stone-500 dark:text-stone-400">
-                                (Dzień {timelineInfo?.daysSinceSowing || 1} z ~{timelineInfo?.totalDaysToHarvest || 80})
+                                ({isEn ? 'Day' : 'Dzień'} {timelineInfo?.daysSinceSowing || 1} {isEn ? 'of' : 'z'} ~{timelineInfo?.totalDaysToHarvest || 80})
                               </span>
                             </div>
                           )}
@@ -653,13 +661,13 @@ export const MyCropsView: React.FC<Props> = ({
                             id={`rescue-active-btn-${selectedCropKey}`}
                             onClick={() => setRescueCropPlant({ crop: selectedCrop, plant: selectedPlant })}
                             className="flex-1 sm:flex-initial px-5 py-3.5 sm:py-4 rounded-2xl bg-rose-600 hover:bg-rose-700 active:scale-[0.98] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition cursor-pointer shadow-sm group"
-                            title="Otwórz kartę planu ratunkowego lub zgłoś inny problem"
+                            title={isEn ? 'Open rescue plan card or report another issue' : 'Otwórz kartę planu ratunkowego lub zgłoś inny problem'}
                           >
                             <LifeBuoy className="w-5 h-5 text-white group-hover:rotate-45 transition-transform shrink-0" />
                             <div className="text-left">
-                              <div className="leading-tight">Plan ratunkowy</div>
+                              <div className="leading-tight">{isEn ? 'Rescue Plan' : 'Plan ratunkowy'}</div>
                               <div className="text-[10px] font-normal text-rose-100 opacity-90">
-                                {selectedCrop.rescuePlan?.issueTitle} • Otwórz
+                                {selectedCrop.rescuePlan?.issueTitle} • {isEn ? 'Open' : 'Otwórz'}
                               </div>
                             </div>
                           </button>
@@ -668,13 +676,13 @@ export const MyCropsView: React.FC<Props> = ({
                           {isSelectedCropWateringSuspended ? (
                             <div
                               className="flex-1 sm:flex-initial px-4 py-3 sm:py-3.5 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-300 dark:border-rose-800 text-rose-950 dark:text-rose-200 flex items-center gap-2.5"
-                              title="Podlewanie wstrzymane w ramach planu ratunkowego"
+                              title={isEn ? 'Watering paused under rescue plan' : 'Podlewanie wstrzymane w ramach planu ratunkowego'}
                             >
                               <span className="text-lg shrink-0">⏸️</span>
                               <div className="text-left">
-                                <div className="text-xs font-bold leading-tight">Podlewanie zawieszone</div>
+                                <div className="text-xs font-bold leading-tight">{isEn ? 'Watering suspended' : 'Podlewanie zawieszone'}</div>
                                 <div className="text-[10px] text-rose-700 dark:text-rose-300">
-                                  Zostało {selectedCropSuspensionDaysRemaining} {selectedCropSuspensionDaysRemaining === 1 ? 'dzień' : 'dni'}
+                                  {isEn ? 'Remaining:' : 'Zostało'} {selectedCropSuspensionDaysRemaining} {selectedCropSuspensionDaysRemaining === 1 ? (isEn ? 'day' : 'dzień') : (isEn ? 'days' : 'dni')}
                                 </div>
                               </div>
                             </div>
@@ -683,10 +691,10 @@ export const MyCropsView: React.FC<Props> = ({
                               type="button"
                               onClick={() => handleToggleWaterCrop(selectedCrop)}
                               className="flex-1 sm:flex-initial px-4 py-3 sm:py-3.5 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 hover:bg-emerald-200 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
-                              title="Karencja minęła – możesz podlać po sprawdzeniu wilgotności podłoża"
+                              title={isEn ? 'Grace period over – you can water after checking soil moisture' : 'Karencja minęła – możesz podlać po sprawdzeniu wilgotności podłoża'}
                             >
                               <span>💧</span>
-                              <span>Wznów ostrożne podlewanie</span>
+                              <span>{isEn ? 'Resume careful watering' : 'Wznów ostrożne podlewanie'}</span>
                             </button>
                           )}
                         </>
@@ -698,18 +706,18 @@ export const MyCropsView: React.FC<Props> = ({
                               type="button"
                               onClick={() => handleToggleWaterCrop(selectedCrop)}
                               className="flex-1 sm:flex-initial px-5 py-3.5 sm:py-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100/90 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-2 border-emerald-400/80 dark:border-emerald-600 font-bold text-xs sm:text-sm flex items-center justify-center gap-2.5 transition-all cursor-pointer group shadow-2xs"
-                              title="Kliknij, aby cofnąć oznaczenie podlania"
+                              title={isEn ? 'Click to undo watered status' : 'Kliknij, aby cofnąć oznaczenie podlania'}
                             >
                               <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0" />
                               <div className="text-left">
                                 <div className="leading-tight flex items-center gap-1.5">
-                                  <span>Podlane dzisiaj</span>
+                                  <span>{isEn ? 'Watered today' : 'Podlane dzisiaj'}</span>
                                   <span className="text-[10px] bg-emerald-200 dark:bg-emerald-800 text-emerald-900 dark:text-emerald-100 px-1.5 py-0.2 rounded-md font-bold">
                                     ✓
                                   </span>
                                 </div>
                                 <div className="text-[10px] font-normal text-emerald-700 dark:text-emerald-300 opacity-90">
-                                  Zrobione na dziś • Cofnij
+                                  {isEn ? 'Done for today • Undo' : 'Zrobione na dziś • Cofnij'}
                                 </div>
                               </div>
                             </button>
@@ -721,11 +729,11 @@ export const MyCropsView: React.FC<Props> = ({
                             >
                               <span className="text-xl group-hover:scale-110 transition-transform shrink-0">💦</span>
                               <div className="text-left">
-                                <div className="leading-tight">Podlej dzisiaj</div>
+                                <div className="leading-tight">{isEn ? 'Water today' : 'Podlej dzisiaj'}</div>
                                 <div className="text-[10px] font-normal text-emerald-100 opacity-90">
                                   {timelineInfo?.currentPhase.shortName === 'Kiełkowanie'
-                                    ? 'Zraszaj mgiełką ze zraszacza'
-                                    : 'Umiarkowana dawka wody'}
+                                    ? (isEn ? 'Mist gently with sprayer' : 'Zraszaj mgiełką ze zraszacza')
+                                    : (isEn ? 'Moderate watering' : 'Umiarkowana dawka wody')}
                                 </div>
                               </div>
                             </button>
@@ -737,13 +745,13 @@ export const MyCropsView: React.FC<Props> = ({
                             id={`rescue-btn-${selectedCropKey}`}
                             onClick={() => setRescueCropPlant({ crop: selectedCrop, plant: selectedPlant })}
                             className="flex-1 sm:flex-initial px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-amber-50 hover:bg-amber-100/90 active:scale-[0.98] dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-900 dark:text-amber-200 border-2 border-amber-300/90 dark:border-amber-700/80 text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition cursor-pointer shadow-2xs group"
-                            title="Zgłoś problem: żółknięcie liści, biały nalot, więdnięcie, szkodniki – uruchom plan ratunkowy"
+                            title={isEn ? 'Report issue: yellowing leaves, mold, wilting, pests – start rescue plan' : 'Zgłoś problem: żółknięcie liści, biały nalot, więdnięcie, szkodniki – uruchom plan ratunkowy'}
                           >
                             <Bandage className="w-5 h-5 text-amber-600 dark:text-amber-400 group-hover:rotate-12 transition-transform shrink-0" />
                             <div className="text-left">
-                              <div className="leading-tight">Coś jest nie tak</div>
+                              <div className="leading-tight">{isEn ? 'Something is wrong' : 'Coś jest nie tak'}</div>
                               <div className="text-[10px] font-normal text-amber-700 dark:text-amber-300 opacity-90">
-                                Pogotowie roślinne
+                                {isEn ? 'Plant First Aid' : 'Pogotowie roślinne'}
                               </div>
                             </div>
                           </button>
@@ -760,7 +768,7 @@ export const MyCropsView: React.FC<Props> = ({
                               }
                             }}
                             className="flex-1 sm:flex-initial px-4 sm:px-5 py-3.5 sm:py-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100/90 active:scale-[0.98] dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border-2 border-emerald-300/80 dark:border-emerald-700/80 text-xs sm:text-sm font-bold flex items-center justify-center gap-2.5 transition cursor-pointer shadow-2xs group"
-                            title="Dziennik zdjęć i animacja poklatkowa (Timelapse) ze wzrostu rośliny"
+                            title={isEn ? 'Photo journal and timelapse animation of crop growth' : 'Dziennik zdjęć i animacja poklatkowa (Timelapse) ze wzrostu rośliny'}
                           >
                             <Camera className="w-5 h-5 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform shrink-0" />
                             <div className="text-left">
@@ -772,8 +780,8 @@ export const MyCropsView: React.FC<Props> = ({
                               </div>
                               <div className="text-[10px] font-normal text-emerald-700 dark:text-emerald-300 opacity-90">
                                 {selectedCrop.photos && selectedCrop.photos.length >= 2
-                                  ? 'Odtwórz animację'
-                                  : 'Dodaj kadr wzrostu'}
+                                  ? (isEn ? 'Play timelapse' : 'Odtwórz animację')
+                                  : (isEn ? 'Add growth frame' : 'Dodaj kadr wzrostu')}
                               </div>
                             </div>
                           </button>
@@ -791,7 +799,7 @@ export const MyCropsView: React.FC<Props> = ({
                             })
                           }
                           className="p-3 text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 bg-stone-50 dark:bg-stone-800/80 hover:bg-stone-100 dark:hover:bg-stone-700 rounded-2xl transition border border-stone-200/80 dark:border-stone-700 cursor-pointer shadow-2xs"
-                          title="Parametry donicy i podłoża"
+                          title={isEn ? 'Pot & substrate parameters' : 'Parametry donicy i podłoża'}
                         >
                           <Settings2 className="w-5 h-5" />
                         </button>
@@ -807,7 +815,7 @@ export const MyCropsView: React.FC<Props> = ({
                               ? 'bg-emerald-700 text-white border-emerald-700'
                               : 'text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 bg-stone-50 dark:bg-stone-800/80 hover:bg-stone-100 dark:hover:bg-stone-700 border-stone-200/80 dark:border-stone-700'
                           }`}
-                          title="Dodaj notatkę lub lokalizację"
+                          title={isEn ? 'Add note or location' : 'Dodaj notatkę lub lokalizację'}
                         >
                           <Edit3 className="w-5 h-5" />
                         </button>
@@ -815,7 +823,7 @@ export const MyCropsView: React.FC<Props> = ({
                           type="button"
                           onClick={() => onRemoveCrop(selectedCrop.id || selectedCrop.plantId)}
                           className="p-3 text-stone-400 hover:text-rose-600 bg-stone-50 dark:bg-stone-800/80 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-2xl transition border border-stone-200/80 dark:border-stone-700 hover:border-rose-200 cursor-pointer shadow-2xs"
-                          title="Usuń uprawę"
+                          title={isEn ? 'Delete crop' : 'Usuń uprawę'}
                         >
                           <Trash2 className="w-5 h-5" />
                         </button>
@@ -828,26 +836,26 @@ export const MyCropsView: React.FC<Props> = ({
                     <div className="p-4 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3 animate-fade-in">
                       <div>
                         <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
-                          Nazwa własna / Lokalizacja donicy:
+                          {isEn ? 'Custom pot name / location:' : 'Nazwa własna / Lokalizacja donicy:'}
                         </label>
                         <input
                           type="text"
                           value={editPotName}
                           onChange={(e) => setEditPotName(e.target.value)}
                           className="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                          placeholder="np. Donica na balustradzie wschodniej"
+                          placeholder={isEn ? 'e.g. East balcony rail pot' : 'np. Donica na balustradzie wschodniej'}
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1">
-                          Twoje notatki o tej roślinie:
+                          {isEn ? 'Your notes for this plant:' : 'Twoje notatki o tej roślinie:'}
                         </label>
                         <textarea
                           value={editNotes}
                           onChange={(e) => setEditNotes(e.target.value)}
                           rows={2}
                           className="w-full bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl px-3 py-2 text-xs sm:text-sm text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-                          placeholder="Zapisz datę wschodu, nawożenie, obserwacje..."
+                          placeholder={isEn ? 'Record sprouting date, fertilizing, observations...' : 'Zapisz datę wschodu, nawożenie, obserwacje...'}
                         />
                       </div>
                       <div className="flex justify-end gap-2 pt-1">
@@ -856,14 +864,14 @@ export const MyCropsView: React.FC<Props> = ({
                           onClick={() => setEditingCropId(null)}
                           className="px-3 py-1 text-xs text-stone-600 dark:text-stone-400 hover:text-stone-900"
                         >
-                          Anuluj
+                          {isEn ? 'Cancel' : 'Anuluj'}
                         </button>
                         <button
                           type="button"
                           onClick={() => saveEdit(selectedCrop)}
                           className="px-4 py-1.5 bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs hover:bg-emerald-800"
                         >
-                          Zapisz zmiany
+                          {isEn ? 'Save changes' : 'Zapisz zmiany'}
                         </button>
                       </div>
                     </div>
@@ -894,7 +902,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 {selectedCrop.rescuePlan.symptomBadge}
                               </span>
                               <span className="text-xs font-bold text-rose-800 dark:text-rose-300">
-                                🚨 Plan ratunkowy w toku
+                                {isEn ? '🚨 Rescue plan in progress' : '🚨 Plan ratunkowy w toku'}
                               </span>
                             </div>
                             <h4 className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-100 mt-0.5">
@@ -913,7 +921,7 @@ export const MyCropsView: React.FC<Props> = ({
                             className="px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-200 text-xs font-bold hover:bg-stone-50 dark:hover:bg-stone-700 transition cursor-pointer shadow-2xs flex items-center gap-1.5"
                           >
                             <LifeBuoy className="w-3.5 h-3.5 text-rose-600" />
-                            <span>Szczegóły / Zmień</span>
+                            <span>{isEn ? 'Details / Change' : 'Szczegóły / Zmień'}</span>
                           </button>
                           <button
                             type="button"
@@ -925,10 +933,10 @@ export const MyCropsView: React.FC<Props> = ({
                               onUpdateCrop(updated);
                             }}
                             className="px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition cursor-pointer shadow-2xs flex items-center gap-1.5"
-                            title="Kliknij, gdy roślina wyzdrowiała, aby wznowić normalny harmonogram"
+                            title={isEn ? 'Click when plant recovered to resume normal schedule' : 'Kliknij, gdy roślina wyzdrowiała, aby wznowić normalny harmonogram'}
                           >
                             <Check className="w-3.5 h-3.5" />
-                            <span>Roślina wyzdrowiała ✓</span>
+                            <span>{isEn ? 'Plant recovered ✓' : 'Roślina wyzdrowiała ✓'}</span>
                           </button>
                         </div>
                       </div>
@@ -939,18 +947,18 @@ export const MyCropsView: React.FC<Props> = ({
                           <div className="flex items-center gap-2 font-medium">
                             <span>⏸️</span>
                             <span>
-                              <strong>Normalne podlewanie zawieszone:</strong> pozwól przeschnąć wierzchniej warstwie ziemi, by dotlenić korzenie.
+                              <strong>{isEn ? 'Regular watering paused:' : 'Normalne podlewanie zawieszone:'}</strong> {isEn ? 'let top soil layer dry to aerate roots.' : 'pozwól przeschnąć wierzchniej warstwie ziemi, by dotlenić korzenie.'}
                             </span>
                           </div>
                           <span className="font-bold text-rose-800 dark:text-rose-200 bg-white/80 dark:bg-stone-900/80 px-2.5 py-0.5 rounded-lg border border-rose-200 dark:border-rose-800">
-                            Zostało: {selectedCropSuspensionDaysRemaining} {selectedCropSuspensionDaysRemaining === 1 ? 'dzień' : 'dni'}
+                            {isEn ? 'Remaining:' : 'Zostało:'} {selectedCropSuspensionDaysRemaining} {selectedCropSuspensionDaysRemaining === 1 ? (isEn ? 'day' : 'dzień') : (isEn ? 'days' : 'dni')}
                           </span>
                         </div>
                       ) : (
                         <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
                           <span>💧</span>
                           <span>
-                            Okres wstrzymania minął. Przed podlaniem zbadaj ziemię palcem na głębokość 2-3 cm.
+                            {isEn ? 'Pause period ended. Check soil moisture 2-3cm deep before watering.' : 'Okres wstrzymania minął. Przed podlaniem zbadaj ziemię palcem na głębokość 2-3 cm.'}
                           </span>
                         </div>
                       )}
@@ -958,9 +966,9 @@ export const MyCropsView: React.FC<Props> = ({
                       {/* Interactive Checklist of Steps */}
                       <div className="space-y-2 pt-1">
                         <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-between">
-                          <span>Jednoetapowy plan ratunkowy (wykonaj poniższe kroki):</span>
+                          <span>{isEn ? 'Rescue action plan (complete steps below):' : 'Jednoetapowy plan ratunkowy (wykonaj poniższe kroki):'}</span>
                           <span className="text-[11px] font-normal text-stone-500">
-                            Kliknij, aby odznaczyć wykonany krok
+                            {isEn ? 'Click to check off completed step' : 'Kliknij, aby odznaczyć wykonany krok'}
                           </span>
                         </div>
                         <div className="grid grid-cols-1 gap-1.5">
@@ -1023,19 +1031,19 @@ export const MyCropsView: React.FC<Props> = ({
                         </div>
                         <div className="text-left">
                           <div className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                            <span>Szczegóły uprawy</span>
+                            <span>{isEn ? 'Crop Details' : 'Szczegóły uprawy'}</span>
                             <span className="text-[11px] font-normal text-stone-500 dark:text-stone-400 hidden sm:inline">
-                              (Pojemność donicy, drenaż, opis kiełkowania, instrukcje zraszania)
+                              {isEn ? '(Pot volume, drainage, sprouting guide, misting instructions)' : '(Pojemność donicy, drenaż, opis kiełkowania, instrukcje zraszania)'}
                             </span>
                           </div>
                           <span className="text-[11px] text-stone-500 dark:text-stone-400 sm:hidden">
-                            Pojemność, drenaż, faza, zraszanie
+                            {isEn ? 'Volume, drainage, phase, misting' : 'Pojemność, drenaż, faza, zraszanie'}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-400 px-3.5 py-1.5 rounded-xl bg-white dark:bg-stone-700 border border-stone-200/90 dark:border-stone-600 shadow-2xs group-hover:border-emerald-300 transition-colors">
-                        <span>{isCropCardExpanded ? 'Zwiń szczegóły' : 'Pokaż szczegóły'}</span>
+                        <span>{isCropCardExpanded ? (isEn ? 'Hide details' : 'Zwiń szczegóły') : (isEn ? 'Show details' : 'Pokaż szczegóły')}</span>
                         {isCropCardExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </div>
                     </button>
@@ -1054,7 +1062,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-200'
                             }`}
                           >
-                            <span>🪴 Donica i drenaż</span>
+                            <span>{isEn ? '🪴 Pot & Drainage' : '🪴 Donica i drenaż'}</span>
                           </button>
                           <button
                             type="button"
@@ -1065,7 +1073,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-200'
                             }`}
                           >
-                            <span>🌱 Harmonogram i fazy rozwoju</span>
+                            <span>{isEn ? '🌱 Schedule & Growth Phases' : '🌱 Harmonogram i fazy rozwoju'}</span>
                           </button>
                           <button
                             type="button"
@@ -1077,7 +1085,7 @@ export const MyCropsView: React.FC<Props> = ({
                             }`}
                           >
                             <Camera className="w-3.5 h-3.5" />
-                            <span>Dziennik zdjęć & Timelapse ({selectedCrop.photos?.length || 0})</span>
+                            <span>{isEn ? 'Photo Journal & Timelapse' : 'Dziennik zdjęć & Timelapse'} ({selectedCrop.photos?.length || 0})</span>
                           </button>
                           <button
                             type="button"
@@ -1088,7 +1096,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-200'
                             }`}
                           >
-                            <span>🏡 Szklarnia i mikroklimat</span>
+                            <span>{isEn ? '🏡 Greenhouse & Microclimate' : '🏡 Szklarnia i mikroklimat'}</span>
                           </button>
                           <button
                             type="button"
@@ -1099,7 +1107,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 : 'text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-stone-900 dark:hover:text-stone-200'
                             }`}
                           >
-                            <span>📝 Dziennik i notatki</span>
+                            <span>{isEn ? '📝 Journal & Notes' : '📝 Dziennik i notatki'}</span>
                           </button>
                         </div>
 
@@ -1111,16 +1119,16 @@ export const MyCropsView: React.FC<Props> = ({
                               <div className="p-5 rounded-2xl bg-stone-50/70 dark:bg-stone-800/40 border border-stone-200/70 dark:border-stone-800 space-y-3 shadow-sm">
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
-                                    Pojemność donicy
+                                    {isEn ? 'Pot Volume' : 'Pojemność donicy'}
                                   </span>
                                   <span className="text-lg">🪴</span>
                                 </div>
                                 <div>
                                   <div className="text-2xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight">
-                                    {selectedCrop.pot?.volumeL || selectedPlant.pot?.min_volume_l || 10} litrów
+                                    {selectedCrop.pot?.volumeL || selectedPlant.pot?.min_volume_l || 10} {isEn ? 'liters' : 'litrów'}
                                   </div>
                                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                                    Zalecane minimum dla tej odmiany: {selectedPlant.pot?.min_volume_l || 5}L
+                                    {isEn ? 'Recommended minimum for this variety:' : 'Zalecane minimum dla tej odmiany:'} {selectedPlant.pot?.min_volume_l || 5}L
                                   </p>
                                 </div>
                                 <div className="pt-1">
@@ -1134,7 +1142,7 @@ export const MyCropsView: React.FC<Props> = ({
                                     }
                                     className="text-xs font-bold text-emerald-800 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                                   >
-                                    <span>Dostosuj wymiary donicy</span>
+                                    <span>{isEn ? 'Customize pot dimensions' : 'Dostosuj wymiary donicy'}</span>
                                     <ArrowRight className="w-3 h-3" />
                                   </button>
                                 </div>
@@ -1144,7 +1152,7 @@ export const MyCropsView: React.FC<Props> = ({
                               <div className="p-5 rounded-2xl bg-stone-50/70 dark:bg-stone-800/40 border border-stone-200/70 dark:border-stone-800 space-y-3 shadow-sm">
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
-                                    Warstwa drenażowa
+                                    {isEn ? 'Drainage Layer' : 'Warstwa drenażowa'}
                                   </span>
                                   <span className="text-lg">💧</span>
                                 </div>
@@ -1152,20 +1160,20 @@ export const MyCropsView: React.FC<Props> = ({
                                   <div className="text-sm font-extrabold text-stone-900 dark:text-stone-100 flex items-center gap-2">
                                     {selectedCrop.pot?.hasDrainage !== false ? (
                                       <span className="text-emerald-800 dark:text-emerald-400 flex items-center gap-1">
-                                        <CheckCircle2 className="w-4 h-4" /> Drenaż obecny
+                                        <CheckCircle2 className="w-4 h-4" /> {isEn ? 'Drainage present' : 'Drenaż obecny'}
                                       </span>
                                     ) : (
                                       <span className="text-amber-800 dark:text-amber-400 flex items-center gap-1">
-                                        <AlertCircle className="w-4 h-4" /> Brak warstwy drenażu
+                                        <AlertCircle className="w-4 h-4" /> {isEn ? 'No drainage layer' : 'Brak warstwy drenażu'}
                                       </span>
                                     )}
                                   </div>
                                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 leading-relaxed">
-                                    Warstwa 3–5 cm keramzytu na dnie zabezpiecza korzenie przed gniciem po ulewnych deszczach.
+                                    {isEn ? '3–5 cm clay pebble layer prevents root rot after heavy rainfall.' : 'Warstwa 3–5 cm keramzytu na dnie zabezpiecza korzenie przed gniciem po ulewnych deszczach.'}
                                   </p>
                                 </div>
                                 <div className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
-                                  Otwory odpływowe: Wymagane w dnie
+                                  {isEn ? 'Drainage holes: Required in bottom' : 'Otwory odpływowe: Wymagane w dnie'}
                                 </div>
                               </div>
 
@@ -1173,16 +1181,16 @@ export const MyCropsView: React.FC<Props> = ({
                               <div className="p-5 rounded-2xl bg-stone-50/70 dark:bg-stone-800/40 border border-stone-200/70 dark:border-stone-800 space-y-3 shadow-sm">
                                 <div className="flex items-center justify-between">
                                   <span className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
-                                    Podłoże & rozstawa
+                                    {isEn ? 'Soil & Spacing' : 'Podłoże & rozstawa'}
                                   </span>
                                   <span className="text-lg">📏</span>
                                 </div>
                                 <div>
                                   <div className="text-sm font-extrabold text-stone-900 dark:text-stone-100">
-                                    Rozstawa: {selectedPlant.spacing_guide?.spacing_cm || 25} cm
+                                    {isEn ? 'Spacing:' : 'Rozstawa:'} {selectedPlant.spacing_guide?.spacing_cm || 25} cm
                                   </div>
                                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">
-                                    Głębokość min.: {selectedCrop.pot?.depthCm || selectedPlant.pot?.min_depth_cm || 20} cm • pH: 6.0–6.8
+                                    {isEn ? 'Min depth:' : 'Głębokość min.:'} {selectedCrop.pot?.depthCm || selectedPlant.pot?.min_depth_cm || 20} cm • pH: 6.0–6.8
                                   </p>
                                 </div>
                                 <div className="pt-1">
@@ -1191,7 +1199,7 @@ export const MyCropsView: React.FC<Props> = ({
                                     onClick={() => onOpenPotCalc(selectedPlant)}
                                     className="text-xs font-bold text-emerald-800 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                                   >
-                                    <span>Otwórz kalkulator donic</span>
+                                    <span>{isEn ? 'Open pot calculator' : 'Otwórz kalkulator donic'}</span>
                                     <ArrowRight className="w-3 h-3" />
                                   </button>
                                 </div>
@@ -1211,19 +1219,19 @@ export const MyCropsView: React.FC<Props> = ({
                                   <span className="text-2xl">{timelineInfo?.currentPhase.icon || '🌱'}</span>
                                   <div>
                                     <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                                      {timelineInfo?.currentPhase.name || 'Wzrost'} (Dzień {timelineInfo?.daysSinceSowing || 1})
+                                      {timelineInfo?.currentPhase.name || (isEn ? 'Growth' : 'Wzrost')} ({isEn ? 'Day' : 'Dzień'} {timelineInfo?.daysSinceSowing || 1})
                                     </h4>
                                     <span className="text-[11px] text-stone-500 dark:text-stone-400">
-                                      Opis etapu i spodziewany rozwój
+                                      {isEn ? 'Phase description & expected progress' : 'Opis etapu i spodziewany rozwój'}
                                     </span>
                                   </div>
                                 </div>
                                 <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
                                   {timelineInfo?.currentPhase.whatToExpect ||
-                                    'Roślina dynamicznie rozwija system korzeniowy oraz pierwsze liście właściwe.'}
+                                    (isEn ? 'Plant is actively developing root system and true leaves.' : 'Roślina dynamicznie rozwija system korzeniowy oraz pierwsze liście właściwe.')}
                                 </p>
                                 <div className="text-xs font-semibold text-emerald-800 dark:text-emerald-400 pt-1">
-                                  Kluczowe zadanie: {timelineInfo?.currentPhase.keyCareAction || 'Zapewnij optymalne nasłonecznienie.'}
+                                  {isEn ? 'Key task:' : 'Kluczowe zadanie:'} {timelineInfo?.currentPhase.keyCareAction || (isEn ? 'Ensure optimal sunlight.' : 'Zapewnij optymalne nasłonecznienie.')}
                                 </div>
                               </div>
 
@@ -1235,22 +1243,22 @@ export const MyCropsView: React.FC<Props> = ({
                                   </div>
                                   <div>
                                     <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                                      Nawadnianie & zraszanie
+                                      {isEn ? 'Watering & Misting' : 'Nawadnianie & zraszanie'}
                                     </h4>
                                     <span className="text-[11px] text-stone-500 dark:text-stone-400">
-                                      Zalecenia dla bieżącej fazy
+                                      {isEn ? 'Recommendations for current phase' : 'Zalecenia dla bieżącej fazy'}
                                     </span>
                                   </div>
                                 </div>
                                 <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
                                   {timelineInfo?.currentPhase.wateringTip ||
-                                    'Utrzymuj podłoże stale lekko wilgotne, ale nie mokre.'}
+                                    (isEn ? 'Keep soil consistently moist, but not soggy.' : 'Utrzymuj podłoże stale lekko wilgotne, ale nie mokre.')}
                                 </p>
                                 <div className="text-xs text-stone-500 dark:text-stone-400 pt-1">
-                                  💡 <strong>Wskazówka:</strong>{' '}
+                                  💡 <strong>{isEn ? 'Tip:' : 'Wskazówka:'}</strong>{' '}
                                   {timelineInfo?.currentPhase.shortName === 'Kiełkowanie'
-                                    ? 'Używaj wyłącznie delikatnej mgiełki ze zraszacza, by nie wypłukać nasion ani nie uszkodzić drobnych korzonków.'
-                                    : 'Podlewaj rano u nasady łodygi, unikając moczenia liści w pełnym słońcu.'}
+                                    ? (isEn ? 'Use fine mist sprayer only to avoid washing away seeds or damaging young roots.' : 'Używaj wyłącznie delikatnej mgiełki ze zraszacza, by nie wypłukać nasion ani nie uszkodzić drobnych korzonków.')
+                                    : (isEn ? 'Water in morning at base of stem, avoid wetting foliage under direct sun.' : 'Podlewaj rano u nasady łodygi, unikając moczenia liści w pełnym słońcu.')}
                                 </div>
                               </div>
                             </div>
@@ -1293,10 +1301,12 @@ export const MyCropsView: React.FC<Props> = ({
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200/60 dark:border-stone-700/60">
                               <div>
                                 <h4 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                                  <span>📸 Dziennik wzrostu & Animacja poklatkowa (Timelapse)</span>
+                                  <span>{isEn ? '📸 Growth Journal & Timelapse Animation' : '📸 Dziennik wzrostu & Animacja poklatkowa (Timelapse)'}</span>
                                 </h4>
                                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 max-w-2xl leading-relaxed">
-                                  Rób 1 zdjęcie co 1–2 tygodnie. Aplikacja automatycznie dopasuje je do etapów rozwoju fenologicznego i wygeneruje pamiątkową animację poklatkową, ukazując pełną przemianę od nasionka po zbiory.
+                                  {isEn
+                                    ? 'Take 1 photo every 1–2 weeks. The app automatically maps them to phenological growth stages and generates a commemorative timelapse showing full transformation from seed to harvest.'
+                                    : 'Rób 1 zdjęcie co 1–2 tygodnie. Aplikacja automatycznie dopasuje je do etapów rozwoju fenologicznego i wygeneruje pamiątkową animację poklatkową, ukazując pełną przemianę od nasionka po zbiory.'}
                                 </p>
                               </div>
 
@@ -1313,7 +1323,7 @@ export const MyCropsView: React.FC<Props> = ({
                                     className="px-4 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold flex items-center gap-2 transition cursor-pointer shadow-xs"
                                   >
                                     <Play className="w-3.5 h-3.5 fill-current" />
-                                    <span>Odtwórz timelapse ({selectedCrop.photos.length} klatek)</span>
+                                    <span>{isEn ? `Play timelapse (${selectedCrop.photos.length} frames)` : `Odtwórz timelapse (${selectedCrop.photos.length} klatek)`}</span>
                                   </button>
                                 ) : (
                                   <button
@@ -1330,10 +1340,10 @@ export const MyCropsView: React.FC<Props> = ({
                                       });
                                     }}
                                     className="px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
-                                    title="Załaduj 6 przykładowych zdjęć etapów wzrostu pomidora, by natychmiast przetestować animację"
+                                    title={isEn ? 'Load 6 sample tomato growth stages to instantly test animation' : 'Załaduj 6 przykładowych zdjęć etapów wzrostu pomidora, by natychmiast przetestować animację'}
                                   >
                                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                    <span>Załaduj demo timelapse (Pomidor)</span>
+                                    <span>{isEn ? 'Load demo timelapse (Tomato)' : 'Załaduj demo timelapse (Pomidor)'}</span>
                                   </button>
                                 )}
 
@@ -1348,7 +1358,7 @@ export const MyCropsView: React.FC<Props> = ({
                                   className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs"
                                 >
                                   <Camera className="w-3.5 h-3.5" />
-                                  <span>+ Dodaj zdjęcie</span>
+                                  <span>{isEn ? '+ Add photo' : '+ Dodaj zdjęcie'}</span>
                                 </button>
                               </div>
                             </div>
@@ -1364,7 +1374,7 @@ export const MyCropsView: React.FC<Props> = ({
                                     </div>
                                     <div>
                                       <span className="font-bold text-stone-900 dark:text-stone-100 block">
-                                        Rekomendowany rytm: 1 zdjęcie na 1–2 tygodnie
+                                        {isEn ? 'Recommended cadence: 1 photo every 1–2 weeks' : 'Rekomendowany rytm: 1 zdjęcie na 1–2 tygodnie'}
                                       </span>
                                       <span className="text-stone-500 dark:text-stone-400">
                                         {cadence.cadenceMessage}
@@ -1387,10 +1397,12 @@ export const MyCropsView: React.FC<Props> = ({
                                 </div>
                                 <div className="max-w-md space-y-1">
                                   <h5 className="font-bold text-stone-800 dark:text-stone-200 text-sm">
-                                    Twój album wzrostu jest jeszcze pusty
+                                    {isEn ? 'Your growth album is still empty' : 'Twój album wzrostu jest jeszcze pusty'}
                                   </h5>
                                   <p className="text-xs text-stone-500 dark:text-stone-400">
-                                    Dodaj pierwsze zdjęcie siewki lub sadzonki. Każde kolejne zdjęcie w odstępach 7–14 dni stworzy niepowtarzalną pamiątkę z całego sezonu balkonowego!
+                                    {isEn
+                                      ? 'Add your first photo of the seedling or sprout. Each subsequent photo spaced 7–14 days apart will create a unique keepsake from your entire balcony season!'
+                                      : 'Dodaj pierwsze zdjęcie siewki lub sadzonki. Każde kolejne zdjęcie w odstępach 7–14 dni stworzy niepowtarzalną pamiątkę z całego sezonu balkonowego!'}
                                   </p>
                                 </div>
                                 <div className="flex items-center gap-2 flex-wrap justify-center pt-2">
@@ -1405,7 +1417,7 @@ export const MyCropsView: React.FC<Props> = ({
                                     className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
                                   >
                                     <Camera className="w-4 h-4" />
-                                    <span>Zrób / Dodaj 1. zdjęcie</span>
+                                    <span>{isEn ? 'Take / Add 1st photo' : 'Zrób / Dodaj 1. zdjęcie'}</span>
                                   </button>
                                   <button
                                     type="button"
@@ -1423,7 +1435,7 @@ export const MyCropsView: React.FC<Props> = ({
                                     className="px-4 py-2.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 font-bold text-xs flex items-center gap-1.5 cursor-pointer hover:bg-stone-100"
                                   >
                                     <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                                    <span>Przetestuj z 6 klatkami demo</span>
+                                    <span>{isEn ? 'Test with 6 demo frames' : 'Przetestuj z 6 klatkami demo'}</span>
                                   </button>
                                 </div>
                               </div>
@@ -1446,29 +1458,29 @@ export const MyCropsView: React.FC<Props> = ({
                                           })
                                         }
                                         className="relative aspect-[4/3] bg-black overflow-hidden cursor-pointer flex items-center justify-center"
-                                        title="Kliknij, aby odtworzyć animację od tej klatki"
+                                        title={isEn ? 'Click to play animation from this frame' : 'Kliknij, aby odtworzyć animację od tej klatki'}
                                       >
                                         <img
                                           src={photo.imageUrl}
-                                          alt={photo.caption || `Kadr ${idx + 1}`}
+                                          alt={photo.caption || `${isEn ? 'Frame' : 'Kadr'} ${idx + 1}`}
                                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                           referrerPolicy="no-referrer"
                                         />
                                         <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                           <div className="px-3 py-1.5 rounded-xl bg-black/75 backdrop-blur-xs text-white text-xs font-bold flex items-center gap-1.5">
                                             <Play className="w-3.5 h-3.5 fill-current" />
-                                            <span>Odtwórz w timelapse</span>
+                                            <span>{isEn ? 'Play in timelapse' : 'Odtwórz w timelapse'}</span>
                                           </div>
                                         </div>
 
                                         {/* Frame badge */}
                                         <span className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-xs text-white text-[10px] font-bold">
-                                          Kadr {idx + 1}
+                                          {isEn ? 'Frame' : 'Kadr'} {idx + 1}
                                         </span>
 
                                         {/* Week badge */}
                                         <span className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-md bg-emerald-950/80 backdrop-blur-xs border border-emerald-500/30 text-emerald-300 text-[10px] font-bold">
-                                          Tydzień {photo.weekNumber}
+                                          {isEn ? 'Week' : 'Tydzień'} {photo.weekNumber}
                                         </span>
                                       </div>
 
@@ -1478,7 +1490,7 @@ export const MyCropsView: React.FC<Props> = ({
                                           <div className="flex items-center justify-between text-[11px] text-stone-500 dark:text-stone-400 mb-1">
                                             <span className="font-semibold">{photo.date}</span>
                                             <span className="text-emerald-700 dark:text-emerald-400 font-bold">
-                                              Dzień {photo.dayNumber}
+                                              {isEn ? 'Day' : 'Dzień'} {photo.dayNumber}
                                             </span>
                                           </div>
 
@@ -1508,13 +1520,13 @@ export const MyCropsView: React.FC<Props> = ({
                                             className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                                           >
                                             <Play className="w-3 h-3 fill-current" />
-                                            <span>Pokaż</span>
+                                            <span>{isEn ? 'Show' : 'Pokaż'}</span>
                                           </button>
 
                                           <button
                                             type="button"
                                             onClick={() => {
-                                              if (!window.confirm('Czy na pewno chcesz usunąć to zdjęcie?')) return;
+                                              if (!window.confirm(isEn ? 'Are you sure you want to delete this photo?' : 'Czy na pewno chcesz usunąć to zdjęcie?')) return;
                                               const remaining = (selectedCrop.photos || []).filter((p) => p.id !== photo.id);
                                               onUpdateCrop({
                                                 ...selectedCrop,
@@ -1522,7 +1534,7 @@ export const MyCropsView: React.FC<Props> = ({
                                               });
                                             }}
                                             className="text-stone-400 hover:text-rose-600 p-1 rounded-lg transition cursor-pointer"
-                                            title="Usuń zdjęcie"
+                                            title={isEn ? 'Delete photo' : 'Usuń zdjęcie'}
                                           >
                                             <Trash2 className="w-3.5 h-3.5" />
                                           </button>
@@ -1541,13 +1553,15 @@ export const MyCropsView: React.FC<Props> = ({
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200/60 dark:border-stone-700/60">
                               <div>
                                 <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                                  <span>🏡 Warunki szklarniowe i mikroklimat</span>
+                                  <span>{isEn ? '🏡 Greenhouse Conditions & Microclimate' : '🏡 Warunki szklarniowe i mikroklimat'}</span>
                                   <span className="text-xs font-normal text-stone-500">
-                                    ({selectedCrop.inGreenhouse ? 'W szklarence balkonowej' : 'Otwarty balkon'})
+                                    ({selectedCrop.inGreenhouse ? (isEn ? 'In balcony greenhouse' : 'W szklarence balkonowej') : (isEn ? 'Open balcony' : 'Otwarty balkon')})
                                   </span>
                                 </h4>
                                 <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
-                                  Szklarnia zapewnia bufor cieplny +3°C do +8°C, ale wymaga regularnego wietrzenia.
+                                  {isEn
+                                    ? 'A greenhouse provides a thermal buffer of +3°C to +8°C, but requires regular ventilation.'
+                                    : 'Szklarnia zapewnia bufor cieplny +3°C do +8°C, ale wymaga regularnego wietrzenia.'}
                                 </p>
                               </div>
                               <button
@@ -1566,8 +1580,8 @@ export const MyCropsView: React.FC<Props> = ({
                               >
                                 <span>
                                   {selectedCrop.inGreenhouse
-                                    ? '✓ W szklarni (Kliknij by zmienić)'
-                                    : 'Przenieś do szklarni'}
+                                    ? (isEn ? '✓ In greenhouse (Click to change)' : '✓ W szklarni (Kliknij by zmienić)')
+                                    : (isEn ? 'Move to greenhouse' : 'Przenieś do szklarni')}
                                 </span>
                               </button>
                             </div>
@@ -1587,18 +1601,22 @@ export const MyCropsView: React.FC<Props> = ({
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                               <div className="p-3.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200/70 dark:border-stone-700">
                                 <span className="font-bold text-stone-800 dark:text-stone-200 block mb-1">
-                                  💨 Cyrkulacja powietrza
+                                  {isEn ? '💨 Air Circulation' : '💨 Cyrkulacja powietrza'}
                                 </span>
                                 <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
-                                  W słoneczne dni uchylaj suwak lub okienko szklarni, aby temperatura nie przekroczyła 32°C.
+                                  {isEn
+                                    ? 'On sunny days, open zipper vents or windows to prevent temperatures exceeding 32°C.'
+                                    : 'W słoneczne dni uchylaj suwak lub okienko szklarni, aby temperatura nie przekroczyła 32°C.'}
                                 </p>
                               </div>
                               <div className="p-3.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-200/70 dark:border-stone-700">
                                 <span className="font-bold text-stone-800 dark:text-stone-200 block mb-1">
-                                  🐝 Zapylanie kwiatów
+                                  {isEn ? '🐝 Flower Pollination' : '🐝 Zapylanie kwiatów'}
                                 </span>
                                 <p className="text-stone-600 dark:text-stone-400 leading-relaxed">
-                                  W fazie kwitnienia lekko potrząsaj pędami raz dziennie lub zapewnij dostęp owadom zapylającym.
+                                  {isEn
+                                    ? 'During flowering, gently shake stems once daily or allow access for pollinating insects.'
+                                    : 'W fazie kwitnienia lekko potrząsaj pędami raz dziennie lub zapewnij dostęp owadom zapylającym.'}
                                 </p>
                               </div>
                             </div>
@@ -1610,7 +1628,7 @@ export const MyCropsView: React.FC<Props> = ({
                           <div className="p-5 rounded-2xl bg-stone-50/70 dark:bg-stone-800/40 border border-stone-200/70 dark:border-stone-800 space-y-4 shadow-sm">
                             <div className="flex items-center justify-between">
                               <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                                Dziennik hodowcy & notatki
+                                {isEn ? 'Grower Journal & Notes' : 'Dziennik hodowcy & notatki'}
                               </h4>
                               <button
                                 type="button"
@@ -1618,7 +1636,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 className="text-xs font-bold text-emerald-800 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
-                                <span>Edytuj notatkę</span>
+                                <span>{isEn ? 'Edit note' : 'Edytuj notatkę'}</span>
                               </button>
                             </div>
                             <div className="p-4 rounded-xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-700 text-xs leading-relaxed text-stone-700 dark:text-stone-300">
@@ -1626,7 +1644,9 @@ export const MyCropsView: React.FC<Props> = ({
                                 <p className="whitespace-pre-wrap">{selectedCrop.notes}</p>
                               ) : (
                                 <p className="text-stone-400 italic">
-                                  Brak wpisanych notatek. Kliknij &quot;Edytuj notatkę&quot;, aby zapisać datę kiełkowania, rodzaj zastosowanego nawozu lub uwagi o roślinie.
+                                  {isEn
+                                    ? 'No notes yet. Click "Edit note" to record germination date, fertilizer type, or plant observations.'
+                                    : 'Brak wpisanych notatek. Kliknij "Edytuj notatkę", aby zapisać datę kiełkowania, rodzaj zastosowanego nawozu lub uwagi o roślinie.'}
                                 </p>
                               )}
                             </div>

@@ -1,9 +1,11 @@
 import React from 'react';
 import { Shield, ShieldAlert, ShieldCheck, Check, AlertCircle, CheckCircle2, XCircle } from 'lucide-react';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   password?: string;
   idPrefix?: string;
+  lang?: 'pl' | 'en';
 }
 
 export interface PasswordMatchProps {
@@ -11,6 +13,7 @@ export interface PasswordMatchProps {
   confirmPassword?: string;
   idPrefix?: string;
   minLength?: number;
+  lang?: 'pl' | 'en';
 }
 
 export interface PasswordMatchResult {
@@ -27,8 +30,10 @@ export interface PasswordMatchResult {
 export function evaluatePasswordMatch(
   password: string = '',
   confirmPassword: string = '',
-  minLength: number = 4
+  minLength: number = 4,
+  lang: 'pl' | 'en' = 'pl'
 ): PasswordMatchResult {
+  const isEn = lang === 'en';
   if (!confirmPassword) {
     return {
       hasStarted: false,
@@ -51,7 +56,7 @@ export function evaluatePasswordMatch(
       isValid: false,
       isMatch,
       isLengthValid: false,
-      message: `Hasło musi mieć co najmniej ${minLength} znaki`,
+      message: isEn ? `Password must be at least ${minLength} characters` : `Hasło musi mieć co najmniej ${minLength} znaki`,
       textColorClass: 'text-amber-600 dark:text-amber-400',
       borderColorClass: 'border-amber-400 dark:border-amber-500 focus:ring-amber-500',
       status: 'too-short',
@@ -64,7 +69,7 @@ export function evaluatePasswordMatch(
       isValid: false,
       isMatch: false,
       isLengthValid: true,
-      message: 'Hasła nie są identyczne',
+      message: isEn ? 'Passwords do not match' : 'Hasła nie są identyczne',
       textColorClass: 'text-rose-600 dark:text-rose-400',
       borderColorClass: 'border-rose-400 dark:border-rose-500 focus:ring-rose-500',
       status: 'mismatch',
@@ -76,7 +81,7 @@ export function evaluatePasswordMatch(
     isValid: true,
     isMatch: true,
     isLengthValid: true,
-    message: 'Hasła są zgodne',
+    message: isEn ? 'Passwords match' : 'Hasła są zgodne',
     textColorClass: 'text-emerald-600 dark:text-emerald-400 font-medium',
     borderColorClass: 'border-emerald-500 dark:border-emerald-500 focus:ring-emerald-500',
     status: 'match',
@@ -88,12 +93,17 @@ export const PasswordMatchIndicator: React.FC<PasswordMatchProps> = ({
   confirmPassword = '',
   idPrefix = 'pwd-match',
   minLength = 4,
+  lang,
 }) => {
+  const { language } = useLanguage();
+  const effectiveLang = lang || language;
+  const isEn = effectiveLang === 'en';
+
   if (!confirmPassword) {
     return null;
   }
 
-  const result = evaluatePasswordMatch(password, confirmPassword, minLength);
+  const result = evaluatePasswordMatch(password, confirmPassword, minLength, effectiveLang);
 
   return (
     <div
@@ -117,7 +127,7 @@ export const PasswordMatchIndicator: React.FC<PasswordMatchProps> = ({
 
       {result.status === 'match' && (
         <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80">
-          Zgodne
+          {isEn ? 'Match' : 'Zgodne'}
         </span>
       )}
     </div>
@@ -134,16 +144,17 @@ export interface PasswordStrengthResult {
   suggestions: string[];
 }
 
-export function evaluatePasswordStrength(password: string = ''): PasswordStrengthResult {
+export function evaluatePasswordStrength(password: string = '', lang: 'pl' | 'en' = 'pl'): PasswordStrengthResult {
+  const isEn = lang === 'en';
   if (!password || password.length === 0) {
     return {
       score: 0,
-      label: 'Wpisz hasło',
-      sublabel: 'Minimum 4 znaki',
+      label: isEn ? 'Enter password' : 'Wpisz hasło',
+      sublabel: isEn ? 'Minimum 4 characters' : 'Minimum 4 znaki',
       colorClass: 'bg-stone-200 dark:bg-stone-700',
       barColorClass: 'bg-stone-200 dark:bg-stone-700',
       textColorClass: 'text-stone-400 dark:text-stone-500',
-      suggestions: ['Użyj co najmniej 4 znaków'],
+      suggestions: [isEn ? 'Use at least 4 characters' : 'Użyj co najmniej 4 znaków'],
     };
   }
 
@@ -168,24 +179,24 @@ export function evaluatePasswordStrength(password: string = ''): PasswordStrengt
   score = Math.min(4, Math.max(1, score));
 
   if (password.length < 6) {
-    suggestions.push('Wydłuż hasło do min. 6–8 znaków');
+    suggestions.push(isEn ? 'Extend password to at least 6–8 characters' : 'Wydłuż hasło do min. 6–8 znaków');
   }
   if (!hasNumber) {
-    suggestions.push('Dodaj cyfrę (0-9)');
+    suggestions.push(isEn ? 'Add a digit (0-9)' : 'Dodaj cyfrę (0-9)');
   }
   if (!hasUpper || !hasLower) {
-    suggestions.push('Połącz małe i wielkie litery');
+    suggestions.push(isEn ? 'Combine uppercase and lowercase letters' : 'Połącz małe i wielkie litery');
   }
   if (!hasSpecial) {
-    suggestions.push('Dodaj znak specjalny (np. !@#$)');
+    suggestions.push(isEn ? 'Add a special character (e.g. !@#$)' : 'Dodaj znak specjalny (np. !@#$)');
   }
 
   switch (score) {
     case 1:
       return {
         score: 1,
-        label: 'Słabe (Weak)',
-        sublabel: 'Hasło jest zbyt proste lub za krótkie',
+        label: isEn ? 'Weak' : 'Słabe (Weak)',
+        sublabel: isEn ? 'Password is too simple or too short' : 'Hasło jest zbyt proste lub za krótkie',
         colorClass: 'bg-rose-500',
         barColorClass: 'bg-rose-500',
         textColorClass: 'text-rose-600 dark:text-rose-400',
@@ -194,8 +205,8 @@ export function evaluatePasswordStrength(password: string = ''): PasswordStrengt
     case 2:
       return {
         score: 2,
-        label: 'Średnie (Medium)',
-        sublabel: 'Dobre, ale warto dodać cyfry lub symbole',
+        label: isEn ? 'Medium' : 'Średnie (Medium)',
+        sublabel: isEn ? 'Good, but consider adding digits or symbols' : 'Dobre, ale warto dodać cyfry lub symbole',
         colorClass: 'bg-amber-500',
         barColorClass: 'bg-amber-500',
         textColorClass: 'text-amber-600 dark:text-amber-400',
@@ -204,8 +215,8 @@ export function evaluatePasswordStrength(password: string = ''): PasswordStrengt
     case 3:
       return {
         score: 3,
-        label: 'Silne (Strong)',
-        sublabel: 'Bezpieczne hasło dla Twojego konta',
+        label: isEn ? 'Strong' : 'Silne (Strong)',
+        sublabel: isEn ? 'Secure password for your account' : 'Bezpieczne hasło dla Twojego konta',
         colorClass: 'bg-emerald-500',
         barColorClass: 'bg-emerald-500',
         textColorClass: 'text-emerald-600 dark:text-emerald-400',
@@ -215,8 +226,8 @@ export function evaluatePasswordStrength(password: string = ''): PasswordStrengt
     default:
       return {
         score: 4,
-        label: 'Bardzo silne (Very Strong)',
-        sublabel: 'Doskonałe, wysoce bezpieczne hasło',
+        label: isEn ? 'Very Strong' : 'Bardzo silne (Very Strong)',
+        sublabel: isEn ? 'Excellent, highly secure password' : 'Doskonałe, wysoce bezpieczne hasło',
         colorClass: 'bg-emerald-600 dark:bg-emerald-400',
         barColorClass: 'bg-emerald-600 dark:bg-emerald-400',
         textColorClass: 'text-emerald-700 dark:text-emerald-300 font-bold',
@@ -225,12 +236,16 @@ export function evaluatePasswordStrength(password: string = ''): PasswordStrengt
   }
 }
 
-export const PasswordStrengthIndicator: React.FC<Props> = ({ password = '', idPrefix = 'pwd-strength' }) => {
+export const PasswordStrengthIndicator: React.FC<Props> = ({ password = '', idPrefix = 'pwd-strength', lang }) => {
+  const { language } = useLanguage();
+  const effectiveLang = lang || language;
+  const isEn = effectiveLang === 'en';
+
   if (!password) {
     return null;
   }
 
-  const result = evaluatePasswordStrength(password);
+  const result = evaluatePasswordStrength(password, effectiveLang);
 
   return (
     <div id={`${idPrefix}-container`} className="mt-2 space-y-1.5 transition-all duration-200">
@@ -256,7 +271,7 @@ export const PasswordStrengthIndicator: React.FC<Props> = ({ password = '', idPr
           {result.score <= 1 && <ShieldAlert className="w-3.5 h-3.5 text-rose-500 shrink-0" />}
           {result.score === 2 && <Shield className="w-3.5 h-3.5 text-amber-500 shrink-0" />}
           {result.score >= 3 && <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />}
-          <span className="text-stone-500 dark:text-stone-400">Siła hasła:</span>
+          <span className="text-stone-500 dark:text-stone-400">{isEn ? 'Password strength:' : 'Siła hasła:'}</span>
           <span id={`${idPrefix}-label`} className={`font-bold ${result.textColorClass}`}>
             {result.label}
           </span>
@@ -264,7 +279,7 @@ export const PasswordStrengthIndicator: React.FC<Props> = ({ password = '', idPr
 
         {result.score >= 3 && (
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium hidden sm:inline flex items-center gap-0.5">
-            <Check className="w-3 h-3 inline" /> Bezpieczne
+            <Check className="w-3 h-3 inline" /> {isEn ? 'Secure' : 'Bezpieczne'}
           </span>
         )}
       </div>
@@ -273,9 +288,10 @@ export const PasswordStrengthIndicator: React.FC<Props> = ({ password = '', idPr
       {result.suggestions.length > 0 && result.score < 3 && (
         <div className="text-[10.5px] text-stone-500 dark:text-stone-400 flex items-center gap-1">
           <span className="text-amber-500 font-bold">•</span>
-          <span>Wskazówka: {result.suggestions.join(', ')}</span>
+          <span>{isEn ? 'Hint:' : 'Wskazówka:'} {result.suggestions.join(', ')}</span>
         </div>
       )}
     </div>
   );
 };
+

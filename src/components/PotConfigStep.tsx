@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Plant, PotShape, LegacyPotMaterial, SupportType } from '../types';
 import { POT_MATERIAL_OPTIONS, POT_SUPPORT_OPTIONS } from '../lib/potSupportEvaluations';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface PotConfigStepProps {
   availablePlants: Plant[];
@@ -80,6 +81,49 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
   onApplyPreset,
   onCalculate,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
+  const getMaterialLabel = (key: LegacyPotMaterial) => {
+    if (isEn) {
+      switch (key) {
+        case 'plastic':
+          return 'Plastic / Synthetic';
+        case 'terracotta':
+          return 'Terracotta / Unglazed ceramic';
+        case 'wood':
+          return 'Natural wood';
+        case 'fabric':
+          return 'Geotextile / Fabric pot / Smart Pot';
+        case 'ceramic':
+          return 'Glazed ceramic';
+        default:
+          return key;
+      }
+    }
+    return POT_MATERIAL_OPTIONS.find((o) => o.key === key)?.label || key;
+  };
+
+  const getSupportLabel = (key: SupportType) => {
+    if (isEn) {
+      switch (key) {
+        case 'none':
+          return 'No support';
+        case 'stake':
+          return 'Bamboo stake';
+        case 'trellis':
+          return 'Balcony trellis / Wall grid';
+        case 'balcony_railing':
+          return 'Balcony railing';
+        case 'cage':
+          return 'Plant cage / Spiral';
+        default:
+          return key;
+      }
+    }
+    return POT_SUPPORT_OPTIONS.find((o) => o.key === key)?.label || key;
+  };
+
   return (
     <div className="space-y-6">
       {/* 2-kolumnowy układ formularza na większych ekranach */}
@@ -92,7 +136,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               htmlFor="pot-calc-plant-select"
               className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-2"
             >
-              1. Wybierz uprawianą roślinę:
+              {isEn ? '1. Select crop to grow:' : '1. Wybierz uprawianą roślinę:'}
             </label>
             <select
               id="pot-calc-plant-select"
@@ -100,7 +144,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               onChange={(e) => onSelectPlantId(e.target.value)}
               className="w-full bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-600 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-stone-500 focus:outline-none"
             >
-              <optgroup label="🥕 Warzywa">
+              <optgroup label={isEn ? '🥕 Vegetables' : '🥕 Warzywa'}>
                 {availablePlants
                   .filter((p) => p.plant_group === 'warzywa')
                   .map((p) => (
@@ -109,7 +153,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                     </option>
                   ))}
               </optgroup>
-              <optgroup label="🍓 Owoce">
+              <optgroup label={isEn ? '🍓 Fruit' : '🍓 Owoce'}>
                 {availablePlants
                   .filter((p) => p.plant_group === 'owoce')
                   .map((p) => (
@@ -118,7 +162,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                     </option>
                   ))}
               </optgroup>
-              <optgroup label="🌿 Zioła">
+              <optgroup label={isEn ? '🌿 Herbs' : '🌿 Zioła'}>
                 {availablePlants
                   .filter((p) => p.plant_group === 'ziola')
                   .map((p) => (
@@ -127,7 +171,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                     </option>
                   ))}
               </optgroup>
-              <optgroup label="🌸 Rośliny ozdobne (kwiaty)">
+              <optgroup label={isEn ? '🌸 Flowers & Ornamentals' : '🌸 Rośliny ozdobne (kwiaty)'}>
                 {availablePlants
                   .filter((p) => p.plant_group === 'ozdobne')
                   .map((p) => (
@@ -136,7 +180,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                     </option>
                   ))}
               </optgroup>
-              <optgroup label="🌱 Mikrolistki i kiełki">
+              <optgroup label={isEn ? '🌱 Microgreens & Sprouts' : '🌱 Mikrolistki i kiełki'}>
                 {availablePlants
                   .filter((p) => p.plant_group === 'kielki')
                   .map((p) => (
@@ -145,7 +189,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                     </option>
                   ))}
               </optgroup>
-              <optgroup label="🍄 Grzyby uprawne">
+              <optgroup label={isEn ? '🍄 Cultivated Mushrooms' : '🍄 Grzyby uprawne'}>
                 {availablePlants
                   .filter((p) => p.plant_group === 'grzyby')
                   .map((p) => (
@@ -157,9 +201,11 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
             </select>
 
             <div className="flex flex-wrap items-center justify-between text-[11px] text-stone-600 dark:text-stone-300 mt-2.5 pt-2.5 border-t border-stone-200 dark:border-stone-700/80 gap-1.5">
-              <span>Wymagania dla {currentPlant.name}:</span>
+              <span>{isEn ? `Requirements for ${currentPlant.name}:` : `Wymagania dla ${currentPlant.name}:`}</span>
               <span className="font-semibold text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2 py-0.5 rounded border border-stone-200 dark:border-stone-700">
-                min. {minPlantVol}L (zalec. {recPlantVol}L) • głębokość min. {minDepth} cm
+                {isEn
+                  ? `min. ${minPlantVol}L (rec. ${recPlantVol}L) • depth min. ${minDepth} cm`
+                  : `min. ${minPlantVol}L (zalec. ${recPlantVol}L) • głębokość min. ${minDepth} cm`}
               </span>
             </div>
           </div>
@@ -167,7 +213,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
           {/* 2. Kształt donicy */}
           <div>
             <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider mb-2">
-              2. Kształt Twojej donicy:
+              {isEn ? '2. Container Shape:' : '2. Kształt Twojej donicy:'}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <button
@@ -181,9 +227,9 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               >
                 <Box className="w-5 h-5 text-stone-800 dark:text-stone-200 shrink-0" />
                 <div>
-                  <div className="text-xs">Prostokątna</div>
+                  <div className="text-xs">{isEn ? 'Rectangular' : 'Prostokątna'}</div>
                   <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal">
-                    Skrzynka, korytko, rynna
+                    {isEn ? 'Window box, planter trough' : 'Skrzynka, korytko, rynna'}
                   </div>
                 </div>
               </button>
@@ -199,9 +245,9 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               >
                 <Circle className="w-5 h-5 text-stone-800 dark:text-stone-200 shrink-0" />
                 <div>
-                  <div className="text-xs">Okrągła</div>
+                  <div className="text-xs">{isEn ? 'Round' : 'Okrągła'}</div>
                   <div className="text-[10px] text-stone-500 dark:text-stone-400 font-normal">
-                    Misa, doniczka, wiadro
+                    {isEn ? 'Pot, bowl, bucket' : 'Misa, doniczka, wiadro'}
                   </div>
                 </div>
               </button>
@@ -211,7 +257,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
           {/* Szybkie presety typowych donic */}
           <div>
             <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider mb-2">
-              Szybkie typowe wymiary donic:
+              {isEn ? 'Quick common container presets:' : 'Szybkie typowe wymiary donic:'}
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
@@ -219,28 +265,28 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 onClick={() => onApplyPreset('box60')}
                 className="px-2.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
-                Skrzynka 60×20×18 cm
+                {isEn ? 'Window box 60×20×18 cm' : 'Skrzynka 60×20×18 cm'}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyPreset('pot30')}
                 className="px-2.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
-                Misa okrągła ⌀ 30 cm
+                {isEn ? 'Round pot ⌀ 30 cm' : 'Misa okrągła ⌀ 30 cm'}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyPreset('large40')}
                 className="px-2.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
-                Kwadratowa 40×40 cm
+                {isEn ? 'Square planter 40×40 cm' : 'Kwadratowa 40×40 cm'}
               </button>
               <button
                 type="button"
                 onClick={() => onApplyPreset('bucket15')}
                 className="px-2.5 py-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 text-left cursor-pointer transition font-medium"
               >
-                Głęboka donica ⌀ 28 cm
+                {isEn ? 'Deep bucket ⌀ 28 cm' : 'Głęboka donica ⌀ 28 cm'}
               </button>
             </div>
           </div>
@@ -252,10 +298,10 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
           <div className="bg-stone-50 dark:bg-stone-800/90 p-4 sm:p-5 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-wider">
-                3. Wymiary donicy (w cm):
+                {isEn ? '3. Dimensions (in cm):' : '3. Wymiary donicy (w cm):'}
               </span>
               <span className="text-xs font-bold text-stone-900 dark:text-stone-100 bg-stone-200/90 dark:bg-stone-700 px-2.5 py-0.5 rounded-lg">
-                Pojemność: {volumeLiters} L
+                {isEn ? `Capacity: ${volumeLiters} L` : `Pojemność: ${volumeLiters} L`}
               </span>
             </div>
 
@@ -263,7 +309,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               <>
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-stone-600 dark:text-stone-400">Długość skrzynki (L):</span>
+                    <span className="text-stone-600 dark:text-stone-400">{isEn ? 'Box length (L):' : 'Długość skrzynki (L):'}</span>
                     <span className="font-bold text-stone-900 dark:text-stone-100">{lengthCm} cm</span>
                   </div>
                   <input
@@ -279,7 +325,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-stone-600 dark:text-stone-400">Szerokość / głębokość (W):</span>
+                    <span className="text-stone-600 dark:text-stone-400">{isEn ? 'Width / Depth (W):' : 'Szerokość / głębokość (W):'}</span>
                     <span className="font-bold text-stone-900 dark:text-stone-100">{widthCm} cm</span>
                   </div>
                   <input
@@ -295,7 +341,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-stone-600 dark:text-stone-400">Wysokość donicy (H):</span>
+                    <span className="text-stone-600 dark:text-stone-400">{isEn ? 'Height (H):' : 'Wysokość donicy (H):'}</span>
                     <span className="font-bold text-stone-900 dark:text-stone-100">{rectHeightCm} cm</span>
                   </div>
                   <input
@@ -313,7 +359,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               <>
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-stone-600 dark:text-stone-400">Średnica górna (⌀):</span>
+                    <span className="text-stone-600 dark:text-stone-400">{isEn ? 'Top diameter (⌀):' : 'Średnica górna (⌀):'}</span>
                     <span className="font-bold text-stone-900 dark:text-stone-100">{diameterCm} cm</span>
                   </div>
                   <input
@@ -329,7 +375,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
 
                 <div>
                   <div className="flex justify-between text-xs mb-1">
-                    <span className="text-stone-600 dark:text-stone-400">Wysokość donicy (H):</span>
+                    <span className="text-stone-600 dark:text-stone-400">{isEn ? 'Height (H):' : 'Wysokość donicy (H):'}</span>
                     <span className="font-bold text-stone-900 dark:text-stone-100">{roundHeightCm} cm</span>
                   </div>
                   <input
@@ -352,7 +398,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               htmlFor="pot-calc-material-select"
               className="block text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider"
             >
-              4. Materiał donicy:
+              {isEn ? '4. Container Material:' : '4. Materiał donicy:'}
             </label>
             <select
               id="pot-calc-material-select"
@@ -362,7 +408,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
             >
               {POT_MATERIAL_OPTIONS.map((opt) => (
                 <option key={opt.key} value={opt.key}>
-                  {opt.label}
+                  {getMaterialLabel(opt.key)}
                 </option>
               ))}
             </select>
@@ -386,7 +432,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                   ) : (
                     <AlertCircle className="w-3.5 h-3.5 text-red-600 dark:text-red-400 shrink-0" />
                   )}
-                  <span>Ocena materiału:</span>
+                  <span>{isEn ? 'Material evaluation:' : 'Ocena materiału:'}</span>
                 </span>
                 <span
                   className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wide ${
@@ -397,14 +443,20 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                       : 'bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-100 border-red-300 dark:border-red-700'
                   }`}
                 >
-                  {materialEvaluation.badgeText}
+                  {isEn
+                    ? materialEvaluation.rating === 'good'
+                      ? 'Good choice'
+                      : materialEvaluation.rating === 'warning'
+                      ? 'Average / with cautions'
+                      : 'Poor choice'
+                    : materialEvaluation.badgeText}
                 </span>
               </div>
               <div className="font-semibold text-[11px] mt-0.5 text-stone-800 dark:text-stone-200">
-                {materialEvaluation.title}
+                {isEn ? (materialEvaluation.titleEn || materialEvaluation.title) : materialEvaluation.title}
               </div>
               <p className="text-[11px] leading-relaxed mt-0.5 text-stone-700 dark:text-stone-300 font-normal">
-                {materialEvaluation.description}
+                {isEn ? (materialEvaluation.descriptionEn || materialEvaluation.description) : materialEvaluation.description}
               </p>
             </div>
           </div>
@@ -416,7 +468,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 htmlFor="pot-calc-support-select"
                 className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider"
               >
-                Podpora w donicy:
+                {isEn ? 'Container Support:' : 'Podpora w donicy:'}
               </label>
               <select
                 id="pot-calc-support-select"
@@ -426,7 +478,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               >
                 {POT_SUPPORT_OPTIONS.map((opt) => (
                   <option key={opt.key} value={opt.key}>
-                    {opt.label}
+                    {getSupportLabel(opt.key)}
                   </option>
                 ))}
               </select>
@@ -434,7 +486,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
 
             <div className="pt-2 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between">
               <span className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
-                Liczba donic (szt.):
+                {isEn ? 'Pot count (qty):' : 'Liczba donic (szt.):'}
               </span>
               <div className="flex items-center gap-1">
                 {[1, 2, 3, 4, 6].map((num) => (
@@ -456,7 +508,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
 
             <div className="pt-2 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between">
               <span className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
-                Sposób startu:
+                {isEn ? 'Start method:' : 'Sposób startu:'}
               </span>
               <div className="flex items-center gap-1">
                 <button
@@ -468,7 +520,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                       : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100'
                   }`}
                 >
-                  🌱 Z nasion
+                  {isEn ? '🌱 From Seed' : '🌱 Z nasion'}
                 </button>
                 <button
                   type="button"
@@ -479,7 +531,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                       : 'bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100'
                   }`}
                 >
-                  🌿 Rozsada
+                  {isEn ? '🌿 Seedling' : '🌿 Rozsada'}
                 </button>
               </div>
             </div>
@@ -492,13 +544,13 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
         <div className="text-xs text-stone-700 dark:text-stone-300 space-y-0.5 text-center sm:text-left">
           <div className="font-semibold text-stone-900 dark:text-stone-100 flex items-center gap-1.5 justify-center sm:justify-start">
             <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Gotowy do kalkulacji i wygenerowania makiety</span>
+            <span>{isEn ? 'Ready for calculation & layout generation' : 'Gotowy do kalkulacji i wygenerowania makiety'}</span>
           </div>
           <p className="text-stone-500 dark:text-stone-400 text-[11px]">
-            Roślina: <strong>{currentPlant.name}</strong> • Objętość: <strong>{volumeLiters} L</strong> •{' '}
+            {isEn ? 'Plant: ' : 'Roślina: '}<strong>{currentPlant.name}</strong> • {isEn ? 'Volume: ' : 'Objętość: '}<strong>{volumeLiters} L</strong> •{' '}
             {shape === 'rectangular'
               ? `${lengthCm}×${widthCm}×${rectHeightCm} cm`
-              : `⌀ ${diameterCm} cm, wys. ${roundHeightCm} cm`}
+              : (isEn ? `⌀ ${diameterCm} cm, height ${roundHeightCm} cm` : `⌀ ${diameterCm} cm, wys. ${roundHeightCm} cm`)}
           </p>
         </div>
 
@@ -508,10 +560,11 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
           onClick={onCalculate}
           className="w-full sm:w-auto px-8 py-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white rounded-2xl text-base font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-3 cursor-pointer"
         >
-          <span>Oblicz</span>
+          <span>{isEn ? 'Calculate' : 'Oblicz'}</span>
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>
     </div>
   );
 };
+

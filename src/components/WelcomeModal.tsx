@@ -11,7 +11,6 @@ import {
   ArrowRight,
   ShieldCheck,
   ChevronLeft,
-  HelpCircle,
   X,
   AlertCircle,
   CloudSun,
@@ -21,6 +20,7 @@ import { UserAccount, UserBalconySpec, MyCropItem } from '../types';
 import { registerAccount, loginAccount } from '../lib/auth';
 import { signInWithGoogle } from '../lib/firebase';
 import { PasswordStrengthIndicator, PasswordMatchIndicator, evaluatePasswordMatch } from './PasswordStrengthIndicator';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   isOpen: boolean;
@@ -39,6 +39,8 @@ export const WelcomeModal: React.FC<Props> = ({
   onAuthSuccess,
   onContinueAsGuest,
 }) => {
+  const { language, t } = useLanguage();
+  const isEn = language === 'en';
   const [viewMode, setViewMode] = useState<'overview' | 'register' | 'login'>('overview');
 
   // Auth form state
@@ -58,13 +60,13 @@ export const WelcomeModal: React.FC<Props> = ({
     setGoogleLoading(true);
     try {
       const res = await signInWithGoogle(balconySpec, myCrops);
-      setAuthSuccess(`Super! Witaj ${res.user.username}.`);
+      setAuthSuccess(isEn ? `Great! Welcome ${res.user.username}.` : `Super! Witaj ${res.user.username}.`);
       setTimeout(() => {
         onAuthSuccess(res.user, res.message);
         onClose();
       }, 500);
     } catch (err: any) {
-      setAuthError(err.message || 'Wystąpił błąd podczas autoryzacji kontem Google.');
+      setAuthError(err.message || (isEn ? 'Google authentication error.' : 'Wystąpił błąd podczas autoryzacji kontem Google.'));
     } finally {
       setGoogleLoading(false);
     }
@@ -77,28 +79,28 @@ export const WelcomeModal: React.FC<Props> = ({
 
     const trimmed = username.trim();
     if (!trimmed || trimmed.length < 2) {
-      setAuthError('Nick musi zawierać minimum 2 znaki.');
+      setAuthError(isEn ? 'Username must have at least 2 characters.' : 'Nick musi zawierać minimum 2 znaki.');
       return;
     }
     if (!password || password.length < 4) {
-      setAuthError('Hasło musi zawierać minimum 4 znaki.');
+      setAuthError(isEn ? 'Password must have at least 4 characters.' : 'Hasło musi zawierać minimum 4 znaki.');
       return;
     }
     if (password !== confirmPassword) {
-      setAuthError('Wpisane hasła różnią się od siebie.');
+      setAuthError(isEn ? 'Passwords do not match.' : 'Wpisane hasła różnią się od siebie.');
       return;
     }
 
     setAuthLoading(true);
     try {
       const res = await registerAccount(trimmed, password, balconySpec, myCrops);
-      setAuthSuccess(`Super! Witaj ${res.user.username}.`);
+      setAuthSuccess(isEn ? `Great! Welcome ${res.user.username}.` : `Super! Witaj ${res.user.username}.`);
       setTimeout(() => {
         onAuthSuccess(res.user, res.message);
         onClose();
       }, 600);
     } catch (err: any) {
-      setAuthError(err.message || 'Nie udało się założyć konta. Spróbuj ponownie.');
+      setAuthError(err.message || (isEn ? 'Failed to create account. Try again.' : 'Nie udało się założyć konta. Spróbuj ponownie.'));
     } finally {
       setAuthLoading(false);
     }
@@ -111,24 +113,24 @@ export const WelcomeModal: React.FC<Props> = ({
 
     const trimmed = username.trim();
     if (!trimmed) {
-      setAuthError('Podaj swój nick.');
+      setAuthError(isEn ? 'Please provide username.' : 'Podaj swój nick.');
       return;
     }
     if (!password) {
-      setAuthError('Wpisz hasło.');
+      setAuthError(isEn ? 'Please enter password.' : 'Wpisz hasło.');
       return;
     }
 
     setAuthLoading(true);
     try {
       const res = await loginAccount(trimmed, password);
-      setAuthSuccess(`Witaj z powrotem, ${res.user.username}!`);
+      setAuthSuccess(isEn ? `Welcome back, ${res.user.username}!` : `Witaj z powrotem, ${res.user.username}!`);
       setTimeout(() => {
         onAuthSuccess(res.user, res.message);
         onClose();
       }, 600);
     } catch (err: any) {
-      setAuthError(err.message || 'Nieprawidłowy nick lub hasło.');
+      setAuthError(err.message || (isEn ? 'Invalid username or password.' : 'Nieprawidłowy nick lub hasło.'));
     } finally {
       setAuthLoading(false);
     }
@@ -153,10 +155,10 @@ export const WelcomeModal: React.FC<Props> = ({
               <div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/20 text-emerald-50 border border-white/20 mb-1">
                   <Sparkles className="w-3 h-3 text-amber-300" />
-                  <span>Twój Miejski Asystent Uprawy</span>
+                  <span>{isEn ? 'Your Urban Growing Assistant' : 'Twój Miejski Asystent Uprawy'}</span>
                 </div>
                 <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
-                  Ogródek Balkonowy
+                  {isEn ? 'Balcony Container Garden' : 'Ogródek Balkonowy'}
                 </h1>
               </div>
             </div>
@@ -165,10 +167,11 @@ export const WelcomeModal: React.FC<Props> = ({
               type="button"
               id="skip-welcome-btn"
               onClick={onContinueAsGuest}
-              className="text-emerald-100/80 hover:text-white hover:bg-white/10 p-2 rounded-xl transition cursor-pointer"
-              title="Przejdź do aplikacji"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+              title={isEn ? 'Go to app' : 'Przejdź do aplikacji'}
+              aria-label={isEn ? 'Close and go to app' : 'Zamknij i przejdź do aplikacji'}
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
         </div>
@@ -181,24 +184,30 @@ export const WelcomeModal: React.FC<Props> = ({
               {/* Friendly Intro Heading */}
               <div className="text-center sm:text-left space-y-1.5">
                 <h2 className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100">
-                  Zamień swój balkon w zieloną, obfitą oazę 🌿
+                  {isEn
+                    ? 'Turn your balcony into a lush, bountiful urban oasis 🌿'
+                    : 'Zamień swój balkon w zieloną, obfitą oazę 🌿'}
                 </h2>
                 <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 leading-relaxed">
-                  Nawet mała przestrzeń w bloku wystarczy, by cieszyć się własnymi, pachnącymi pomidorkami, chrupiącą sałatą i świeżymi ziołami. Aplikacja prowadzi Cię za rękę od nasionka po zbiory.
+                  {isEn
+                    ? 'Even a small apartment balcony is enough to enjoy fragrant home-grown tomatoes, crisp salad greens, and fresh culinary herbs. The app guides you step-by-step from seed to harvest.'
+                    : 'Nawet mała przestrzeń w bloku wystarczy, by cieszyć się własnymi, pachnącymi pomidorkami, chrupiącą sałatą i świeżymi ziołami. Aplikacja prowadzi Cię za rękę od nasionka po zbiory.'}
                 </p>
               </div>
 
-              {/* 4 Feature Cards (Co robi aplikacja?) */}
+              {/* 4 Feature Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="p-4 rounded-2xl bg-white dark:bg-stone-800/90 border border-stone-200/80 dark:border-stone-700/80 shadow-2xs space-y-1.5">
                   <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/70 text-amber-700 dark:text-amber-300 flex items-center justify-center font-bold">
                     <Sun className="w-4 h-4" />
                   </div>
                   <h3 className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Dopasowanie do słońca i wiatru
+                    {isEn ? 'Sunlight & Wind Matching' : 'Dopasowanie do słońca i wiatru'}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-                    Sprawdza ekspozycję (wschód, zachód, południe) i piętro. Poleca tylko te rośliny, które naprawdę zaowocują.
+                    {isEn
+                      ? 'Evaluates orientation (East, South, West) and floor height. Recommends crops that genuinely thrive in your exact spot.'
+                      : 'Sprawdza ekspozycję (wschód, zachód, południe) i piętro. Poleca tylko te rośliny, które naprawdę zaowocują.'}
                   </p>
                 </div>
 
@@ -207,10 +216,12 @@ export const WelcomeModal: React.FC<Props> = ({
                     <Calendar className="w-4 h-4" />
                   </div>
                   <h3 className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Osobisty kalendarz siewu
+                    {isEn ? 'Personal Sowing Schedule' : 'Osobisty kalendarz siewu'}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-                    Wiesz dokładnie, kiedy siać na parapecie, kiedy hartować i kiedy wynosić na zewnątrz po „zimnej Zośce”.
+                    {isEn
+                      ? 'Know exactly when to start seeds indoors, when to harden off seedlings, and when to transplant outside after the last frost.'
+                      : 'Wiesz dokładnie, kiedy siać na parapecie, kiedy hartować i kiedy wynosić na zewnątrz po „zimnej Zośce”.'}
                   </p>
                 </div>
 
@@ -219,10 +230,12 @@ export const WelcomeModal: React.FC<Props> = ({
                     <Layers className="w-4 h-4" />
                   </div>
                   <h3 className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Kalkulator donic i odmian
+                    {isEn ? 'Pot & Variety Calculator' : 'Kalkulator donic i odmian'}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-                    Precyzyjny dobór litrażu ziemi i odmian karłowych dedykowanych do skrzynek i ciasnych donic.
+                    {isEn
+                      ? 'Precise soil volume calculation and compact dwarf cultivars tailored to balcony planters and tight spaces.'
+                      : 'Precyzyjny dobór litrażu ziemi i odmian karłowych dedykowanych do skrzynek i ciasnych donic.'}
                   </p>
                 </div>
 
@@ -231,15 +244,17 @@ export const WelcomeModal: React.FC<Props> = ({
                     <CloudSun className="w-4 h-4" />
                   </div>
                   <h3 className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Codzienne wskazówki i pogoda
+                    {isEn ? 'Daily Tips & Weather' : 'Codzienne wskazówki i pogoda'}
                   </h3>
                   <p className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-                    Lokalne ostrzeżenia przed przymrozkami lub suszą oraz proste porady dotyczące podlewania.
+                    {isEn
+                      ? 'Local frost and heat alerts along with actionable advice on watering schedules and pest prevention.'
+                      : 'Lokalne ostrzeżenia przed przymrozkami lub suszą oraz proste porady dotyczące podlewania.'}
                   </p>
                 </div>
               </div>
 
-              {/* Call-to-action Section: Rejestracja / Logowanie */}
+              {/* Call-to-action Section */}
               <div className="p-5 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50/60 dark:from-emerald-950/40 dark:to-stone-800 border border-emerald-200/80 dark:border-emerald-800/80 space-y-4">
                 <div className="flex items-start gap-3">
                   <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
@@ -247,10 +262,12 @@ export const WelcomeModal: React.FC<Props> = ({
                   </div>
                   <div className="space-y-1">
                     <h3 className="text-sm font-bold text-emerald-950 dark:text-emerald-100">
-                      Załóż bezpłatne konto lub zaloguj się
+                      {isEn ? 'Create a free account or sign in' : 'Załóż bezpłatne konto lub zaloguj się'}
                     </h3>
                     <p className="text-xs text-emerald-850 dark:text-emerald-200/90 leading-relaxed">
-                      Zapisz parametry swojego balkonu, prowadź listę swoich sadzonek i miej dostęp do kalendarza na telefonie oraz komputerze.
+                      {isEn
+                        ? 'Save your balcony specs, track your crops, and access your schedule across mobile and desktop devices.'
+                        : 'Zapisz parametry swojego balkonu, prowadź listę swoich sadzonek i miej dostęp do kalendarza na telefonie oraz komputerze.'}
                     </p>
                   </div>
                 </div>
@@ -274,13 +291,13 @@ export const WelcomeModal: React.FC<Props> = ({
                         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                       </svg>
                     )}
-                    <span>Zarejestruj lub zaloguj przez konto Google</span>
+                    <span>{isEn ? 'Sign in or register with Google' : 'Zarejestruj lub zaloguj przez konto Google'}</span>
                   </button>
 
                   <div className="relative flex items-center justify-center">
                     <div className="border-t border-emerald-200/60 dark:border-emerald-800/40 w-full" />
                     <span className="bg-[#FAF8F5] dark:bg-stone-900 px-2.5 text-[11px] text-stone-500 dark:text-stone-400 font-medium shrink-0">
-                      lub tradycyjne konto
+                      {isEn ? 'or traditional account' : 'lub tradycyjne konto'}
                     </span>
                   </div>
 
@@ -295,7 +312,7 @@ export const WelcomeModal: React.FC<Props> = ({
                       className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <UserPlus className="w-4 h-4" />
-                      <span>Załóż darmowe konto</span>
+                      <span>{isEn ? 'Create free account' : 'Załóż darmowe konto'}</span>
                     </button>
 
                     <button
@@ -308,7 +325,7 @@ export const WelcomeModal: React.FC<Props> = ({
                       className="w-full py-2.5 px-4 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-600 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <LogIn className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                      <span>Mam już konto (Zaloguj)</span>
+                      <span>{isEn ? 'Already have an account (Sign in)' : 'Mam już konto (Zaloguj)'}</span>
                     </button>
                   </div>
                 </div>
@@ -316,7 +333,7 @@ export const WelcomeModal: React.FC<Props> = ({
                 {/* Guest option */}
                 <div className="pt-2 text-center border-t border-emerald-200/60 dark:border-emerald-800/40 flex flex-col sm:flex-row items-center justify-between gap-2">
                   <span className="text-[11px] text-stone-500 dark:text-stone-400">
-                    Chcesz najpierw rozejrzeć się po aplikacji?
+                    {isEn ? 'Want to explore the app first?' : 'Chcesz najpierw rozejrzeć się po aplikacji?'}
                   </span>
                   <button
                     type="button"
@@ -324,7 +341,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     onClick={onContinueAsGuest}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 dark:hover:text-emerald-100 underline decoration-emerald-400/50 hover:decoration-emerald-600 cursor-pointer py-1"
                   >
-                    <span>Wypróbuj jako gość (bez logowania)</span>
+                    <span>{isEn ? 'Try as guest (no sign-in)' : 'Wypróbuj jako gość (bez logowania)'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -345,18 +362,20 @@ export const WelcomeModal: React.FC<Props> = ({
                   className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Wróć do opisu aplikacji</span>
+                  <span>{isEn ? 'Back to app overview' : 'Wróć do opisu aplikacji'}</span>
                 </button>
-                <span className="text-xs text-stone-400">Krok 1 z 2</span>
+                <span className="text-xs text-stone-400">{isEn ? 'Step 1 of 2' : 'Krok 1 z 2'}</span>
               </div>
 
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
                   <UserPlus className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Utwórz darmowe konto</span>
+                  <span>{isEn ? 'Create Free Account' : 'Utwórz darmowe konto'}</span>
                 </h2>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Wystarczy unikalny nick i hasło. Nie wymagamy podawania wrażliwych danych.
+                  {isEn
+                    ? 'All you need is a unique username and password. No sensitive personal data required.'
+                    : 'Wystarczy unikalny nick i hasło. Nie wymagamy podawania wrażliwych danych.'}
                 </p>
               </div>
 
@@ -392,27 +411,27 @@ export const WelcomeModal: React.FC<Props> = ({
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                   </svg>
                 )}
-                <span>Zarejestruj się błyskawicznie przez konto Google</span>
+                <span>{isEn ? 'Instant registration with Google' : 'Zarejestruj się błyskawicznie przez konto Google'}</span>
               </button>
 
               <div className="relative flex items-center justify-center my-1">
                 <div className="border-t border-stone-200 dark:border-stone-800 w-full" />
                 <span className="bg-[#FAF8F5] dark:bg-stone-900 px-3 text-[11px] text-stone-400 dark:text-stone-500 font-medium shrink-0">
-                  lub tradycyjnie przez nick i hasło
+                  {isEn ? 'or traditionally with username & password' : 'lub tradycyjnie przez nick i hasło'}
                 </span>
               </div>
 
               <form onSubmit={handleRegister} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                    Twój Nick / Imię ogrodnika
+                    {isEn ? 'Your Username / Gardener Name' : 'Twój Nick / Imię ogrodnika'}
                   </label>
                   <input
                     type="text"
                     id="welcome-reg-username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="np. ZielonyBalkon_Tomek, Kasia_Ziolka"
+                    placeholder={isEn ? 'e.g. UrbanGardener_Tom, GreenBalcony' : 'np. ZielonyBalkon_Tomek, Kasia_Ziolka'}
                     required
                     minLength={2}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -421,14 +440,14 @@ export const WelcomeModal: React.FC<Props> = ({
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                    Hasło
+                    {isEn ? 'Password' : 'Hasło'}
                   </label>
                   <input
                     type="password"
                     id="welcome-reg-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimum 4 znaki"
+                    placeholder={isEn ? 'Minimum 4 characters' : 'Minimum 4 znaki'}
                     required
                     minLength={4}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -438,14 +457,14 @@ export const WelcomeModal: React.FC<Props> = ({
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                    Powtórz hasło
+                    {isEn ? 'Confirm Password' : 'Powtórz hasło'}
                   </label>
                   <input
                     type="password"
                     id="welcome-reg-password-confirm"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Wpisz hasło ponownie"
+                    placeholder={isEn ? 'Enter password again' : 'Wpisz hasło ponownie'}
                     required
                     minLength={4}
                     className={`w-full px-3.5 py-2.5 rounded-xl border bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 transition ${
@@ -471,7 +490,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     }}
                     className="text-xs text-stone-500 hover:text-emerald-700 dark:hover:text-emerald-400 underline cursor-pointer order-2 sm:order-1"
                   >
-                    Masz już konto? Zaloguj się
+                    {isEn ? 'Already have an account? Sign In' : 'Masz już konto? Zaloguj się'}
                   </button>
 
                   <button
@@ -481,11 +500,11 @@ export const WelcomeModal: React.FC<Props> = ({
                     className="w-full sm:w-auto px-6 py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 order-1 sm:order-2 group"
                   >
                     {authLoading ? (
-                      <span>Tworzenie konta...</span>
+                      <span>{isEn ? 'Creating account...' : 'Tworzenie konta...'}</span>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 text-emerald-200 shrink-0" />
-                        <span>Zarejestruj i przejdź do balkonu</span>
+                        <span>{isEn ? 'Register & Go to Balcony' : 'Zarejestruj i przejdź do balkonu'}</span>
                         <ArrowRight className="w-4 h-4 text-emerald-200 shrink-0 transition-transform group-hover:translate-x-0.5" />
                       </>
                     )}
@@ -499,10 +518,12 @@ export const WelcomeModal: React.FC<Props> = ({
                   <div className="space-y-0.5 text-center sm:text-left">
                     <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-center sm:justify-start gap-1.5">
                       <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Tryb Offline-First (Bez rejestracji)</span>
+                      <span>{isEn ? 'Offline-First Mode (No Registration)' : 'Tryb Offline-First (Bez rejestracji)'}</span>
                     </div>
                     <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-tight">
-                      Nie chcesz zakładać konta? Wszystkie dane i uprawy zapiszą się lokalnie w przeglądarce.
+                      {isEn
+                        ? "Don't want to create an account? All data and crops will be saved locally in your browser."
+                        : 'Nie chcesz zakładać konta? Wszystkie dane i uprawy zapiszą się lokalnie w przeglądarce.'}
                     </p>
                   </div>
 
@@ -512,7 +533,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     onClick={onContinueAsGuest}
                     className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 hover:text-emerald-700 dark:hover:text-emerald-300 border border-stone-300 dark:border-stone-600 font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
                   >
-                    <span>Kontynuuj jako gość</span>
+                    <span>{isEn ? 'Continue as guest' : 'Kontynuuj jako gość'}</span>
                     <ArrowRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   </button>
                 </div>
@@ -533,17 +554,19 @@ export const WelcomeModal: React.FC<Props> = ({
                   className="inline-flex items-center gap-1 text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" />
-                  <span>Wróć do opisu aplikacji</span>
+                  <span>{isEn ? 'Back to app overview' : 'Wróć do opisu aplikacji'}</span>
                 </button>
               </div>
 
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
                   <LogIn className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                  <span>Zaloguj się do swojego balkonu</span>
+                  <span>{isEn ? 'Sign in to your balcony' : 'Zaloguj się do swojego balkonu'}</span>
                 </h2>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
-                  Podaj nick i hasło, aby wczytać zapisane warunki balkonu i swoje rośliny.
+                  {isEn
+                    ? 'Enter your username and password to load your saved balcony conditions and tracked plants.'
+                    : 'Podaj nick i hasło, aby wczytać zapisane warunki balkonu i swoje rośliny.'}
                 </p>
               </div>
 
@@ -579,27 +602,27 @@ export const WelcomeModal: React.FC<Props> = ({
                     <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
                   </svg>
                 )}
-                <span>Zaloguj się przez konto Google</span>
+                <span>{isEn ? 'Sign in with Google' : 'Zaloguj się przez konto Google'}</span>
               </button>
 
               <div className="relative flex items-center justify-center my-1">
                 <div className="border-t border-stone-200 dark:border-stone-800 w-full" />
                 <span className="bg-[#FAF8F5] dark:bg-stone-900 px-3 text-[11px] text-stone-400 dark:text-stone-500 font-medium shrink-0">
-                  lub tradycyjnie przez nick i hasło
+                  {isEn ? 'or traditionally with username & password' : 'lub tradycyjnie przez nick i hasło'}
                 </span>
               </div>
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                    Twój Nick
+                    {isEn ? 'Your Username' : 'Twój Nick'}
                   </label>
                   <input
                     type="text"
                     id="welcome-login-username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    placeholder="Wpisz nick"
+                    placeholder={isEn ? 'Enter username' : 'Wpisz nick'}
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
@@ -607,14 +630,14 @@ export const WelcomeModal: React.FC<Props> = ({
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400">
-                    Hasło
+                    {isEn ? 'Password' : 'Hasło'}
                   </label>
                   <input
                     type="password"
                     id="welcome-login-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Wpisz hasło"
+                    placeholder={isEn ? 'Enter password' : 'Wpisz hasło'}
                     required
                     className="w-full px-3.5 py-2.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
@@ -629,7 +652,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     }}
                     className="text-xs text-stone-500 hover:text-emerald-700 dark:hover:text-emerald-400 underline cursor-pointer order-2 sm:order-1"
                   >
-                    Nie masz jeszcze konta? Załóż bezpłatnie
+                    {isEn ? "Don't have an account yet? Register for free" : 'Nie masz jeszcze konta? Załóż bezpłatnie'}
                   </button>
 
                   <button
@@ -639,11 +662,11 @@ export const WelcomeModal: React.FC<Props> = ({
                     className="w-full sm:w-auto px-6 py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 order-1 sm:order-2"
                   >
                     {authLoading ? (
-                      <span>Logowanie...</span>
+                      <span>{isEn ? 'Signing in...' : 'Logowanie...'}</span>
                     ) : (
                       <>
                         <LogIn className="w-4 h-4" />
-                        <span>Zaloguj się</span>
+                        <span>{isEn ? 'Sign In' : 'Zaloguj się'}</span>
                       </>
                     )}
                   </button>
@@ -656,10 +679,10 @@ export const WelcomeModal: React.FC<Props> = ({
                   <div className="space-y-0.5 text-center sm:text-left">
                     <div className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center justify-center sm:justify-start gap-1.5">
                       <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                      <span>Tryb Offline-First</span>
+                      <span>{isEn ? 'Offline-First Mode' : 'Tryb Offline-First'}</span>
                     </div>
                     <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-tight">
-                      Przejdź do aplikacji bezpośrednio bez logowania.
+                      {isEn ? 'Proceed directly to the application without signing in.' : 'Przejdź do aplikacji bezpośrednio bez logowania.'}
                     </p>
                   </div>
 
@@ -669,7 +692,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     onClick={onContinueAsGuest}
                     className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 hover:text-emerald-700 dark:hover:text-emerald-300 border border-stone-300 dark:border-stone-600 font-bold text-xs transition flex items-center justify-center gap-2 shadow-xs shrink-0 cursor-pointer"
                   >
-                    <span>Kontynuuj jako gość</span>
+                    <span>{isEn ? 'Continue as guest' : 'Kontynuuj jako gość'}</span>
                     <ArrowRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                   </button>
                 </div>

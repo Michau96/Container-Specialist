@@ -472,6 +472,8 @@ export interface DailyCropsRecommendation {
   lastUpdated: string;
 }
 
+export type Language = 'pl' | 'en';
+
 export interface UserAccount {
   id: string;
   username: string; // Nick lub nazwa użytkownika
@@ -483,6 +485,7 @@ export interface UserAccount {
   balconySpec: UserBalconySpec;
   myCrops?: MyCropItem[];
   lastLoginAt?: string;
+  language?: Language;
 }
 
 export interface AuthState {

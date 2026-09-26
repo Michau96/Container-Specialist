@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { WeatherData, UserBalconySpec } from '../types';
 import { POLAND_REGIONS } from '../lib/api';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   weather: WeatherData | null;
@@ -25,6 +26,9 @@ interface Props {
 }
 
 export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onRefresh }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   const [isExpanded, setIsExpanded] = useState<boolean>(() => {
     try {
       return localStorage.getItem('balcony_weather_expanded') === 'true';
@@ -44,7 +48,40 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
   };
 
   const regionInfo = POLAND_REGIONS[userSpec.region];
-  const cityName = regionInfo ? regionInfo.name.split('(')[0].trim() : 'Polska';
+  const cityName = regionInfo ? regionInfo.name.split('(')[0].trim() : (isEn ? 'Poland' : 'Polska');
+
+  const getWeatherDesc = (desc?: string, code?: number) => {
+    if (!desc) return isEn ? 'Fetching data...' : 'Pobieranie danych...';
+    if (!isEn) return desc;
+    if (code === 0) return 'Clear sky';
+    if (code === 1 || code === 2) return 'Mainly sunny / Partly cloudy';
+    if (code === 3) return 'Overcast';
+    if (code === 45 || code === 48) return 'Fog';
+    if (code >= 51 && code <= 55) return 'Drizzle';
+    if (code >= 61 && code <= 65) return 'Rain';
+    if (code >= 71 && code <= 77) return 'Snow';
+    if (code >= 80 && code <= 82) return 'Rain showers';
+    if (code >= 95) return 'Thunderstorm';
+    return desc;
+  };
+
+  const getWateringStatus = (status?: string) => {
+    if (!status) return isEn ? 'Moderate watering in the morning or evening. Always check soil moisture with your finger.' : 'Umiarkowane podlewanie rano lub wieczorem. Zawsze sprawdzaj wilgotność ziemi palcem.';
+    if (!isEn) return status;
+    if (status.includes('Wstrzymaj')) return 'Hold off on watering – rainfall hydrated containers.';
+    if (status.includes('obficie') || status.includes('Wysokie')) return 'High water demand – water generously in early morning or after sunset!';
+    if (status.includes('oszczędnie') || status.includes('chłodny')) return 'Water very sparingly on cool days.';
+    return 'Moderate watering once daily in the morning.';
+  };
+
+  const getSummary = (summary?: string) => {
+    if (!summary) return isEn ? 'Stable weather conditions for your balcony plants.' : 'Stabilna aura dla roślin na Twoim balkonie.';
+    if (!isEn) return summary;
+    if (summary.includes('Stabiln')) return 'Stable growing conditions for balcony crops.';
+    if (summary.includes('wiatr') || summary.includes('Wiatr')) return 'Strong winds detected on higher floor.';
+    if (summary.includes('przymroz') || summary.includes('Przymroz')) return 'Frost risk detected – protect delicate pots.';
+    return summary;
+  };
 
   const getWeatherIcon = (code: number, sizeClass = 'w-6 h-6') => {
     if (code === 0) return <Sun className={`${sizeClass} text-amber-500`} />;
@@ -73,24 +110,24 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
               {cityName}
             </span>
             <span className="text-xs text-stone-500 dark:text-stone-400">
-              ({weather?.weather_desc || 'Pobieranie danych...'})
+              ({getWeatherDesc(weather?.weather_desc, weather?.weather_code)})
             </span>
 
             {/* Quick Status Pill */}
             {weather?.balcony_advice?.frost_risk ? (
               <span className="text-[11px] font-bold bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-200 px-2 py-0.5 rounded-full flex items-center gap-1 border border-red-300 dark:border-red-800 ml-1">
                 <AlertCircle className="w-3 h-3 text-red-600 dark:text-red-400" />
-                Ryzyko przymrozku
+                {isEn ? 'Frost risk' : 'Ryzyko przymrozku'}
               </span>
             ) : weather?.balcony_advice?.wind_risk ? (
               <span className="text-[11px] font-bold bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-300 dark:border-amber-800 ml-1">
                 <AlertTriangle className="w-3 h-3 text-amber-600 dark:text-amber-400" />
-                Wiatr na {userSpec.floor}. p.
+                {isEn ? `Wind at fl. ${userSpec.floor}` : `Wiatr na ${userSpec.floor}. p.`}
               </span>
             ) : (
               <span className="text-[11px] font-medium text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded-full flex items-center gap-1 border border-emerald-200 dark:border-emerald-800/60 ml-1">
                 <ShieldCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                Dobre warunki do wegetacji
+                {isEn ? 'Good growing conditions' : 'Dobre warunki do wegetacji'}
               </span>
             )}
           </div>
@@ -102,7 +139,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
             id="refresh-weather-btn"
             onClick={onRefresh}
             disabled={loading}
-            title="Odśwież dane pogodowe"
+            title={isEn ? 'Refresh weather data' : 'Odśwież dane pogodowe'}
             className="p-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
@@ -113,7 +150,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
             onClick={toggleExpand}
             className="px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800 hover:bg-stone-100 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-200 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
           >
-            <span>{isExpanded ? 'Zwiń szczegóły' : 'Szczegóły pogody'}</span>
+            <span>{isExpanded ? (isEn ? 'Collapse details' : 'Zwiń szczegóły') : (isEn ? 'Weather details' : 'Szczegóły pogody')}</span>
             {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
           </button>
         </div>
@@ -126,13 +163,13 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
             {/* Left: Weather Metrics */}
             <div className="p-3.5 rounded-xl bg-white dark:bg-stone-800 border border-stone-200/80 dark:border-stone-700/80">
               <span className="text-[11px] font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400 mb-2 block">
-                Parametry aury dla {userSpec.floor}. piętra:
+                {isEn ? `Weather metrics for floor ${userSpec.floor}:` : `Parametry aury dla ${userSpec.floor}. piętra:`}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
                 <div className="p-2 rounded-lg bg-stone-50 dark:bg-stone-850 border border-stone-150 dark:border-stone-700">
                   <div className="text-[10px] text-stone-500 dark:text-stone-400 flex items-center gap-1">
                     <Sun className="w-3 h-3 text-amber-500" />
-                    <span>Odczuwalna</span>
+                    <span>{isEn ? 'Feels like' : 'Odczuwalna'}</span>
                   </div>
                   <div className="font-bold text-stone-900 dark:text-stone-100 mt-0.5">
                     {weather ? `${weather.apparent_temperature}°C` : '--'}
@@ -142,7 +179,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
                 <div className="p-2 rounded-lg bg-stone-50 dark:bg-stone-850 border border-stone-150 dark:border-stone-700">
                   <div className="text-[10px] text-stone-500 dark:text-stone-400 flex items-center gap-1">
                     <Wind className="w-3 h-3 text-stone-500" />
-                    <span>Wiatr na {userSpec.floor}. p.</span>
+                    <span>{isEn ? `Wind at fl. ${userSpec.floor}` : `Wiatr na ${userSpec.floor}. p.`}</span>
                   </div>
                   <div className="font-bold text-stone-900 dark:text-stone-100 mt-0.5">
                     {weather?.balcony_advice?.adjusted_wind_at_floor ?? weather?.wind_speed ?? 10} km/h
@@ -152,7 +189,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
                 <div className="p-2 rounded-lg bg-stone-50 dark:bg-stone-850 border border-stone-150 dark:border-stone-700">
                   <div className="text-[10px] text-stone-500 dark:text-stone-400 flex items-center gap-1">
                     <Droplets className="w-3 h-3 text-blue-500" />
-                    <span>Wilgotność</span>
+                    <span>{isEn ? 'Humidity' : 'Wilgotność'}</span>
                   </div>
                   <div className="font-bold text-stone-900 dark:text-stone-100 mt-0.5">
                     {weather?.humidity ?? 60}%
@@ -163,7 +200,7 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
               {weather && weather.precipitation > 0 && (
                 <div className="mt-2 text-xs text-sky-700 dark:text-sky-300 font-medium flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 p-2 rounded-lg border border-sky-200 dark:border-sky-800">
                   <CloudRain className="w-3.5 h-3.5" />
-                  <span>Dzisiejsze opady deszczu: {weather.precipitation} mm</span>
+                  <span>{isEn ? `Today's rainfall: ${weather.precipitation} mm` : `Dzisiejsze opady deszczu: ${weather.precipitation} mm`}</span>
                 </div>
               )}
             </div>
@@ -174,19 +211,18 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1.5">
                     <Droplets className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
-                    <span>Rekomendacja podlewania donic na dziś</span>
+                    <span>{isEn ? "Today's Container Watering Recommendation" : 'Rekomendacja podlewania donic na dziś'}</span>
                   </span>
                 </div>
 
                 <p className="text-xs text-stone-700 dark:text-stone-300 leading-relaxed">
-                  {weather?.balcony_advice?.watering_status ||
-                    'Umiarkowane podlewanie rano lub wieczorem. Zawsze sprawdzaj wilgotność ziemi palcem.'}
+                  {getWateringStatus(weather?.balcony_advice?.watering_status)}
                 </p>
               </div>
 
               <div className="text-[11px] text-stone-600 dark:text-stone-400 mt-2 flex items-center gap-1.5 font-medium pt-2 border-t border-stone-100 dark:border-stone-700">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <span>{weather?.balcony_advice?.summary || 'Stabilna aura dla roślin na Twoim balkonie.'}</span>
+                <span>{getSummary(weather?.balcony_advice?.summary)}</span>
               </div>
             </div>
           </div>
@@ -195,3 +231,4 @@ export const WeatherWidget: React.FC<Props> = ({ weather, loading, userSpec, onR
     </div>
   );
 };
+

@@ -13,6 +13,7 @@ import { Plant } from '../types';
 import { getPlantTimingInfo } from '../lib/cropTiming';
 import { getPlantVisual } from '../lib/plantImages';
 import { getPlantLifestylePills } from '../lib/plantLifestyle';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   plant: Plant;
@@ -35,15 +36,16 @@ export const PlantCard: React.FC<Props> = ({
   onRequestAddVariety,
   forceDetailed = false,
 }) => {
+  const { language } = useLanguage();
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [isExpanded, setIsExpanded] = useState(forceDetailed);
 
   const suitability = plant.suitability;
   const score = suitability?.score ?? 88;
-  const timing = getPlantTimingInfo(plant);
+  const timing = getPlantTimingInfo(plant, new Date(), language === 'en');
   const visual = getPlantVisual(plant.id, plant.plant_group);
-  const lifestylePills = getPlantLifestylePills(plant);
+  const lifestylePills = getPlantLifestylePills(plant, language);
 
   // Trust badge styling based on score (clean, high-contrast, non-slop)
   const getTrustBadgeClass = (val: number) => {
@@ -99,7 +101,11 @@ export const PlantCard: React.FC<Props> = ({
             )}`}
           >
             <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse" />
-            <span>{score}% dopasowania do Twojego balkonu</span>
+            <span>
+              {language === 'en'
+                ? `${score}% match for your balcony`
+                : `${score}% dopasowania do Twojego balkonu`}
+            </span>
           </div>
         </div>
 
@@ -108,12 +114,20 @@ export const PlantCard: React.FC<Props> = ({
           {isMyCrop ? (
             <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-600/95 text-white shadow-md backdrop-blur-md border border-emerald-400/40">
               <Check className="w-3.5 h-3.5" />
-              <span>{cropCount > 1 ? `${cropCount}x w uprawach` : 'W uprawach'}</span>
+              <span>
+                {language === 'en'
+                  ? cropCount > 1
+                    ? `${cropCount}x in crops`
+                    : 'In your crops'
+                  : cropCount > 1
+                  ? `${cropCount}x w uprawach`
+                  : 'W uprawach'}
+              </span>
             </div>
           ) : timing.isGoodTimeToPlantNow ? (
             <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-stone-900/80 text-emerald-300 shadow-sm backdrop-blur-md border border-emerald-500/30">
               <span>🌱</span>
-              <span>Termin aktywny</span>
+              <span>{language === 'en' ? 'Active season' : 'Termin aktywny'}</span>
             </div>
           ) : null}
         </div>
@@ -130,7 +144,7 @@ export const PlantCard: React.FC<Props> = ({
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-1">
               {plant.varieties && plant.varieties.length > 0 ? (
                 <>
-                  Odmiany do donic:{' '}
+                  {language === 'en' ? 'Container varieties: ' : 'Odmiany do donic: '}
                   <span className="font-semibold text-stone-700 dark:text-stone-300">
                     {plant.varieties
                       .slice(0, 3)
@@ -180,13 +194,15 @@ export const PlantCard: React.FC<Props> = ({
                 <>
                   <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <span>
-                    W uprawach ({cropCount > 1 ? `${cropCount}x` : 'dodano'}) • Dodaj kolejną +
+                    {language === 'en'
+                      ? `In crops (${cropCount > 1 ? `${cropCount}x` : 'added'}) • Add another +`
+                      : `W uprawach (${cropCount > 1 ? `${cropCount}x` : 'dodano'}) • Dodaj kolejną +`}
                   </span>
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  <span>Dodaj do balkonu</span>
+                  <span>{language === 'en' ? 'Add to balcony' : 'Dodaj do balkonu'}</span>
                 </>
               )}
             </button>
@@ -207,12 +223,12 @@ export const PlantCard: React.FC<Props> = ({
               {isMyCrop ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
-                  <span>W Twoich uprawach</span>
+                  <span>{language === 'en' ? 'In your crops' : 'W Twoich uprawach'}</span>
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  <span>Dodaj do balkonu</span>
+                  <span>{language === 'en' ? 'Add to balcony' : 'Dodaj do balkonu'}</span>
                 </>
               )}
             </button>
@@ -230,7 +246,7 @@ export const PlantCard: React.FC<Props> = ({
               className="text-stone-500 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Przewodnik uprawy</span>
+              <span>{language === 'en' ? 'Growing guide' : 'Przewodnik uprawy'}</span>
             </button>
 
             {onOpenPotCalc && (
@@ -243,7 +259,7 @@ export const PlantCard: React.FC<Props> = ({
                 }}
                 className="text-stone-500 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
               >
-                <span>📐 Kalkulator donicy</span>
+                <span>{language === 'en' ? '📐 Pot calculator' : '📐 Kalkulator donicy'}</span>
               </button>
             )}
           </div>
@@ -253,11 +269,11 @@ export const PlantCard: React.FC<Props> = ({
         {forceDetailed && (
           <div className="mt-2 pt-2 border-t border-dashed border-stone-200 dark:border-stone-800 text-xs text-stone-600 dark:text-stone-400 space-y-1">
             <div className="flex justify-between">
-              <span>Rekomendowana donica:</span>
+              <span>{language === 'en' ? 'Recommended pot:' : 'Rekomendowana donica:'}</span>
               <strong className="text-stone-800 dark:text-stone-200">min. {plant.pot.min_volume_l}L</strong>
             </div>
             <div className="flex justify-between">
-              <span>Optymalny siew:</span>
+              <span>{language === 'en' ? 'Optimal sowing:' : 'Optymalny siew:'}</span>
               <strong className="text-stone-800 dark:text-stone-200">{timing.bestSowingLabel}</strong>
             </div>
           </div>

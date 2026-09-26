@@ -16,7 +16,7 @@ import {
   HelpCircle,
   Sprout,
 } from 'lucide-react';
-import { UserAccount, UserBalconySpec, MyCropItem, getFloorCategoryLabel } from '../types';
+import { UserAccount, UserBalconySpec, MyCropItem, getFloorCategoryLabel, Language } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS } from '../lib/api';
 import {
   loginAccount,
@@ -26,6 +26,7 @@ import {
 } from '../lib/auth';
 import { signInWithGoogle } from '../lib/firebase';
 import { PasswordStrengthIndicator, PasswordMatchIndicator, evaluatePasswordMatch } from './PasswordStrengthIndicator';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   isOpen: boolean;
@@ -44,10 +45,12 @@ export const AuthModal: React.FC<Props> = ({
   onAuthSuccess,
   initialTab = 'login',
 }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [mode, setMode] = useState<'login' | 'register'>(initialTab);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language | null>(null);
   const [attachCurrentSpec, setAttachCurrentSpec] = useState(true);
 
   const [loading, setLoading] = useState(false);
@@ -92,24 +95,27 @@ export const AuthModal: React.FC<Props> = ({
     setSuccessMessage(null);
 
     if (!username.trim()) {
-      setError('Podaj nick.');
+      setError(language === 'en' ? 'Please provide username.' : 'Podaj nick.');
       return;
     }
     if (!password) {
-      setError('Podaj hasło.');
+      setError(language === 'en' ? 'Please enter password.' : 'Podaj hasło.');
       return;
     }
 
     setLoading(true);
     try {
       const res = await loginAccount(username, password);
+      if (res.user?.language) {
+        setLanguage(res.user.language);
+      }
       setSuccessMessage(res.message);
       setTimeout(() => {
         onAuthSuccess(res.user, res.message);
         onClose();
       }, 500);
     } catch (err: any) {
-      setError(err.message || 'Wystąpił błąd podczas logowania.');
+      setError(err.message || (language === 'en' ? 'An error occurred during sign in.' : 'Wystąpił błąd podczas logowania.'));
     } finally {
       setLoading(false);
     }
@@ -122,19 +128,24 @@ export const AuthModal: React.FC<Props> = ({
 
     const trimmed = username.trim();
     if (!trimmed || trimmed.length < 2) {
-      setError('Nick musi mieć co najmniej 2 znaki.');
+      setError(t('minNickError'));
       return;
     }
     if (trimmed.length > 30) {
-      setError('Nick może mieć maksymalnie 30 znaków.');
+      setError(language === 'en' ? 'Username can have at most 30 characters.' : 'Nick może mieć maksymalnie 30 znaków.');
       return;
     }
     if (!password || password.length < 4) {
-      setError('Hasło musi mieć co najmniej 4 znaki.');
+      setError(t('minLengthError'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Wpisane hasła nie są identyczne.');
+      setError(t('passwordMismatch'));
+      return;
+    }
+    // Mandatory language selection validation
+    if (!selectedLanguage) {
+      setError(t('languageSelectionError'));
       return;
     }
 
@@ -145,15 +156,17 @@ export const AuthModal: React.FC<Props> = ({
         trimmed,
         password,
         currentBalconySpec,
-        cropsToAttach
+        cropsToAttach,
+        selectedLanguage
       );
+      setLanguage(selectedLanguage);
       setSuccessMessage(res.message);
       setTimeout(() => {
         onAuthSuccess(res.user, res.message);
         onClose();
       }, 600);
     } catch (err: any) {
-      setError(err.message || 'Błąd podczas tworzenia konta.');
+      setError(err.message || (language === 'en' ? 'Error creating account.' : 'Błąd podczas tworzenia konta.'));
     } finally {
       setLoading(false);
     }
@@ -183,22 +196,24 @@ export const AuthModal: React.FC<Props> = ({
               </div>
               <div>
                 <h3 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100">
-                  {mode === 'login' ? 'Zaloguj się do konta' : 'Utwórz nowe konto'}
+                  {mode === 'login' ? t('loginTitle') : t('registerTitle')}
                 </h3>
                 <p className="text-xs text-stone-500 dark:text-stone-400">
                   {mode === 'login'
-                    ? 'Wczytaj swoje zapisane parametry balkonu i uprawy'
-                    : 'Zapisz parametry swojego balkonu pod nickiem i hasłem'}
+                    ? t('loginSubtitle')
+                    : t('registerSubtitle')}
                 </p>
               </div>
             </div>
 
             <button
+              id="close-auth-modal-btn"
               onClick={onClose}
-              className="p-1.5 text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
-              title="Zamknij okno"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+              title={language === 'en' ? 'Close window' : 'Zamknij okno'}
+              aria-label={language === 'en' ? 'Close window' : 'Zamknij okno'}
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
 
@@ -218,7 +233,7 @@ export const AuthModal: React.FC<Props> = ({
               }`}
             >
               <LogIn className="w-3.5 h-3.5" />
-              <span>Logowanie</span>
+              <span>{language === 'en' ? 'Sign In' : 'Logowanie'}</span>
             </button>
             <button
               type="button"
@@ -234,7 +249,7 @@ export const AuthModal: React.FC<Props> = ({
               }`}
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>Utwórz konto</span>
+              <span>{language === 'en' ? 'Register' : 'Utwórz konto'}</span>
             </button>
           </div>
         </div>
@@ -289,14 +304,14 @@ export const AuthModal: React.FC<Props> = ({
                 </svg>
               )}
               <span>
-                {mode === 'register' ? 'Zarejestruj się przez konto Google' : 'Zaloguj się przez konto Google'}
+                {mode === 'register' ? t('googleRegister') : t('googleLogin')}
               </span>
             </button>
 
             <div className="relative flex items-center justify-center py-1">
               <div className="border-t border-stone-200 dark:border-stone-800 w-full" />
               <span className="bg-white dark:bg-stone-900 px-3 text-[11px] text-stone-400 dark:text-stone-500 font-medium shrink-0">
-                lub tradycyjnie przez nick i hasło
+                {t('orTraditional')}
               </span>
             </div>
           </div>
@@ -306,7 +321,7 @@ export const AuthModal: React.FC<Props> = ({
             {/* Nick / Username Field */}
             <div>
               <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5">
-                Nick użytkownika
+                {t('username')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-400">
@@ -317,7 +332,7 @@ export const AuthModal: React.FC<Props> = ({
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="np. zielony_balkon, tomek_ogrodnik"
+                  placeholder={t('usernamePlaceholder')}
                   maxLength={30}
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:focus:ring-emerald-500 transition"
                 />
@@ -327,7 +342,7 @@ export const AuthModal: React.FC<Props> = ({
             {/* Password Field */}
             <div>
               <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5">
-                Hasło
+                {t('password')}
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-400">
@@ -338,7 +353,7 @@ export const AuthModal: React.FC<Props> = ({
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Wpisz hasło (min. 4 znaki)"
+                  placeholder={t('passwordPlaceholder')}
                   className="w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:focus:ring-emerald-500 transition"
                 />
               </div>
@@ -351,7 +366,7 @@ export const AuthModal: React.FC<Props> = ({
             {mode === 'register' && (
               <div>
                 <label className="block text-xs font-bold text-stone-700 dark:text-stone-300 mb-1.5">
-                  Powtórz hasło
+                  {t('confirmPassword')}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-stone-400">
@@ -362,7 +377,7 @@ export const AuthModal: React.FC<Props> = ({
                     required
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Powtórz hasło"
+                    placeholder={t('confirmPasswordPlaceholder')}
                     className={`w-full pl-9 pr-3 py-2.5 bg-stone-50 dark:bg-stone-800 border rounded-2xl text-xs sm:text-sm text-stone-900 dark:text-stone-100 placeholder:text-stone-400 focus:outline-none focus:ring-2 transition ${
                       confirmPassword
                         ? evaluatePasswordMatch(password, confirmPassword, 4).borderColorClass
@@ -379,30 +394,114 @@ export const AuthModal: React.FC<Props> = ({
               </div>
             )}
 
+            {/* Mandatory Language Selection on Register */}
+            {mode === 'register' && (
+              <div className="space-y-2 pt-1" id="auth-register-language-selection">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-stone-700 dark:text-stone-300">
+                    {t('selectLanguageRequired')}{' '}
+                    <span className="text-red-500 font-bold">*</span>
+                  </label>
+                  <span
+                    className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-md transition-colors ${
+                      selectedLanguage
+                        ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800'
+                        : 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 animate-pulse'
+                    }`}
+                  >
+                    {selectedLanguage ? (selectedLanguage === 'pl' ? '✓ PL' : '✓ EN') : (language === 'en' ? 'REQUIRED' : 'WYMAGANE')}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    id="auth-register-lang-pl-btn"
+                    onClick={() => {
+                      setSelectedLanguage('pl');
+                      setError(null);
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all flex items-start gap-2.5 cursor-pointer ${
+                      selectedLanguage === 'pl'
+                        ? 'border-emerald-600 dark:border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/50 ring-2 ring-emerald-500/20 shadow-xs'
+                        : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/80 hover:border-emerald-300 dark:hover:border-emerald-700'
+                    }`}
+                  >
+                    <span className="text-2xl leading-none shrink-0">🇵🇱</span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1">
+                        <span>Polski</span>
+                        {selectedLanguage === 'pl' && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        )}
+                      </div>
+                      <div className="text-[10px] text-stone-500 dark:text-stone-400 leading-snug mt-0.5">
+                        {t('langPlDesc')}
+                      </div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    id="auth-register-lang-en-btn"
+                    onClick={() => {
+                      setSelectedLanguage('en');
+                      setError(null);
+                    }}
+                    className={`p-3 rounded-2xl border text-left transition-all flex items-start gap-2.5 cursor-pointer ${
+                      selectedLanguage === 'en'
+                        ? 'border-emerald-600 dark:border-emerald-500 bg-emerald-50/90 dark:bg-emerald-950/50 ring-2 ring-emerald-500/20 shadow-xs'
+                        : 'border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/80 hover:border-emerald-300 dark:hover:border-emerald-700'
+                    }`}
+                  >
+                    <span className="text-2xl leading-none shrink-0">🇬🇧</span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1">
+                        <span>English</span>
+                        {selectedLanguage === 'en' && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        )}
+                      </div>
+                      <div className="text-[10px] text-stone-500 dark:text-stone-400 leading-snug mt-0.5">
+                        {t('langEnDesc')}
+                      </div>
+                    </div>
+                  </button>
+                </div>
+
+                {!selectedLanguage && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{t('languageSelectionError')}</span>
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Balcony Spec Preview on Register */}
             {mode === 'register' && (
               <div className="p-3.5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 space-y-2 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
                     <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                    <span>Ustawienia balkonu do zapisania:</span>
+                    <span>{t('balconySettingsToSave')}</span>
                   </span>
                   <span className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
-                    {currentMyCrops.length} {currentMyCrops.length === 1 ? 'uprawa' : 'upraw'}
+                    {currentMyCrops.length} {currentMyCrops.length === 1 ? (language === 'en' ? 'crop' : 'uprawa') : (language === 'en' ? 'crops' : 'upraw')}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-3 gap-2 text-[11px] text-stone-700 dark:text-stone-300 pt-1">
                   <div className="bg-white/80 dark:bg-stone-800/80 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
-                    <div className="text-[10px] text-stone-400">Województwo</div>
-                    <div className="font-bold truncate">{regionInfo?.name.split('(')[0].trim() || 'Polska'}</div>
+                    <div className="text-[10px] text-stone-400">{t('regionLabel')}</div>
+                    <div className="font-bold truncate">{regionInfo?.name.split('(')[0].trim() || (language === 'en' ? 'Poland' : 'Polska')}</div>
                   </div>
                   <div className="bg-white/80 dark:bg-stone-800/80 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
-                    <div className="text-[10px] text-stone-400">Piętro</div>
+                    <div className="text-[10px] text-stone-400">{t('floorLabel')}</div>
                     <div className="font-bold">{getFloorCategoryLabel(currentBalconySpec.floor)}</div>
                   </div>
                   <div className="bg-white/80 dark:bg-stone-800/80 p-2 rounded-xl border border-emerald-100 dark:border-emerald-900/40">
-                    <div className="text-[10px] text-stone-400">Wystawa</div>
+                    <div className="text-[10px] text-stone-400">{t('exposureLabel')}</div>
                     <div className="font-bold truncate">{orientItem?.label.split('(')[0].trim() || currentBalconySpec.orientation}</div>
                   </div>
                 </div>
@@ -415,7 +514,7 @@ export const AuthModal: React.FC<Props> = ({
                     className="w-4 h-4 text-emerald-600 rounded-sm focus:ring-emerald-500"
                   />
                   <span className="text-[11px] text-stone-600 dark:text-stone-300">
-                    Powiąż obecne ustawienia balkonu i rośliny z nowym kontem
+                    {t('attachBalconyNotice')}
                   </span>
                 </label>
               </div>
@@ -432,12 +531,12 @@ export const AuthModal: React.FC<Props> = ({
               ) : mode === 'login' ? (
                 <>
                   <LogIn className="w-4 h-4" />
-                  <span>Zaloguj się</span>
+                  <span>{t('submitLogin')}</span>
                 </>
               ) : (
                 <>
                   <UserPlus className="w-4 h-4" />
-                  <span>Utwórz konto i zapisz balkon</span>
+                  <span>{t('submitRegister')}</span>
                 </>
               )}
             </button>
@@ -451,7 +550,7 @@ export const AuthModal: React.FC<Props> = ({
                 className="w-full py-2.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-750 text-stone-700 dark:text-stone-300 hover:text-emerald-700 dark:hover:text-emerald-300 font-semibold text-xs transition flex items-center justify-center gap-2 border border-stone-200 dark:border-stone-700 cursor-pointer"
               >
                 <Sprout className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Kontynuuj jako gość (bez logowania)</span>
+                <span>{language === 'en' ? 'Continue as guest (without account)' : 'Kontynuuj jako gość (bez logowania)'}</span>
               </button>
             </div>
           </form>
@@ -460,7 +559,7 @@ export const AuthModal: React.FC<Props> = ({
           {knownAccounts.length > 0 && mode === 'login' && (
             <div className="pt-2 border-t border-stone-100 dark:border-stone-800">
               <div className="text-[11px] font-bold text-stone-500 dark:text-stone-400 mb-2">
-                Zapisane konta na tym urządzeniu:
+                {language === 'en' ? 'Saved accounts on this device:' : 'Zapisane konta na tym urządzeniu:'}
               </div>
               <div className="flex flex-wrap gap-1.5">
                 {knownAccounts.map((acc) => (
@@ -479,7 +578,7 @@ export const AuthModal: React.FC<Props> = ({
                     <button
                       type="button"
                       onClick={(e) => handleRemoveKnownAccount(e, acc.id)}
-                      title="Usuń z listy urządzeń"
+                      title={language === 'en' ? 'Remove from device list' : 'Usuń z listy urządzeń'}
                       className="text-stone-400 hover:text-red-500 p-0.5 rounded-full cursor-pointer ml-1"
                     >
                       <X className="w-3 h-3" />
@@ -493,7 +592,11 @@ export const AuthModal: React.FC<Props> = ({
           {/* Footer note */}
           <div className="pt-2 text-[11px] text-stone-500 dark:text-stone-400 text-center flex items-center justify-center gap-1.5">
             <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-            <span>Konto pozwala zachować profil balkonu i wracać do niego w dowolnej chwili.</span>
+            <span>
+              {language === 'en'
+                ? 'Your account keeps your balcony profile intact and accessible across sessions.'
+                : 'Konto pozwala zachować profil balkonu i wracać do niego w dowolnej chwili.'}
+            </span>
           </div>
         </div>
       </div>

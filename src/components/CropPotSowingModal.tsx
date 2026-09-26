@@ -31,6 +31,8 @@ import { evaluatePotMaterial } from '../lib/potSupportEvaluations';
 import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 import { SoilShoppingGuideCard } from './SoilShoppingGuideCard';
+import { useLanguage } from '../lib/LanguageContext';
+import { getPlantName } from '../lib/plantTranslations';
 
 interface Props {
   plant: Plant | null;
@@ -40,20 +42,66 @@ interface Props {
   onAddAsNewCrop?: (plant: Plant, varietyName: string, potCount: number) => void;
 }
 
-const POT_TYPES: { key: PotType; label: string; icon: string; desc: string }[] = [
-  { key: 'okragla', label: 'Donica okrągła', icon: '🪴', desc: 'Klasyczna głęboka donica na podłodze' },
-  { key: 'skrzynka', label: 'Skrzynka podłużna', icon: '🪟', desc: 'Zawieszana na barierce lub na parapecie 40–80 cm' },
-  { key: 'kwadratowa', label: 'Donica kwadratowa', icon: '📦', desc: 'Stabilna donica podłogowa i narożna' },
-  { key: 'worek_growbag', label: 'Worek tkaninowy Growbag', icon: '🎒', desc: 'Przepuszcza powietrze, zapobiega skręcaniu korzeni' },
-  { key: 'samonawadniajaca', label: 'Skrzynka samonawadniająca', icon: '💧', desc: 'Z podwójnym dnem i wlewem rezerwowym' },
-  { key: 'wiszaca', label: 'Kosz wiszący amplia', icon: '🧺', desc: 'Podwieszany do sufitu lub barierki' },
+const getPotTypes = (isEn: boolean): { key: PotType; label: string; icon: string; desc: string }[] => [
+  {
+    key: 'okragla',
+    label: isEn ? 'Round Pot' : 'Donica okrągła',
+    icon: '🪴',
+    desc: isEn ? 'Classic deep floor pot' : 'Klasyczna głęboka donica na podłodze',
+  },
+  {
+    key: 'skrzynka',
+    label: isEn ? 'Window Box / Planter' : 'Skrzynka podłużna',
+    icon: '🪟',
+    desc: isEn ? 'Hangs on railing or windowsill 40–80 cm' : 'Zawieszana na barierce lub na parapecie 40–80 cm',
+  },
+  {
+    key: 'kwadratowa',
+    label: isEn ? 'Square Pot' : 'Donica kwadratowa',
+    icon: '📦',
+    desc: isEn ? 'Stable floor and corner planter' : 'Stabilna donica podłogowa i narożna',
+  },
+  {
+    key: 'worek_growbag',
+    label: isEn ? 'Growbag Fabric Pot' : 'Worek tkaninowy Growbag',
+    icon: '🎒',
+    desc: isEn ? 'Air breathable, prevents root circling' : 'Przepuszcza powietrze, zapobiega skręcaniu korzeni',
+  },
+  {
+    key: 'samonawadniajaca',
+    label: isEn ? 'Self-Watering Planter' : 'Skrzynka samonawadniająca',
+    icon: '💧',
+    desc: isEn ? 'Double bottom with water reservoir' : 'Z podwójnym dnem i wlewem rezerwowym',
+  },
+  {
+    key: 'wiszaca',
+    label: isEn ? 'Hanging Basket' : 'Kosz wiszący amplia',
+    icon: '🧺',
+    desc: isEn ? 'Suspended from ceiling or railing' : 'Podwieszany do sufitu lub barierki',
+  },
 ];
 
-const POT_MATERIALS: { key: PotMaterial; label: string; note: string }[] = [
-  { key: 'plastik', label: 'Plastik / Tworzywo sztuczne', note: 'Lekki i szczelny, dobrze trzyma wilgoć' },
-  { key: 'ceramika_terakota', label: 'Ceramika / Terakota nieszkliwiona', note: 'Oddychająca i porowata, naturalnie chłodzi korzenie' },
-  { key: 'tkanina', label: 'Agrowłóknina / Tkanina / Smart Pot', note: 'Maksymalne napowietrzenie korzeni i air-pruning' },
-  { key: 'drewno', label: 'Drewno naturalne', note: 'Świetna naturalna termoizolacja bryły korzeniowej' },
+const getPotMaterials = (isEn: boolean): { key: PotMaterial; label: string; note: string }[] => [
+  {
+    key: 'plastik',
+    label: isEn ? 'Plastic / Synthetic' : 'Plastik / Tworzywo sztuczne',
+    note: isEn ? 'Lightweight and moisture retaining' : 'Lekki i szczelny, dobrze trzyma wilgoć',
+  },
+  {
+    key: 'ceramika_terakota',
+    label: isEn ? 'Terracotta / Unglazed Ceramic' : 'Ceramika / Terakota nieszkliwiona',
+    note: isEn ? 'Breathable, naturally cools roots' : 'Oddychająca i porowata, naturalnie chłodzi korzenie',
+  },
+  {
+    key: 'tkanina',
+    label: isEn ? 'Fabric / Smart Pot' : 'Agrowłóknina / Tkanina / Smart Pot',
+    note: isEn ? 'Maximum root aeration and air-pruning' : 'Maksymalne napowietrzenie korzeni i air-pruning',
+  },
+  {
+    key: 'drewno',
+    label: isEn ? 'Natural Wood' : 'Drewno naturalne',
+    note: isEn ? 'Great thermal root insulation' : 'Świetna naturalna termoizolacja bryły korzeniowej',
+  },
 ];
 
 export const CropPotSowingModal: React.FC<Props> = ({
@@ -63,13 +111,19 @@ export const CropPotSowingModal: React.FC<Props> = ({
   onSave,
   onAddAsNewCrop,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   if (!plant || !crop) return null;
+
+  const POT_TYPES = getPotTypes(isEn);
+  const POT_MATERIALS = getPotMaterials(isEn);
 
   const availableVarieties = getPlantVarieties(plant);
   const initialVarietyStr =
     typeof crop.selectedVariety === 'string'
       ? crop.selectedVariety
-      : (crop.selectedVariety as any)?.name || (availableVarieties[0]?.name ?? 'Standardowa');
+      : (crop.selectedVariety as any)?.name || (availableVarieties[0]?.name ?? (isEn ? 'Standard' : 'Standardowa'));
   const [selectedVariety, setSelectedVariety] = useState<string>(initialVarietyStr);
 
   const varietyDetails = getEffectivePlantRequirements(plant, selectedVariety);
@@ -154,7 +208,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
     const updatedCrop: MyCropItem = {
       ...crop,
       selectedVariety,
-      varietyBadge: matched?.badge || crop.varietyBadge || 'Odmiana donicowa',
+      varietyBadge: matched?.badge || crop.varietyBadge || (isEn ? 'Container Variety' : 'Odmiana donicowa'),
       potCount,
       customPotName:
         locationNote.trim() ||
@@ -200,30 +254,34 @@ export const CropPotSowingModal: React.FC<Props> = ({
           <div>
             <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider mb-1">
               <Sparkles className="w-4 h-4" />
-              <span>Parametry odmiany, donic i terminarz siewu</span>
+              <span>{isEn ? 'Variety specs, pots & sowing calendar' : 'Parametry odmiany, donic i terminarz siewu'}</span>
             </div>
             <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2 flex-wrap">
-              <span>{plant.name}</span>
+              <span>{getPlantName(plant, language)}</span>
               <span className="text-sm font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-800/80 text-emerald-200 border border-emerald-700">
-                Odmiana: {selectedVariety}
+                {isEn ? 'Variety:' : 'Odmiana:'} {selectedVariety}
               </span>
               {potCount > 1 && (
                 <span className="text-xs font-bold px-2 py-0.5 rounded-lg bg-stone-800 text-stone-200 border border-stone-700">
-                  {potCount}x identyczne donice
+                  {potCount}x {isEn ? 'identical pots' : 'identyczne donice'}
                 </span>
               )}
             </h3>
             <p className="text-xs text-stone-400 mt-1 max-w-lg">
-              Dopasuj odmianę, wymiary pojedynczej donicy oraz ich liczbę, aby uzyskać dokładne dawki wody, zapotrzebowanie na ziemię i kalendarz pielęgnacji.
+              {isEn
+                ? 'Customize variety, pot dimensions and count for precise watering doses, soil requirements and care calendar.'
+                : 'Dopasuj odmianę, wymiary pojedynczej donicy oraz ich liczbę, aby uzyskać dokładne dawki wody, zapotrzebowanie na ziemię i kalendarz pielęgnacji.'}
             </p>
           </div>
 
           <button
+            id="close-sowing-modal-btn"
             onClick={onClose}
-            className="p-2 text-stone-400 hover:text-white hover:bg-stone-800 rounded-xl transition cursor-pointer"
-            title="Zamknij"
+            className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+            title={isEn ? 'Close' : 'Zamknij'}
+            aria-label={isEn ? 'Close' : 'Zamknij'}
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
@@ -235,7 +293,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <label className="text-xs font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-1.5">
                 <Sparkles className="w-4 h-4 text-emerald-600" />
-                <span>Wybrana odmiana / gatunek uprawny:</span>
+                <span>{isEn ? 'Selected variety / cultivar:' : 'Wybrana odmiana / gatunek uprawny:'}</span>
               </label>
 
               {/* Variety dropdown */}
@@ -262,17 +320,21 @@ export const CropPotSowingModal: React.FC<Props> = ({
             {/* Variety Agronomic specifics banner */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1">
               <div className="p-2.5 bg-white/90 dark:bg-stone-900 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 block">🌿 Pokrój i min. donica:</span>
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 block">
+                  {isEn ? '🌿 Habit & Min. Pot:' : '🌿 Pokrój i min. donica:'}
+                </span>
                 <span className="font-bold text-emerald-900 dark:text-emerald-200 block">
                   {varietyDetails.habit}
                 </span>
                 <span className="text-[11px] text-stone-600 dark:text-stone-300">
-                  Min. {varietyDetails.minVolumeL}L ziemi • rozstawa {varietyDetails.spacingCm} cm
+                  {isEn ? `Min. ${varietyDetails.minVolumeL}L soil • spacing ${varietyDetails.spacingCm} cm` : `Min. ${varietyDetails.minVolumeL}L ziemi • rozstawa ${varietyDetails.spacingCm} cm`}
                 </span>
               </div>
 
               <div className="p-2.5 bg-white/90 dark:bg-stone-900 rounded-xl border border-emerald-200 dark:border-emerald-800">
-                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 block">💧 Wymagania wodne odmiany:</span>
+                <span className="text-[11px] font-semibold text-stone-500 dark:text-stone-400 block">
+                  {isEn ? '💧 Watering Profile:' : '💧 Wymagania wodne odmiany:'}
+                </span>
                 <span className="text-[11px] text-stone-800 dark:text-stone-200 leading-snug">
                   {varietyDetails.wateringProfile}
                 </span>
@@ -285,7 +347,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
               <div className="p-2.5 bg-stone-50 dark:bg-stone-800 rounded-xl border border-stone-200 dark:border-stone-700 text-xs flex items-center justify-between">
                 <span className="text-stone-700 dark:text-stone-300 font-medium flex items-center gap-1.5">
                   <span>🌱</span>
-                  <span>Metoda siewu w schemacie:</span>
+                  <span>{isEn ? 'Sowing pattern:' : 'Metoda siewu w schemacie:'}</span>
                 </span>
                 <span
                   className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-full border ${
@@ -295,14 +357,14 @@ export const CropPotSowingModal: React.FC<Props> = ({
                   }`}
                 >
                   {plant.spacing_guide?.sowing_type === 'gniazdowo'
-                    ? 'Siew gniazdowy (gniazdowo)'
+                    ? (isEn ? 'Cluster sowing (in hills)' : 'Siew gniazdowy (gniazdowo)')
                     : plant.spacing_guide?.sowing_type === 'pojedynczo'
-                    ? 'Siew pojedynczy (pojedynczo)'
+                    ? (isEn ? 'Single seed sowing' : 'Siew pojedynczy (pojedynczo)')
                     : plant.spacing_guide?.sowing_type === 'rzutowo'
-                    ? 'Siew rzutowy'
+                    ? (isEn ? 'Broadcast sowing' : 'Siew rzutowy')
                     : plant.spacing_guide?.sowing_type === 'grzybnia'
-                    ? 'Grzybnia'
-                    : 'Sadzenie sadzonki'}
+                    ? (isEn ? 'Mycelium spawn' : 'Grzybnia')
+                    : (isEn ? 'Seedling transplant' : 'Sadzenie sadzonki')}
                 </span>
               </div>
 
@@ -311,10 +373,10 @@ export const CropPotSowingModal: React.FC<Props> = ({
                 <div className="p-2.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-300 dark:border-amber-800 text-xs flex items-center justify-between text-amber-950 dark:text-amber-200">
                   <span className="font-semibold flex items-center gap-1.5 text-amber-900 dark:text-amber-200">
                     <span>🎋</span>
-                    <span>Palik bambusowy:</span>
+                    <span>{isEn ? 'Bamboo stake support:' : 'Palik bambusowy:'}</span>
                   </span>
                   <span className="text-[10px] font-extrabold uppercase bg-amber-200/90 dark:bg-amber-900 text-amber-950 dark:text-amber-100 px-2 py-0.5 rounded-md border border-amber-400 dark:border-amber-700">
-                    Niezbędny do uprawy
+                    {isEn ? 'Essential for growth' : 'Niezbędny do uprawy'}
                   </span>
                 </div>
               )}
@@ -326,10 +388,10 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
                 <Ruler className="w-4 h-4 text-emerald-600" />
-                <span>1. Konfiguracja i liczba donic</span>
+                <span>{isEn ? '1. Pot Configuration & Quantity' : '1. Konfiguracja i liczba donic'}</span>
               </div>
               <span className="text-xs font-medium text-stone-500">
-                Wymóg dla '{selectedVariety}': <strong className="text-emerald-700 dark:text-emerald-400">min. {minReqVolume}L</strong>
+                {isEn ? 'Requirement for' : 'Wymóg dla'} '{selectedVariety}': <strong className="text-emerald-700 dark:text-emerald-400">min. {minReqVolume}L</strong>
               </span>
             </div>
 
@@ -337,10 +399,12 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="p-3.5 bg-stone-50 dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <label className="text-xs font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
-                  <span>Liczba identycznych donic (np. 2x donica 30cm):</span>
+                  <span>{isEn ? 'Number of identical pots (e.g. 2x 30cm pot):' : 'Liczba identycznych donic (np. 2x donica 30cm):'}</span>
                 </label>
                 <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                  Ustaw, ile takich samych pojemników z odmianą '{selectedVariety}' masz na balkonie.
+                  {isEn
+                    ? `Set how many identical containers of '${selectedVariety}' you have on your balcony.`
+                    : `Ustaw, ile takich samych pojemników z odmianą '${selectedVariety}' masz na balkonie.`}
                 </p>
               </div>
 
@@ -371,7 +435,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
             {/* Pot Type Selection */}
             <div>
               <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-2">
-                Typ pojedynczego pojemnika:
+                {isEn ? 'Single container type:' : 'Typ pojedynczego pojemnika:'}
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {POT_TYPES.map((pt) => {
@@ -404,7 +468,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="bg-stone-50 dark:bg-stone-800 p-4 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-                  Pojemność 1 donicy (w litrach):
+                  {isEn ? '1 Pot volume (in liters):' : 'Pojemność 1 donicy (w litrach):'}
                 </label>
                 <span
                   className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -416,8 +480,8 @@ export const CropPotSowingModal: React.FC<Props> = ({
                   }`}
                 >
                   {isTooSmall
-                    ? `⚠️ Zbyt mała (min. ${minReqVolume}L dla tej odmiany)`
-                    : `✅ Odpowiednia pojemność (${volumeL}L)`}
+                    ? (isEn ? `⚠️ Too small (min. ${minReqVolume}L for this variety)` : `⚠️ Zbyt mała (min. ${minReqVolume}L dla tej odmiany)`)
+                    : (isEn ? `✅ Optimal volume (${volumeL}L)` : `✅ Odpowiednia pojemność (${volumeL}L)`)}
                 </span>
               </div>
 
@@ -430,11 +494,13 @@ export const CropPotSowingModal: React.FC<Props> = ({
                   onChange={(e) => setVolumeL(Math.max(1, Number(e.target.value)))}
                   className="w-24 p-2.5 bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 rounded-xl text-center text-base font-bold text-stone-900 dark:text-stone-100 focus:ring-2 focus:ring-emerald-600 focus:outline-hidden"
                 />
-                <span className="text-xs font-semibold text-stone-500">litrów na 1 donicę</span>
+                <span className="text-xs font-semibold text-stone-500">
+                  {isEn ? 'liters per 1 pot' : 'litrów na 1 donicę'}
+                </span>
 
                 {/* Quick Presets */}
                 <div className="flex items-center gap-1.5 flex-wrap ml-auto">
-                  <span className="text-[11px] text-stone-500">Szybki wybór:</span>
+                  <span className="text-[11px] text-stone-500">{isEn ? 'Quick pick:' : 'Szybki wybór:'}</span>
                   {[3, 5, 10, 15, 20, 30].map((v) => (
                     <button
                       key={v}
@@ -455,9 +521,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
               {/* Total volume indicator if multiple pots */}
               {potCount > 1 && (
                 <div className="p-2.5 rounded-xl bg-emerald-100/60 dark:bg-emerald-950/40 text-xs font-bold text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
-                  <span>Łączne podłoże dla {potCount}x identycznych donic:</span>
+                  <span>{isEn ? `Total soil for ${potCount}x identical pots:` : `Łączne podłoże dla ${potCount}x identycznych donic:`}</span>
                   <span className="text-sm font-black">
-                    {potCount} × {volumeL}L = {totalVolumeAllPots} litrów ziemi
+                    {potCount} × {volumeL}L = {totalVolumeAllPots} {isEn ? 'liters of soil' : 'litrów ziemi'}
                   </span>
                 </div>
               )}
@@ -466,7 +532,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
                 <p className="text-[11px] text-red-600 dark:text-red-400 flex items-center gap-1">
                   <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                   <span>
-                    W małej donicy ziemia schnie 2x szybciej w upale, a plon będzie mniejszy. Wymaga częstszego podlewania!
+                    {isEn
+                      ? 'In a small pot, soil dries out 2x faster in the heat and yield will be reduced. Requires frequent watering!'
+                      : 'W małej donicy ziemia schnie 2x szybciej w upale, a plon będzie mniejszy. Wymaga częstszego podlewania!'}
                   </span>
                 </p>
               )}
@@ -477,7 +545,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
-                    Materiał donicy:
+                    {isEn ? 'Pot material:' : 'Materiał donicy:'}
                   </label>
                   <select
                     value={material}
@@ -494,13 +562,13 @@ export const CropPotSowingModal: React.FC<Props> = ({
 
                 <div>
                   <label className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1.5">
-                    Własna nazwa / lokalizacja na balkonie:
+                    {isEn ? 'Custom pot name / balcony position:' : 'Własna nazwa / lokalizacja na balkonie:'}
                   </label>
                   <input
                     type="text"
                     value={locationNote}
                     onChange={(e) => setLocationNote(e.target.value)}
-                    placeholder="np. 2x Skrzynki 60cm od słońca"
+                    placeholder={isEn ? 'e.g. 2x 60cm boxes in full sun' : 'np. 2x Skrzynki 60cm od słońca'}
                     className="w-full p-2.5 bg-stone-50 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 rounded-xl text-xs text-stone-900 dark:text-stone-100"
                   />
                 </div>
@@ -522,7 +590,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
                     <div className="flex items-center justify-between gap-2 mb-1">
                       <span className="font-bold flex items-center gap-1.5 text-stone-900 dark:text-stone-100">
                         <span>🧪</span>
-                        <span>Ocena materiału dla {plant.name} ({selectedVariety}):</span>
+                        <span>{isEn ? `Material rating for ${getPlantName(plant, language)} (${selectedVariety}):` : `Ocena materiału dla ${plant.name} (${selectedVariety}):`}</span>
                       </span>
                       <span
                         className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md border uppercase tracking-wide ${
@@ -533,14 +601,14 @@ export const CropPotSowingModal: React.FC<Props> = ({
                             : 'bg-red-100 dark:bg-red-900 text-red-900 dark:text-red-100 border-red-300 dark:border-red-700'
                         }`}
                       >
-                        {matEval.badgeText}
+                        {isEn ? matEval.badgeTextEn : matEval.badgeText}
                       </span>
                     </div>
                     <div className="font-semibold text-[11px] text-stone-800 dark:text-stone-200">
-                      {matEval.title}
+                      {isEn ? (matEval.titleEn || matEval.title) : matEval.title}
                     </div>
                     <p className="text-[11px] leading-relaxed mt-0.5 text-stone-700 dark:text-stone-300 font-normal">
-                      {matEval.description}
+                      {isEn ? (matEval.descriptionEn || matEval.description) : matEval.description}
                     </p>
                   </div>
                 );
@@ -558,11 +626,11 @@ export const CropPotSowingModal: React.FC<Props> = ({
                   className="w-4 h-4 rounded-md text-emerald-700 focus:ring-emerald-600"
                 />
                 <label htmlFor="pot-drainage-toggle" className="text-xs font-semibold text-stone-800 dark:text-stone-200 cursor-pointer">
-                  Donica posiada otwory odpływowe (drenaż) w dnie
+                  {isEn ? 'Pot has drainage holes in the bottom' : 'Donica posiada otwory odpływowe (drenaż) w dnie'}
                 </label>
               </div>
               <span className="text-[11px] text-stone-500">
-                {hasDrainage ? '✅ Odpływ aktywny' : '🚨 Brak odpływu!'}
+                {hasDrainage ? (isEn ? '✅ Drainage active' : '✅ Odpływ aktywny') : (isEn ? '🚨 No drainage holes!' : '🚨 Brak odpływu!')}
               </span>
             </div>
 
@@ -573,7 +641,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
                   <span className="text-xl">🏡</span>
                   <div>
                     <div className="text-xs font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                      <span>Balkonowa szklarnia / regał z folią</span>
+                      <span>{isEn ? 'Balcony Greenhouse / Foil Cover Rack' : 'Balkonowa szklarnia / regał z folią'}</span>
                       <span
                         className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                           greenhouseInfo.badgeTone === 'emerald'
@@ -589,7 +657,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
                       </span>
                     </div>
                     <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                      Oznacz, czy donica stoi w mini-szklarni lub regale foliowym na balkonie.
+                      {isEn
+                        ? 'Indicate whether this pot is kept in a mini-greenhouse or foil shelf on your balcony.'
+                        : 'Oznacz, czy donica stoi w mini-szklarni lub regale foliowym na balkonie.'}
                     </p>
                   </div>
                 </div>
@@ -614,7 +684,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
               {inGreenhouse ? (
                 <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-950 dark:text-emerald-200 space-y-1">
                   <div className="font-bold flex items-center gap-1.5 text-emerald-900 dark:text-emerald-100">
-                    <span>✅ Donica oznaczona jako: W szklarni balkonowej</span>
+                    <span>{isEn ? '✅ Pot marked as: In balcony greenhouse' : '✅ Donica oznaczona jako: W szklarni balkonowej'}</span>
                     <span className="text-[11px] text-emerald-700 dark:text-emerald-300 font-semibold">
                       ({greenhouseInfo.temperatureGain})
                     </span>
@@ -628,9 +698,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
                 </div>
               ) : (
                 <div className="p-2.5 rounded-xl bg-stone-100/80 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-750 text-xs text-stone-600 dark:text-stone-400">
-                  <span className="font-semibold text-stone-800 dark:text-stone-200">🌿 Stanowisko: Otwarty balkon</span> —{' '}
+                  <span className="font-semibold text-stone-800 dark:text-stone-200">{isEn ? '🌿 Location: Open Balcony' : '🌿 Stanowisko: Otwarty balkon'}</span> —{' '}
                   {greenhouseInfo.suitability === 'recommended'
-                    ? 'Dla tej rośliny mini-szklarnia jest zalecana – w chłodne dni przyspiesza start i owocowanie o 2–3 tygodnie.'
+                    ? (isEn ? 'A mini-greenhouse is recommended for this crop – speeds up start and harvesting by 2–3 weeks on cool days.' : 'Dla tej rośliny mini-szklarnia jest zalecana – w chłodne dni przyspiesza start i owocowanie o 2–3 tygodnie.')
                     : greenhouseInfo.reason}
                 </div>
               )}
@@ -641,10 +711,12 @@ export const CropPotSowingModal: React.FC<Props> = ({
               <div className="space-y-0.5">
                 <div className="font-bold flex items-center gap-1.5">
                   <span>💡</span>
-                  <span>Masz inne donice (o różnych wymiarach) dla tej rośliny?</span>
+                  <span>{isEn ? 'Have other pots (different sizes) for this plant?' : 'Masz inne donice (o różnych wymiarach) dla tej rośliny?'}</span>
                 </div>
                 <p className="text-[11px] text-amber-800 dark:text-amber-300">
-                  Jeśli masz jeszcze inną donicę o innych wymiarach lub na innym stanowisku — dodaj ją jako osobną uprawę.
+                  {isEn
+                    ? 'If you have another pot with different dimensions or exposure — add it as a separate crop.'
+                    : 'Jeśli masz jeszcze inną donicę o innych wymiarach lub na innym stanowisku — dodaj ją jako osobną uprawę.'}
                 </p>
               </div>
 
@@ -658,7 +730,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
                   className="px-3 py-2 bg-amber-700 hover:bg-amber-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs"
                 >
                   <CopyPlus className="w-3.5 h-3.5" />
-                  <span>+ Dodaj w innej donicy</span>
+                  <span>{isEn ? '+ Add in different pot' : '+ Dodaj w innej donicy'}</span>
                 </button>
               )}
             </div>
@@ -669,10 +741,10 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
                 <Calendar className="w-4 h-4 text-emerald-600" />
-                <span>2. Metoda i data rozpoczęcia uprawy</span>
+                <span>{isEn ? '2. Sowing Method & Start Date' : '2. Metoda i data rozpoczęcia uprawy'}</span>
               </div>
               <span className="text-xs text-stone-500">
-                Licznik dni fenologicznych
+                {isEn ? 'Growth days counter' : 'Licznik dni fenologicznych'}
               </span>
             </div>
 
@@ -689,9 +761,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
               >
                 <span className="text-2xl">🌱</span>
                 <div>
-                  <div className="text-xs font-bold">Siane z nasion</div>
+                  <div className="text-xs font-bold">{isEn ? 'Sown from seed' : 'Siane z nasion'}</div>
                   <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
-                    Pełny cykl od zera: kiełkowanie, pierwsze liścienie, pikowanie siewek.
+                    {isEn ? 'Full cycle from seed: germination, cotyledons, potting on.' : 'Pełny cykl od zera: kiełkowanie, pierwsze liścienie, pikowanie siewek.'}
                   </div>
                 </div>
               </button>
@@ -707,9 +779,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
               >
                 <span className="text-2xl">🌿</span>
                 <div>
-                  <div className="text-xs font-bold">Gotowa sadzonka / rozsada</div>
+                  <div className="text-xs font-bold">{isEn ? 'Nursery seedling / plant' : 'Gotowa sadzonka / rozsada'}</div>
                   <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
-                    Kupiona na targu/w sklepie. Sadzonka ma już ok. 3–4 tygodnie, szybciej zakwitnie.
+                    {isEn ? 'Purchased nursery plug (~3–4 weeks old), reaches harvest sooner.' : 'Kupiona na targu/w sklepie. Sadzonka ma już ok. 3–4 tygodnie, szybciej zakwitnie.'}
                   </div>
                 </div>
               </button>
@@ -719,7 +791,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="bg-stone-50 dark:bg-stone-800 p-4 rounded-2xl border border-stone-200 dark:border-stone-700 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <label className="text-xs font-semibold text-stone-700 dark:text-stone-300">
-                  Data siewu nasion / wsadzenia sadzonki do donicy:
+                  {isEn ? 'Sowing / transplant date into pot:' : 'Data siewu nasion / wsadzenia sadzonki do donicy:'}
                 </label>
                 <input
                   type="date"
@@ -731,41 +803,41 @@ export const CropPotSowingModal: React.FC<Props> = ({
 
               {/* Quick Date Buttons */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[11px] text-stone-500">Skróty daty:</span>
+                <span className="text-[11px] text-stone-500">{isEn ? 'Shortcuts:' : 'Skróty daty:'}</span>
                 <button
                   type="button"
                   onClick={() => setRelativeDate(0)}
                   className="px-2.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-[11px] text-stone-700 dark:text-stone-300 hover:bg-stone-100 cursor-pointer"
                 >
-                  Dzisiaj
+                  {isEn ? 'Today' : 'Dzisiaj'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setRelativeDate(7)}
                   className="px-2.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-[11px] text-stone-700 dark:text-stone-300 hover:bg-stone-100 cursor-pointer"
                 >
-                  Tydzień temu
+                  {isEn ? '1 week ago' : 'Tydzień temu'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setRelativeDate(14)}
                   className="px-2.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-[11px] text-stone-700 dark:text-stone-300 hover:bg-stone-100 cursor-pointer"
                 >
-                  2 tygodnie temu
+                  {isEn ? '2 weeks ago' : '2 tygodnie temu'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setRelativeDate(30)}
                   className="px-2.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-[11px] text-stone-700 dark:text-stone-300 hover:bg-stone-100 cursor-pointer"
                 >
-                  Miesiąc temu
+                  {isEn ? '1 month ago' : 'Miesiąc temu'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setRelativeDate(60)}
                   className="px-2.5 py-1 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 rounded-lg text-[11px] text-stone-700 dark:text-stone-300 hover:bg-stone-100 cursor-pointer"
                 >
-                  2 miesiące temu
+                  {isEn ? '2 months ago' : '2 miesiące temu'}
                 </button>
               </div>
 
@@ -774,11 +846,11 @@ export const CropPotSowingModal: React.FC<Props> = ({
                 <div className="flex items-center gap-2 text-emerald-900 dark:text-emerald-200">
                   <Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400 shrink-0" />
                   <span>
-                    Wiek rośliny: <strong>{previewInfo.daysSinceSowing} dni</strong> od startu
+                    {isEn ? 'Plant age:' : 'Wiek rośliny:'} <strong>{previewInfo.daysSinceSowing} {isEn ? 'days' : 'dni'}</strong> {isEn ? 'from start' : 'od startu'}
                   </span>
                 </div>
                 <div className="text-emerald-800 dark:text-emerald-300 font-semibold">
-                  Aktualna faza: {previewInfo.currentPhase.icon} {previewInfo.currentPhase.name}
+                  {isEn ? 'Current phase:' : 'Aktualna faza:'} {previewInfo.currentPhase.icon} {previewInfo.currentPhase.name}
                 </div>
               </div>
             </div>
@@ -789,10 +861,10 @@ export const CropPotSowingModal: React.FC<Props> = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-bold text-stone-900 dark:text-stone-100">
                 <span>💰</span>
-                <span>3. Szacunkowy kosztorys uprawy ({potCount > 1 ? `${potCount}x donice` : '1 donica'})</span>
+                <span>{isEn ? `3. Estimated Crop Budget (${potCount > 1 ? `${potCount}x pots` : '1 pot'})` : `3. Szacunkowy kosztorys uprawy (${potCount > 1 ? `${potCount}x donice` : '1 donica'})`}</span>
               </div>
               <span className="text-xs text-stone-500">
-                Nasiona / Sadzonka + Ziemia + Donica
+                {isEn ? 'Seeds / Seedling + Soil + Pot' : 'Nasiona / Sadzonka + Ziemia + Donica'}
               </span>
             </div>
 
@@ -819,7 +891,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
             onClick={onClose}
             className="px-4 py-2 text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200 cursor-pointer"
           >
-            Anuluj
+            {isEn ? 'Cancel' : 'Anuluj'}
           </button>
 
           <button
@@ -828,10 +900,11 @@ export const CropPotSowingModal: React.FC<Props> = ({
             className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Check className="w-4 h-4" />
-            <span>Zapisz konfigurację ({potCount > 1 ? `${potCount}x ` : ''}'{selectedVariety}')</span>
+            <span>{isEn ? `Save Configuration (${potCount > 1 ? `${potCount}x ` : ''}'${selectedVariety}')` : `Zapisz konfigurację (${potCount > 1 ? `${potCount}x ` : ''}'${selectedVariety}')`}</span>
           </button>
         </div>
       </div>
     </div>
   );
 };
+

@@ -14,6 +14,7 @@ interface StoredUser {
   lastLoginAt: string;
   balconySpec: UserBalconySpec;
   myCrops?: MyCropItem[];
+  language?: 'pl' | 'en';
 }
 
 interface UserDatabase {
@@ -123,6 +124,7 @@ function sanitizeUser(user: StoredUser): UserAccount {
     balconySpec: user.balconySpec,
     myCrops: user.myCrops || [],
     lastLoginAt: user.lastLoginAt,
+    language: user.language || 'pl',
   };
 }
 
@@ -149,7 +151,7 @@ export function createAuthRouter(): express.Router {
   // POST /api/auth/register
   router.post('/register', (req: Request, res: Response): void => {
     try {
-      const { username, password, balconySpec, myCrops } = req.body || {};
+      const { username, password, balconySpec, myCrops, language } = req.body || {};
 
       if (!username || typeof username !== 'string') {
         res.status(400).json({ error: 'Podaj nick użytkownika.' });
@@ -216,6 +218,7 @@ export function createAuthRouter(): express.Router {
         lastLoginAt: now,
         balconySpec: balconySpec && typeof balconySpec === 'object' ? balconySpec : defaultSpec,
         myCrops: Array.isArray(myCrops) ? myCrops : [],
+        language: language === 'en' ? 'en' : 'pl',
       };
 
       db.users.push(newUser);
@@ -386,6 +389,45 @@ export function createAuthRouter(): express.Router {
     } catch (err) {
       console.error('[Auth Save Crops Error]', err);
       res.status(500).json({ error: 'Błąd podczas zapisywania listy upraw.' });
+    }
+  });
+
+  // PUT /api/auth/language - Update user language preference
+  router.put('/language', (req: Request, res: Response): void => {
+    try {
+      const user = getAuthenticatedUser(req);
+      if (!user) {
+        res.status(401).json({ error: 'Zaloguj się, aby zmienić język.' });
+        return;
+      }
+
+      const { language } = req.body || {};
+      if (language !== 'pl' && language !== 'en') {
+        res.status(400).json({ error: 'Nieprawidłowy kod języka (dozwolone: pl, en).' });
+        return;
+      }
+
+      const db = loadDatabase();
+      const dbUser = db.users.find((u) => u.id === user.id);
+      if (!dbUser) {
+        res.status(404).json({ error: 'Użytkownik nie istnieje.' });
+        return;
+      }
+
+      dbUser.language = language;
+      saveDatabase(db);
+
+      console.log(`[Auth] Updated language for user "${dbUser.username}" to "${language}"`);
+
+      res.json({
+        success: true,
+        message: language === 'pl' ? 'Zmieniono język na Polski.' : 'Language changed to English.',
+        language: dbUser.language,
+        user: sanitizeUser(dbUser),
+      });
+    } catch (err) {
+      console.error('[Auth Language Error]', err);
+      res.status(500).json({ error: 'Błąd podczas zmiany języka.' });
     }
   });
 

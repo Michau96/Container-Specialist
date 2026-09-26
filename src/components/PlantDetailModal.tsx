@@ -32,6 +32,7 @@ import { getPlantTimingInfo } from '../lib/cropTiming';
 import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 import { getPlantVarieties } from '../lib/varietyData';
 import { getPlantVisual } from '../lib/plantImages';
+import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
   plant: Plant | null;
@@ -52,11 +53,14 @@ export const PlantDetailModal: React.FC<Props> = ({
   onToggleMyCrop,
   onRequestAddVariety,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   if (!plant) return null;
 
   const suit = plant.suitability;
   const score = suit?.score ?? 75;
-  const timing = getPlantTimingInfo(plant);
+  const timing = getPlantTimingInfo(plant, new Date(), isEn);
   const greenhouse = getPlantGreenhouseInfo(plant);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
@@ -73,7 +77,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           badgeText: 'text-indigo-200 bg-indigo-950/80 border-indigo-700/60',
           btnBg: 'bg-indigo-800 hover:bg-indigo-700 border-indigo-700/70',
           icon: '🥕',
-          label: 'Warzywo balkonowe',
+          label: isEn ? 'Balcony Vegetable' : 'Warzywo balkonowe',
         };
       case 'owoce':
         return {
@@ -81,7 +85,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           badgeText: 'text-fuchsia-200 bg-fuchsia-950/80 border-fuchsia-700/60',
           btnBg: 'bg-fuchsia-800 hover:bg-fuchsia-700 border-fuchsia-700/70',
           icon: '🍓',
-          label: 'Owoc balkonowy',
+          label: isEn ? 'Balcony Fruit' : 'Owoc balkonowy',
         };
       case 'kielki':
         return {
@@ -89,7 +93,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           badgeText: 'text-sky-200 bg-sky-950/80 border-sky-700/60',
           btnBg: 'bg-sky-800 hover:bg-sky-700 border-sky-700/70',
           icon: '🌱',
-          label: 'Mikrolistki i kiełki',
+          label: isEn ? 'Microgreens & Sprouts' : 'Mikrolistki i kiełki',
         };
       case 'grzyby':
         return {
@@ -97,7 +101,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           badgeText: 'text-stone-200 bg-stone-900/80 border-stone-700/60',
           btnBg: 'bg-stone-700 hover:bg-stone-600 border-stone-600/70',
           icon: '🍄',
-          label: 'Grzyb uprawny',
+          label: isEn ? 'Cultivated Mushroom' : 'Grzyb uprawny',
         };
       case 'ozdobne':
         return {
@@ -105,7 +109,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           badgeText: 'text-violet-200 bg-violet-950/80 border-violet-700/60',
           btnBg: 'bg-violet-800 hover:bg-violet-700 border-violet-700/70',
           icon: '🌸',
-          label: 'Roślina ozdobna',
+          label: isEn ? 'Ornamental Plant' : 'Roślina ozdobna',
         };
       case 'ziola':
       default:
@@ -114,7 +118,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           badgeText: 'text-teal-200 bg-teal-950/80 border-teal-700/60',
           btnBg: 'bg-teal-800 hover:bg-teal-700 border-teal-700/70',
           icon: '🌿',
-          label: 'Zioło balkonowe',
+          label: isEn ? 'Balcony Herb' : 'Zioło balkonowe',
         };
     }
   };
@@ -175,7 +179,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                 {suit && (
                   <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${getSuitabilityBadge(score)}`}>
                     <Sparkles className="w-3 h-3 text-white/90" />
-                    {score}% dopasowania do Twojego balkonu
+                    {score}% {isEn ? 'match for your balcony' : 'dopasowania do Twojego balkonu'}
                   </span>
                 )}
               </div>
@@ -183,7 +187,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                 {plant.name}
               </h2>
               <p className="text-xs sm:text-sm text-stone-200 mt-1">
-                Top 5 rekomendowanych odmian do donic:{' '}
+                {isEn ? 'Top 5 recommended varieties for pots: ' : 'Top 5 rekomendowanych odmian do donic: '}
                 <strong className="text-white">{topVarieties.map((v) => v.name).join(', ')}</strong>
               </p>
             </div>
@@ -202,12 +206,12 @@ export const PlantDetailModal: React.FC<Props> = ({
                 {isMyCrop ? (
                   <>
                     <Check className="w-3.5 h-3.5" />
-                    <span>W Moich uprawach (usuń)</span>
+                    <span>{isEn ? 'In My Crops (remove)' : 'W Moich uprawach (usuń)'}</span>
                   </>
                 ) : (
                   <>
                     <Plus className="w-3.5 h-3.5 text-emerald-700" />
-                    <span>+ Dodaj do Moich upraw</span>
+                    <span>{isEn ? '+ Add to My Crops' : '+ Dodaj do Moich upraw'}</span>
                   </>
                 )}
               </button>
@@ -222,16 +226,16 @@ export const PlantDetailModal: React.FC<Props> = ({
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 ${headerTheme.btnBg} text-white text-xs font-semibold rounded-xl border transition cursor-pointer`}
               >
                 <Ruler className="w-3.5 h-3.5" />
-                <span>Kalkulator Twojej donicy</span>
+                <span>{isEn ? 'Your Pot Calculator' : 'Kalkulator Twojej donicy'}</span>
               </button>
             )}
             <button
               id="close-plant-modal-btn"
               onClick={onClose}
-              className="text-stone-300 hover:text-white p-2 rounded-xl hover:bg-white/10 transition cursor-pointer"
-              aria-label="Zamknij okno"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+              aria-label={isEn ? 'Close window' : 'Zamknij okno'}
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5 stroke-[2.5]" />
             </button>
           </div>
         </div>
@@ -247,10 +251,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="p-1 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
                     <Maximize2 className="w-4 h-4" />
                   </div>
-                  <span>Pojemność donicy</span>
+                  <span>{isEn ? 'Pot Volume' : 'Pojemność donicy'}</span>
                 </span>
                 <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/70 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-                  głęb. {plant.pot.min_depth_cm} cm
+                  {isEn ? `depth ${plant.pot.min_depth_cm} cm` : `głęb. ${plant.pot.min_depth_cm} cm`}
                 </span>
               </div>
               <div>
@@ -258,7 +262,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                   min. {plant.pot.min_volume_l} L
                 </div>
                 <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
-                  {plant.pot.recommended_volume_l ? `zalecana: ${plant.pot.recommended_volume_l} L` : 'na 1 sadzonkę'}
+                  {plant.pot.recommended_volume_l
+                    ? (isEn ? `recommended: ${plant.pot.recommended_volume_l} L` : `zalecana: ${plant.pot.recommended_volume_l} L`)
+                    : (isEn ? 'per 1 seedling' : 'na 1 sadzonkę')}
                 </div>
               </div>
             </div>
@@ -270,10 +276,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="p-1 rounded-lg bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
                     <Layers className="w-4 h-4" />
                   </div>
-                  <span>Odczyn pH</span>
+                  <span>{isEn ? 'Soil pH' : 'Odczyn pH'}</span>
                 </span>
                 <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-800">
-                  podłoże
+                  {isEn ? 'soil' : 'podłoże'}
                 </span>
               </div>
               <div>
@@ -281,7 +287,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                   pH {plant.soil.ph}
                 </div>
                 <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">
-                  {plant.soil.ph.includes('5') ? 'lekko kwaśne' : 'obojętne / uniwersalne'}
+                  {plant.soil.ph.includes('5')
+                    ? (isEn ? 'slightly acidic' : 'lekko kwaśne')
+                    : (isEn ? 'neutral / universal' : 'obojętne / uniwersalne')}
                 </div>
               </div>
             </div>
@@ -293,10 +301,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="p-1 rounded-lg bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300">
                     <Sun className="w-4 h-4" />
                   </div>
-                  <span>Nasłonecznienie</span>
+                  <span>{isEn ? 'Sunlight' : 'Nasłonecznienie'}</span>
                 </span>
                 <span className="text-[10px] font-semibold text-orange-800 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/70 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800">
-                  wystawa
+                  {isEn ? 'exposure' : 'wystawa'}
                 </span>
               </div>
               <div>
@@ -316,10 +324,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="p-1 rounded-lg bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300">
                     <Wind className="w-4 h-4" />
                   </div>
-                  <span>Trudność</span>
+                  <span>{isEn ? 'Difficulty' : 'Trudność'}</span>
                 </span>
                 <span className="text-[10px] font-semibold text-sky-800 dark:text-sky-300 bg-sky-50 dark:bg-sky-950/70 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-800">
-                  skala 1-10
+                  {isEn ? 'scale 1-10' : 'skala 1-10'}
                 </span>
               </div>
               <div>
@@ -327,7 +335,11 @@ export const PlantDetailModal: React.FC<Props> = ({
                   {plant.difficulty} / 10
                 </div>
                 <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">
-                  {plant.difficulty <= 3 ? 'Dla początkujących' : plant.difficulty <= 6 ? 'Średnio wymagająca' : 'Wymagająca'}
+                  {plant.difficulty <= 3
+                    ? (isEn ? 'Beginner friendly' : 'Dla początkujących')
+                    : plant.difficulty <= 6
+                    ? (isEn ? 'Moderate' : 'Średnio wymagająca')
+                    : (isEn ? 'Demanding' : 'Wymagająca')}
                 </div>
               </div>
             </div>
@@ -337,7 +349,7 @@ export const PlantDetailModal: React.FC<Props> = ({
           <div className="bg-stone-100/90 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-2xl p-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2 mb-1.5">
               <Lightbulb className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>Streszczenie uprawy w donicy</span>
+              <span>{isEn ? 'Summary of Pot Cultivation' : 'Streszczenie uprawy w donicy'}</span>
             </h3>
             <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 leading-relaxed">{plant.summary}</p>
           </div>
@@ -351,10 +363,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Terminarz ogrodniczy i status na dziś
+                    {isEn ? 'Gardening Calendar & Today’s Status' : 'Terminarz ogrodniczy i status na dziś'}
                   </h3>
                   <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                    Analiza bieżącej daty oraz rekomendowane okna agrotechniczne
+                    {isEn ? 'Analysis of the current date and recommended agrotechnical windows' : 'Analiza bieżącej daty oraz rekomendowane okna agrotechniczne'}
                   </p>
                 </div>
               </div>
@@ -386,7 +398,7 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-700/80 bg-white dark:bg-stone-800/60 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                   <Sprout className="w-4 h-4" />
-                  <span>Kiedy najlepszy termin na sianie:</span>
+                  <span>{isEn ? 'Best sowing window:' : 'Kiedy najlepszy termin na sianie:'}</span>
                 </div>
                 <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1.5">
                   {timing.bestSowingLabel}
@@ -399,7 +411,7 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="p-3.5 rounded-xl border border-stone-200 dark:border-stone-700/80 bg-white dark:bg-stone-800/60 shadow-2xs">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">
                   <Sun className="w-4 h-4" />
-                  <span>Kiedy najlepszy termin na sadzenie:</span>
+                  <span>{isEn ? 'Best transplanting window:' : 'Kiedy najlepszy termin na sadzenie:'}</span>
                 </div>
                 <div className="text-sm font-bold text-stone-900 dark:text-stone-100 mt-1.5">
                   {timing.bestTransplantingLabel}
@@ -422,8 +434,12 @@ export const PlantDetailModal: React.FC<Props> = ({
                     <Ruler className="w-4 h-4" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">Rozstawa, siew i podpory</h3>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400">Zasady rozmieszczenia sadzonek w pojemnikach</p>
+                    <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                      {isEn ? 'Spacing, Sowing & Supports' : 'Rozstawa, siew i podpory'}
+                    </h3>
+                    <p className="text-[11px] text-stone-500 dark:text-stone-400">
+                      {isEn ? 'Seedling layout rules for container growing' : 'Zasady rozmieszczenia sadzonek w pojemnikach'}
+                    </p>
                   </div>
                 </div>
                 {onOpenPotCalc && (
@@ -434,7 +450,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                     }}
                     className="text-xs font-bold text-stone-800 dark:text-stone-200 hover:bg-stone-200 dark:hover:bg-stone-700 bg-stone-100 dark:bg-stone-800 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 transition cursor-pointer"
                   >
-                    Otwórz szkicownik donicy →
+                    {isEn ? 'Open Pot Designer →' : 'Otwórz szkicownik donicy →'}
                   </button>
                 )}
               </div>
@@ -442,31 +458,38 @@ export const PlantDetailModal: React.FC<Props> = ({
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                 <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
                   <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase block mb-1">
-                    Rozstawa między roślinami:
+                    {isEn ? 'Spacing between plants:' : 'Rozstawa między roślinami:'}
                   </span>
                   <span className="text-base font-bold text-stone-900 dark:text-stone-100">
-                    co {plant.spacing_guide.spacing_cm} cm
+                    {isEn ? `every ${plant.spacing_guide.spacing_cm} cm` : `co ${plant.spacing_guide.spacing_cm} cm`}
                   </span>
                   <span className="text-[11px] text-stone-500 dark:text-stone-400 block mt-1">
-                    Głębokość siewu/sadzenia: <strong>{plant.spacing_guide.planting_depth_cm > 0 ? `${plant.spacing_guide.planting_depth_cm} cm` : 'powierzchniowo'}</strong>
+                    {isEn ? 'Sowing/planting depth: ' : 'Głębokość siewu/sadzenia: '}
+                    <strong>
+                      {plant.spacing_guide.planting_depth_cm > 0
+                        ? `${plant.spacing_guide.planting_depth_cm} cm`
+                        : (isEn ? 'surface level' : 'powierzchniowo')}
+                    </strong>
                   </span>
                 </div>
 
                 <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
                   <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase block mb-1">
-                    Pojemność standardowych donic:
+                    {isEn ? 'Standard pot capacity:' : 'Pojemność standardowych donic:'}
                   </span>
                   <span className="text-xs text-stone-800 dark:text-stone-200 block">
-                    Skrzynka 60cm: <strong>max {plant.spacing_guide.max_plants_per_standard_box_60cm} szt.</strong>
+                    {isEn ? 'Box 60cm: ' : 'Skrzynka 60cm: '}
+                    <strong>{isEn ? `max ${plant.spacing_guide.max_plants_per_standard_box_60cm} pcs.` : `max ${plant.spacing_guide.max_plants_per_standard_box_60cm} szt.`}</strong>
                   </span>
                   <span className="text-xs text-stone-800 dark:text-stone-200 block mt-1">
-                    Doniczka ⌀ 30cm: <strong>max {plant.spacing_guide.max_plants_per_round_pot_30cm} szt.</strong>
+                    {isEn ? 'Round pot ⌀ 30cm: ' : 'Doniczka ⌀ 30cm: '}
+                    <strong>{isEn ? `max ${plant.spacing_guide.max_plants_per_round_pot_30cm} pcs.` : `max ${plant.spacing_guide.max_plants_per_round_pot_30cm} szt.`}</strong>
                   </span>
                 </div>
 
                 <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
                   <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase block mb-1">
-                    Podpory i prowadzenie:
+                    {isEn ? 'Supports & Training:' : 'Podpory i prowadzenie:'}
                   </span>
                   <span className="font-semibold text-stone-900 dark:text-stone-100 block leading-tight">
                     {plant.spacing_guide.supports_needed}
@@ -482,15 +505,17 @@ export const PlantDetailModal: React.FC<Props> = ({
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <span className="flex items-center gap-1.5 font-bold text-xs text-amber-900 dark:text-amber-200">
                         <span>🎋</span>
-                        <span>Palik bambusowy:</span>
+                        <span>{isEn ? 'Bamboo stake:' : 'Palik bambusowy:'}</span>
                       </span>
                       <span className="text-[10px] font-extrabold uppercase tracking-wide bg-amber-200/80 dark:bg-amber-900 text-amber-900 dark:text-amber-100 px-2 py-0.5 rounded border border-amber-400 dark:border-amber-700">
-                        Niezbędny do uprawy
+                        {isEn ? 'Essential for growth' : 'Niezbędny do uprawy'}
                       </span>
                     </div>
                     <p className="text-[11px] leading-relaxed font-medium">
                       {plant.spacing_guide.bamboo_stake_desc ||
-                        'Wbij palik bambusowy (60–80 cm) w dno donicy już przy wysadzaniu rośliny, aby nie uszkodzić rozwijającej się bryły korzeniowej. Pędy podwiązuj w ósemkę.'}
+                        (isEn
+                          ? 'Insert a bamboo stake (60–80 cm) to the bottom of the pot during transplanting to protect developing root balls. Tie shoots in a figure-eight.'
+                          : 'Wbij palik bambusowy (60–80 cm) w dno donicy już przy wysadzaniu rośliny, aby nie uszkodzić rozwijającej się bryły korzeniowej. Pędy podwiązuj w ósemkę.')}
                     </p>
                   </div>
                 )}
@@ -500,7 +525,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="flex items-center justify-between gap-2 mb-1.5">
                     <span className="font-bold text-xs flex items-center gap-1.5 text-stone-800 dark:text-stone-200">
                       <span>🌱</span>
-                      <span>Metoda siewu w schemacie:</span>
+                      <span>{isEn ? 'Sowing pattern:' : 'Metoda siewu w schemacie:'}</span>
                     </span>
                     <span
                       className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full border ${
@@ -510,25 +535,29 @@ export const PlantDetailModal: React.FC<Props> = ({
                       }`}
                     >
                       {plant.spacing_guide.sowing_type === 'gniazdowo'
-                        ? 'SIEW GNIAZDOWY'
+                        ? (isEn ? 'CLUSTER SOWING' : 'SIEW GNIAZDOWY')
                         : plant.spacing_guide.sowing_type === 'pojedynczo'
-                        ? 'SIEW POJEDYNCZY'
+                        ? (isEn ? 'SINGLE SEED SOWING' : 'SIEW POJEDYNCZY')
                         : plant.spacing_guide.sowing_type === 'rzutowo'
-                        ? 'SIEW RZUTOWY GĘSTY'
+                        ? (isEn ? 'BROADCAST SOWING' : 'SIEW RZUTOWY GĘSTY')
                         : plant.spacing_guide.sowing_type === 'grzybnia'
-                        ? 'ZASZCZEPIENIE GRZYBNIĄ'
-                        : 'SADZENIE ROZSADY'}
+                        ? (isEn ? 'MYCELIUM INOCULATION' : 'ZASZCZEPIENIE GRZYBNIĄ')
+                        : (isEn ? 'SEEDLING TRANSPLANTING' : 'SADZENIE ROZSADY')}
                     </span>
                   </div>
                   <p className="text-[11px] leading-relaxed text-stone-700 dark:text-stone-300 font-medium">
                     {plant.spacing_guide.sowing_type === 'gniazdowo'
-                      ? '👉 Siać GNIAZDOWO: umieszczaj po 2–3 nasiona w jednym dołku co ' +
-                        plant.spacing_guide.spacing_cm +
-                        ' cm. Po wschodach zostaw 1 najsilniejszą siewkę.'
+                      ? (isEn
+                          ? `👉 Cluster sowing: place 2–3 seeds in one hole every ${plant.spacing_guide.spacing_cm} cm. Thin to 1 strongest seedling after sprouting.`
+                          : '👉 Siać GNIAZDOWO: umieszczaj po 2–3 nasiona w jednym dołku co ' +
+                            plant.spacing_guide.spacing_cm +
+                            ' cm. Po wschodach zostaw 1 najsilniejszą siewkę.')
                       : plant.spacing_guide.sowing_type === 'pojedynczo'
-                      ? '👉 Siać POJEDYNCZO: wysiewaj punktowo po 1 nasionku (lub sadź 1 sadzonkę) w każdym punkcie rozstawy co ' +
-                        plant.spacing_guide.spacing_cm +
-                        ' cm.'
+                      ? (isEn
+                          ? `👉 Single sowing: plant 1 seed (or 1 seedling) per spacing spot every ${plant.spacing_guide.spacing_cm} cm.`
+                          : '👉 Siać POJEDYNCZO: wysiewaj punktowo po 1 nasionku (lub sadź 1 sadzonkę) w każdym punkcie rozstawy co ' +
+                            plant.spacing_guide.spacing_cm +
+                            ' cm.')
                       : plant.spacing_guide.sowing_type_details ||
                         plant.spacing_guide.planting_method}
                   </p>
@@ -543,7 +572,7 @@ export const PlantDetailModal: React.FC<Props> = ({
               </div>
 
               <div className="mt-3 text-xs text-stone-600 dark:text-stone-400 bg-stone-50 dark:bg-stone-800/50 p-3 rounded-xl border border-stone-200/80 dark:border-stone-700">
-                <strong>Zalecenie agrotechniczne:</strong> {plant.spacing_guide.planting_method}
+                <strong>{isEn ? 'Agrotechnical recommendation: ' : 'Zalecenie agrotechniczne: '}</strong> {plant.spacing_guide.planting_method}
               </div>
             </div>
           )}
@@ -553,7 +582,11 @@ export const PlantDetailModal: React.FC<Props> = ({
             <div className="bg-white dark:bg-stone-800 rounded-2xl border border-stone-200 dark:border-stone-700 p-4 space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-500" />
-                <span>Ocena warunków na Twoim balkonie ({suit.suitability_level})</span>
+                <span>
+                  {isEn
+                    ? `Balcony Conditions Assessment (${suit.suitability_level})`
+                    : `Ocena warunków na Twoim balkonie (${suit.suitability_level})`}
+                </span>
               </h3>
 
               {/* Potwierdzone spełnienie wymagań (ZIELONY) */}
@@ -566,7 +599,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                     >
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                       <span>
-                        <strong className="font-semibold">Potwierdzone:</strong> {r}
+                        <strong className="font-semibold">{isEn ? 'Confirmed: ' : 'Potwierdzone: '}</strong> {r}
                       </span>
                     </div>
                   ))}
@@ -585,7 +618,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                       >
                         <AlertCircle className="w-4 h-4 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
                         <span>
-                          <strong className="font-semibold">Wysokie ryzyko:</strong> {w}
+                          <strong className="font-semibold">{isEn ? 'High risk: ' : 'Wysokie ryzyko: '}</strong> {w}
                         </span>
                       </div>
                     ) : (
@@ -595,7 +628,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                       >
                         <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                         <span>
-                          <strong className="font-semibold">Zwróć uwagę:</strong> {w}
+                          <strong className="font-semibold">{isEn ? 'Note: ' : 'Zwróć uwagę: '}</strong> {w}
                         </span>
                       </div>
                     );
@@ -611,7 +644,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                       key={i}
                       className="text-xs text-amber-950 dark:text-amber-200 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/40 p-2 rounded-lg flex items-center gap-1.5"
                     >
-                      <span>💡 <strong className="font-semibold">Zwróć uwagę / Porada:</strong> {t}</span>
+                      <span>💡 <strong className="font-semibold">{isEn ? 'Tip / Note:' : 'Zwróć uwagę / Porada:'}</strong> {t}</span>
                     </div>
                   ))}
                 </div>
@@ -628,15 +661,17 @@ export const PlantDetailModal: React.FC<Props> = ({
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                    Top 5 odmian, którymi warto się zainteresować
+                    {isEn ? 'Top 5 varieties worth considering' : 'Top 5 odmian, którymi warto się zainteresować'}
                   </h3>
                   <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                    Wyselekcjonowane odmiany genetycznie karłowe, o zwartym pokroju i wysokiej plenności w donicach
+                    {isEn
+                      ? 'Selected genetically dwarf, compact varieties with high container yield'
+                      : 'Wyselekcjonowane odmiany genetycznie karłowe, o zwartym pokroju i wysokiej plenności w donicach'}
                   </p>
                 </div>
               </div>
               <span className="text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full border border-stone-200 dark:border-stone-700">
-                5 polecanych
+                {isEn ? '5 recommended' : '5 polecanych'}
               </span>
             </div>
 
@@ -660,7 +695,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                         </span>
                       </div>
                       <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-0.5 leading-relaxed">
-                        <strong className="text-stone-700 dark:text-stone-300">Dlaczego warto: </strong>
+                        <strong className="text-stone-700 dark:text-stone-300">
+                          {isEn ? 'Why choose it: ' : 'Dlaczego warto: '}
+                        </strong>
                         {item.reason}
                       </p>
                     </div>
@@ -676,7 +713,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                       className="shrink-0 px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-2xs cursor-pointer self-start sm:self-center"
                     >
                       <Plus className="w-3.5 h-3.5" />
-                      <span>Wybierz tę odmianę 🌱</span>
+                      <span>{isEn ? 'Select this variety 🌱' : 'Wybierz tę odmianę 🌱'}</span>
                     </button>
                   )}
                 </div>
@@ -699,23 +736,23 @@ export const PlantDetailModal: React.FC<Props> = ({
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
-                      Wskazówki dla zaawansowanych
+                      {isEn ? 'Advanced Tips & Specifications' : 'Wskazówki dla zaawansowanych'}
                     </h3>
                     <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 px-2 py-0.5 rounded-full">
-                      Szklarnia, nawożenie, koszty, witaminy, przewodnik
+                      {isEn ? 'Greenhouse, fertilizer, costs, vitamins, guide' : 'Szklarnia, nawożenie, koszty, witaminy, przewodnik'}
                     </span>
                   </div>
                   <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
                     {isAdvancedOpen
-                      ? 'Kliknij, aby zwinąć szczegółowe moduły i wskazówki'
-                      : 'Rozwiń, aby zobaczyć instrukcję szklarniową, skład gleby, opryski, koszty i źródła'}
+                      ? (isEn ? 'Click to collapse detailed modules' : 'Kliknij, aby zwinąć szczegółowe moduły i wskazówki')
+                      : (isEn ? 'Expand to view greenhouse guide, soil composition, spraying, costs, and sources' : 'Rozwiń, aby zobaczyć instrukcję szklarniową, skład gleby, opryski, koszty i źródła')}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
                 <span className="text-xs font-semibold text-stone-600 dark:text-stone-300 hidden sm:inline">
-                  {isAdvancedOpen ? 'Zwiń' : 'Rozwiń'}
+                  {isAdvancedOpen ? (isEn ? 'Collapse' : 'Zwiń') : (isEn ? 'Expand' : 'Rozwiń')}
                 </span>
                 <div className="p-2 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300">
                   {isAdvancedOpen ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -734,7 +771,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100 flex items-center gap-2">
-                          <span>Uprawa w szklarni balkonowej / mini-folii</span>
+                          <span>{isEn ? 'Balcony Greenhouse / Foil Cover Cultivation' : 'Uprawa w szklarni balkonowej / mini-folii'}</span>
                           <span
                             className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
                               greenhouse.badgeTone === 'emerald'
@@ -750,7 +787,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                           </span>
                         </h4>
                         <p className="text-xs text-stone-500 dark:text-stone-400">
-                          Ocena mikroklimatu regałów foliowych, inspektów i szklarni balkonowych
+                          {isEn ? 'Microclimate assessment of foil racks, cold frames, and balcony greenhouses' : 'Ocena mikroklimatu regałów foliowych, inspektów i szklarni balkonowych'}
                         </p>
                       </div>
                     </div>
@@ -767,7 +804,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                     <div className="p-3 rounded-xl bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-900/40 text-xs">
                       <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5 mb-1">
                         <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
-                        <span>Wietrzenie i ryzyko przegrzania:</span>
+                        <span>{isEn ? 'Ventilation & Overheating Risk:' : 'Wietrzenie i ryzyko przegrzania:'}</span>
                       </div>
                       <div className="text-amber-950 dark:text-amber-300/90 leading-relaxed">
                         {greenhouse.risksAndVentilation}
@@ -777,7 +814,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                     <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-900/40 text-xs">
                       <div className="font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5 mb-1">
                         <Lightbulb className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                        <span>Praktyczna wskazówka balkonowa:</span>
+                        <span>{isEn ? 'Practical Balcony Tip:' : 'Praktyczna wskazówka balkonowa:'}</span>
                       </div>
                       <div className="text-emerald-950 dark:text-emerald-300/90 leading-relaxed">
                         {greenhouse.practicalTip}
@@ -795,10 +832,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                       </div>
                       <div>
                         <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                          Wymagania glebowe i ogólne zasady podłoża
+                          {isEn ? 'Soil Requirements & Substrate Rules' : 'Wymagania glebowe i ogólne zasady podłoża'}
                         </h4>
                         <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                          Podstawowe parametry ziemi dla tej uprawy
+                          {isEn ? 'Primary soil parameters for this crop' : 'Podstawowe parametry ziemi dla tej uprawy'}
                         </p>
                       </div>
                     </div>
@@ -810,7 +847,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
                       <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                        Zalecany typ ziemi:
+                        {isEn ? 'Recommended soil type:' : 'Zalecany typ ziemi:'}
                       </div>
                       <p className="text-stone-800 dark:text-stone-200 font-medium leading-relaxed">
                         {plant.soil.type}
@@ -819,10 +856,12 @@ export const PlantDetailModal: React.FC<Props> = ({
 
                     <div className="bg-stone-50 dark:bg-stone-800/80 p-3 rounded-xl border border-stone-200 dark:border-stone-700">
                       <div className="text-[11px] font-bold text-stone-600 dark:text-stone-400 mb-1">
-                        Drenaż i struktura:
+                        {isEn ? 'Drainage & structure:' : 'Drenaż i struktura:'}
                       </div>
                       <p className="text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
-                        Konieczny drenaż z keramzytu (2–4 cm na dnie donicy) oraz domieszka perlitu dla dotlenienia korzeni i ochrony przed przelaniem.
+                        {isEn
+                          ? 'Expanded clay aggregate drainage (2–4 cm at bottom of pot) and perlite admixture required for root aeration and overwatering protection.'
+                          : 'Konieczny drenaż z keramzytu (2–4 cm na dnie donicy) oraz domieszka perlitu dla dotlenienia korzeni i ochrony przed przelaniem.'}
                       </p>
                     </div>
                   </div>
@@ -831,10 +870,12 @@ export const PlantDetailModal: React.FC<Props> = ({
                     <span className="text-xl leading-none">💡</span>
                     <div className="text-xs text-amber-950 dark:text-amber-200 space-y-1">
                       <p className="font-semibold text-[12px]">
-                        Indywidualny schemat warstw podłoża w donicy:
+                        {isEn ? 'Custom pot soil layer design:' : 'Indywidualny schemat warstw podłoża w donicy:'}
                       </p>
                       <p className="text-amber-900 dark:text-amber-300 leading-relaxed text-[11px]">
-                        Szczegółowy przekrój warstw donicy, dokładne proporcje keramzytu, perlitu oraz łączną objętość ziemi dobierzesz w zakładce <strong>„Projektant donicy i rozstawy”</strong> po skomponowaniu upraw.
+                        {isEn
+                          ? 'Detailed layer breakdown, exact clay/perlite proportions, and total soil volume can be designed in the "Pot & Spacing Designer" tab after planning your crops.'
+                          : 'Szczegółowy przekrój warstw donicy, dokładne proporcje keramzytu, perlitu oraz łączną objętość ziemi dobierzesz w zakładce „Projektant donicy i rozstawy” po skomponowaniu upraw.'}
                       </p>
                       {onOpenPotCalc && (
                         <button
@@ -844,7 +885,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                           }}
                           className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
                         >
-                          <span>📐 Przejdź do schematu donicy</span>
+                          <span>{isEn ? '📐 Go to pot designer' : '📐 Przejdź do schematu donicy'}</span>
                         </button>
                       )}
                     </div>
@@ -879,22 +920,22 @@ export const PlantDetailModal: React.FC<Props> = ({
                         </div>
                         <div>
                           <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                            Wartości odżywcze, witaminy i wpływ na zdrowie
+                            {isEn ? 'Nutritional Value, Vitamins & Health Benefits' : 'Wartości odżywcze, witaminy i wpływ na zdrowie'}
                           </h4>
                           <p className="text-[11px] text-stone-500 dark:text-stone-400">
-                            Dlaczego warto zrywać prosto z krzaczka na balkonie
+                            {isEn ? 'Why picking fresh from your balcony bush is unbeatable' : 'Dlaczego warto zrywać prosto z krzaczka na balkonie'}
                           </p>
                         </div>
                       </div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2.5 py-0.5 rounded-full border border-stone-200 dark:border-stone-700">
-                        100% naturalne bio
+                        {isEn ? '100% natural bio' : '100% naturalne bio'}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
                         <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wide mb-1">
-                          Kluczowe witaminy i minerały:
+                          {isEn ? 'Key vitamins & minerals:' : 'Kluczowe witaminy i minerały:'}
                         </div>
                         <p className="text-stone-900 dark:text-stone-100 font-semibold leading-relaxed">
                           {plant.nutrition.vitamins}
@@ -903,7 +944,7 @@ export const PlantDetailModal: React.FC<Props> = ({
 
                       <div className="p-3.5 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700">
                         <div className="text-[11px] font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wide mb-1">
-                          Główne korzyści dla organizmu:
+                          {isEn ? 'Main health benefits:' : 'Główne korzyści dla organizmu:'}
                         </div>
                         <p className="text-stone-800 dark:text-stone-200 leading-relaxed font-medium">
                           {plant.nutrition.key_benefits}
@@ -914,7 +955,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                     {plant.nutrition.antioxidants && (
                       <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 text-xs">
                         <span className="font-bold text-stone-700 dark:text-stone-300 text-[11px] uppercase tracking-wide">
-                          Antyoksydanty i fitoskładniki:
+                          {isEn ? 'Antioxidants & phytonutrients:' : 'Antyoksydanty i fitoskładniki:'}
                         </span>
                         <p className="text-stone-800 dark:text-stone-200 mt-0.5 leading-relaxed">
                           {plant.nutrition.antioxidants}
@@ -940,7 +981,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="flex items-center gap-2 pb-2 border-b border-stone-100 dark:border-stone-700">
                     <BookOpen className="w-4 h-4 text-stone-800 dark:text-stone-200" />
                     <h4 className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                      Dokładny przewodnik uprawy krok po kroku
+                      {isEn ? 'Step-by-step Detailed Growing Guide' : 'Dokładny przewodnik uprawy krok po kroku'}
                     </h4>
                   </div>
                   <div className="markdown-body text-xs sm:text-[13px] leading-relaxed text-stone-700 dark:text-stone-300 font-sans">
@@ -983,10 +1024,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-bold text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
                       <Globe className="w-3.5 h-3.5 text-stone-700 dark:text-stone-300" />
-                      <span>Zweryfikowane źródła wiedzy ogrodniczej (krajowe i zagraniczne):</span>
+                      <span>{isEn ? 'Verified gardening sources & publications:' : 'Zweryfikowane źródła wiedzy ogrodniczej (krajowe i zagraniczne):'}</span>
                     </span>
                     <span className="text-[10px] text-stone-600 dark:text-stone-400 bg-stone-100 dark:bg-stone-700 px-2 py-0.5 rounded-full font-medium">
-                      Porady i zalecenia w 100% po polsku
+                      {isEn ? 'Peer-reviewed horticultural guidance' : 'Porady i zalecenia w 100% po polsku'}
                     </span>
                   </div>
 
@@ -1036,7 +1077,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                               rel="noopener noreferrer"
                               className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white transition underline"
                             >
-                              <span>Zobacz publikację / źródło</span>
+                              <span>{isEn ? 'View publication / source' : 'Zobacz publikację / źródło'}</span>
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           )}
@@ -1045,7 +1086,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                     })}
                   </div>
                   <p className="text-[11px] text-stone-400 dark:text-stone-500 pt-3 text-center sm:text-left leading-relaxed">
-                    * Dane opracowano na bazie literatury i zweryfikowanych źródeł ogrodniczych. Ze względu na specyfikę poszczególnych mikroklimatów balkonowych informacje mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.
+                    {isEn
+                      ? '* Data developed on the basis of literature and verified gardening sources. Due to the specificity of particular balcony microclimates, double verification is recommended.'
+                      : '* Dane opracowano na bazie literatury i zweryfikowanych źródeł ogrodniczych. Ze względu na specyfikę poszczególnych mikroklimatów balkonowych informacje mogą zawierać nieścisłości — zalecana jest podwójna weryfikacja.'}
                   </p>
                 </div>
               </div>
@@ -1067,7 +1110,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                 >
                   <Plus className="w-3.5 h-3.5" />
                   <span>
-                    {isMyCrop ? '+ Dodaj kolejną odmianę lub inną donicę' : '+ Wybierz odmianę i dodaj do upraw'}
+                    {isMyCrop
+                      ? (isEn ? '+ Add another variety or pot' : '+ Dodaj kolejną odmianę lub inną donicę')
+                      : (isEn ? '+ Choose variety & add to crops' : '+ Wybierz odmianę i dodaj do upraw')}
                   </span>
                 </button>
 
@@ -1075,9 +1120,9 @@ export const PlantDetailModal: React.FC<Props> = ({
                   <button
                     onClick={() => onToggleMyCrop(plant.id)}
                     className="w-full sm:w-auto px-3.5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-red-100 hover:text-red-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
-                    title="Usuń wszystkie donice tej rośliny z Moich upraw"
+                    title={isEn ? 'Remove all pots of this plant from My Crops' : 'Usuń wszystkie donice tej rośliny z Moich upraw'}
                   >
-                    <span>Usuń z upraw</span>
+                    <span>{isEn ? 'Remove from crops' : 'Usuń z upraw'}</span>
                   </button>
                 )}
               </>
@@ -1094,12 +1139,12 @@ export const PlantDetailModal: React.FC<Props> = ({
                   {isMyCrop ? (
                     <>
                       <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                      <span>W Moich uprawach (usuń)</span>
+                      <span>{isEn ? 'In My Crops (remove)' : 'W Moich uprawach (usuń)'}</span>
                     </>
                   ) : (
                     <>
                       <Plus className="w-3.5 h-3.5" />
-                      <span>+ Dodaj do Moich upraw</span>
+                      <span>{isEn ? '+ Add to My Crops' : '+ Dodaj do Moich upraw'}</span>
                     </>
                   )}
                 </button>
@@ -1115,7 +1160,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                 className="w-full sm:w-auto px-4 py-2.5 bg-stone-800 dark:bg-stone-700 hover:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Ruler className="w-4 h-4" />
-                <span>Dopasuj moją donicę i naszkicuj rozstawę</span>
+                <span>{isEn ? 'Fit my pot & sketch spacing' : 'Dopasuj moją donicę i naszkicuj rozstawę'}</span>
               </button>
             )}
           </div>
@@ -1125,7 +1170,7 @@ export const PlantDetailModal: React.FC<Props> = ({
             onClick={onClose}
             className="w-full sm:w-auto px-6 py-2.5 bg-stone-900 dark:bg-stone-800 hover:bg-stone-800 dark:hover:bg-stone-700 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
           >
-            Zamknij przewodnik
+            {isEn ? 'Close Guide' : 'Zamknij przewodnik'}
           </button>
         </div>
       </div>

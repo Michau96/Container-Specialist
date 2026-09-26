@@ -7,6 +7,7 @@ import {
   evaluatePotMaterial,
   evaluatePlantSupport,
 } from '../lib/potSupportEvaluations';
+import { useLanguage } from '../lib/LanguageContext';
 import defaultPlantsData from '../data/plants.json';
 
 const defaultPlants = defaultPlantsData as unknown as Plant[];
@@ -26,6 +27,9 @@ export const PotCalculator: React.FC<Props> = ({
   onClose,
   isModal = false,
 }) => {
+  const { language } = useLanguage();
+  const isEn = language === 'en';
+
   // Gwarantujemy, że lista roślin nigdy nie jest pusta
   const availablePlants = useMemo(() => {
     return plants && plants.length > 0 ? plants : defaultPlants;
@@ -116,11 +120,12 @@ export const PotCalculator: React.FC<Props> = ({
   const minDepth = currentPlant?.pot.min_depth_cm ?? 18;
   const spacingCm = currentPlant?.spacing_guide?.spacing_cm ?? 20;
   const plantingDepth = currentPlant?.spacing_guide?.planting_depth_cm ?? 2;
-  const plantingMethod = currentPlant?.spacing_guide?.planting_method ?? 'Sadź na głębokość bryły korzeniowej.';
-  const requiredSupports = currentPlant?.spacing_guide?.supports_needed ?? 'Palik lub brak';
+  const plantingMethod = currentPlant?.spacing_guide?.planting_method ?? (isEn ? 'Plant to root ball depth.' : 'Sadź na głębokość bryły korzeniowej.');
+  const requiredSupports = currentPlant?.spacing_guide?.supports_needed ?? (isEn ? 'Stake or none' : 'Palik lub brak');
 
   // Obliczenie maksymalnej liczby roślin mieszczących się w donicy
   const capacityInfo = useMemo(() => {
+    const plantLabelPrefix = isEn ? 'Plant' : 'Roślina';
     const maxByVol = Math.floor(volumeLiters / minPlantVol);
     let maxByGeometry = 1;
     let points: { x: number; y: number; label: string }[] = [];
@@ -136,7 +141,7 @@ export const PotCalculator: React.FC<Props> = ({
       const finalCount = Math.max(1, Math.min(maxByVol, maxByGeometry));
 
       if (finalCount === 1) {
-        points = [{ x: 50, y: 50, label: 'Roślina 1' }];
+        points = [{ x: 50, y: 50, label: `${plantLabelPrefix} 1` }];
       } else {
         let placed = 0;
         const actualRows = Math.ceil(finalCount / spotsPerRow);
@@ -151,7 +156,7 @@ export const PotCalculator: React.FC<Props> = ({
             points.push({
               x: rowSpots === 1 && spotsPerRow === 1 ? 50 : xOffset + c * xStep,
               y: actualRows === 1 ? 50 : 10 + r * yStep,
-              label: `Roślina ${placed + 1}`,
+              label: `${plantLabelPrefix} ${placed + 1}`,
             });
             placed++;
             if (placed >= finalCount) break;
@@ -165,7 +170,9 @@ export const PotCalculator: React.FC<Props> = ({
         maxByGeometry,
         maxByVol,
         points,
-        dimensionText: `${lengthCm} cm × ${widthCm} cm, wys. ${rectHeightCm} cm`,
+        dimensionText: isEn
+          ? `${lengthCm} cm × ${widthCm} cm, height ${rectHeightCm} cm`
+          : `${lengthCm} cm × ${widthCm} cm, wys. ${rectHeightCm} cm`,
       };
     } else {
       const usableDiameter = Math.max(0, diameterCm - 10);
@@ -182,27 +189,27 @@ export const PotCalculator: React.FC<Props> = ({
       const finalCount = Math.max(1, Math.min(maxByVol, maxByGeometry));
 
       if (finalCount === 1) {
-        points = [{ x: 50, y: 50, label: 'Roślina 1' }];
+        points = [{ x: 50, y: 50, label: `${plantLabelPrefix} 1` }];
       } else if (finalCount === 2) {
         points = [
-          { x: 35, y: 50, label: 'Roślina 1' },
-          { x: 65, y: 50, label: 'Roślina 2' },
+          { x: 35, y: 50, label: `${plantLabelPrefix} 1` },
+          { x: 65, y: 50, label: `${plantLabelPrefix} 2` },
         ];
       } else if (finalCount === 3) {
         points = [
-          { x: 50, y: 32, label: 'Roślina 1' },
-          { x: 33, y: 65, label: 'Roślina 2' },
-          { x: 67, y: 65, label: 'Roślina 3' },
+          { x: 50, y: 32, label: `${plantLabelPrefix} 1` },
+          { x: 33, y: 65, label: `${plantLabelPrefix} 2` },
+          { x: 67, y: 65, label: `${plantLabelPrefix} 3` },
         ];
       } else if (finalCount === 4) {
         points = [
-          { x: 35, y: 35, label: 'Roślina 1' },
-          { x: 65, y: 35, label: 'Roślina 2' },
-          { x: 35, y: 65, label: 'Roślina 3' },
-          { x: 65, y: 65, label: 'Roślina 4' },
+          { x: 35, y: 35, label: `${plantLabelPrefix} 1` },
+          { x: 65, y: 35, label: `${plantLabelPrefix} 2` },
+          { x: 35, y: 65, label: `${plantLabelPrefix} 3` },
+          { x: 65, y: 65, label: `${plantLabelPrefix} 4` },
         ];
       } else {
-        points.push({ x: 50, y: 50, label: 'Roślina 1' });
+        points.push({ x: 50, y: 50, label: `${plantLabelPrefix} 1` });
         const remaining = finalCount - 1;
         const radius = remaining < 6 ? 25 : 35;
         const angleStep = (2 * Math.PI) / remaining;
@@ -210,7 +217,7 @@ export const PotCalculator: React.FC<Props> = ({
           points.push({
             x: 50 + radius * Math.cos(i * angleStep),
             y: 50 + radius * Math.sin(i * angleStep),
-            label: `Roślina ${i + 2}`,
+            label: `${plantLabelPrefix} ${i + 2}`,
           });
         }
       }
@@ -220,10 +227,12 @@ export const PotCalculator: React.FC<Props> = ({
         maxByGeometry,
         maxByVol,
         points: points.slice(0, finalCount),
-        dimensionText: `Średnica ⌀ ${diameterCm} cm, wys. ${roundHeightCm} cm`,
+        dimensionText: isEn
+          ? `Diameter ⌀ ${diameterCm} cm, height ${roundHeightCm} cm`
+          : `Średnica ⌀ ${diameterCm} cm, wys. ${roundHeightCm} cm`,
       };
     }
-  }, [shape, lengthCm, widthCm, rectHeightCm, diameterCm, roundHeightCm, volumeLiters, minPlantVol, spacingCm]);
+  }, [shape, lengthCm, widthCm, rectHeightCm, diameterCm, roundHeightCm, volumeLiters, minPlantVol, spacingCm, isEn]);
 
   // Ocena dopasowania donicy
   const isDepthOk = heightCm >= minDepth;
@@ -283,25 +292,33 @@ export const PotCalculator: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider mb-1">
             <Ruler className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Kalkulator i szkicownik donicowy (Proces 2-krokowy)</span>
+            <span>{isEn ? 'Pot Calculator & Layout Planner (2 Steps)' : 'Kalkulator i szkicownik donicowy (Proces 2-krokowy)'}</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">
-            {step === 1 ? 'Krok 1: Konfiguracja donicy i rośliny' : 'Krok 2: Wynik, makieta i weryfikacja wymogów'}
+            {step === 1
+              ? (isEn ? 'Step 1: Container & Plant Configuration' : 'Krok 1: Konfiguracja donicy i rośliny')
+              : (isEn ? 'Step 2: Results, Layout & Requirement Verification' : 'Krok 2: Wynik, makieta i weryfikacja wymogów')}
           </h2>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
             {step === 1
-              ? 'Wprowadź wymiary donicy, wybierz roślinę i materiał, a następnie kliknij przycisk „Oblicz”.'
-              : 'Sprawdź, czy donica spełnia minimalne wymagania i zobacz zieloną makietę rozmieszczenia rozstawy.'}
+              ? (isEn
+                  ? 'Enter pot dimensions, select plant and material, then click "Calculate".'
+                  : 'Wprowadź wymiary donicy, wybierz roślinę i materiał, a następnie kliknij przycisk „Oblicz”.')
+              : (isEn
+                  ? 'Check if the container meets agronomic requirements and view the 2D spacing layout.'
+                  : 'Sprawdź, czy donica spełnia minimalne wymagania i zobacz zieloną makietę rozmieszczenia rozstawy.')}
           </p>
         </div>
 
         {isModal && onClose && (
           <button
+            id="close-pot-calculator-modal-btn"
             type="button"
             onClick={onClose}
-            className="self-end sm:self-center px-3.5 py-1.5 rounded-xl border border-stone-200 dark:border-stone-700 text-xs font-semibold text-stone-600 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800 cursor-pointer"
+            className="self-end sm:self-center min-w-[44px] min-h-[44px] px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors cursor-pointer shrink-0 shadow-sm"
+            aria-label={isEn ? 'Close' : 'Zamknij'}
           >
-            Zamknij
+            {isEn ? 'Close' : 'Zamknij'}
           </button>
         )}
       </div>
@@ -329,9 +346,11 @@ export const PotCalculator: React.FC<Props> = ({
               1
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold truncate">Krok 1: Konfiguracja</div>
+              <div className="text-xs font-bold truncate">
+                {isEn ? 'Step 1: Configuration' : 'Krok 1: Konfiguracja'}
+              </div>
               <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate hidden sm:block">
-                Wybór rośliny, wymiary i materiał
+                {isEn ? 'Plant choice, dimensions & material' : 'Wybór rośliny, wymiary i materiał'}
               </div>
             </div>
           </button>
@@ -356,9 +375,11 @@ export const PotCalculator: React.FC<Props> = ({
               2
             </div>
             <div className="min-w-0">
-              <div className="text-xs font-bold truncate">Krok 2: Wynik i makieta</div>
+              <div className="text-xs font-bold truncate">
+                {isEn ? 'Step 2: Results & Layout' : 'Krok 2: Wynik i makieta'}
+              </div>
               <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate hidden sm:block">
-                Weryfikacja, szkic 2D i rozstawa
+                {isEn ? 'Verification, 2D sketch & spacing' : 'Weryfikacja, szkic 2D i rozstawa'}
               </div>
             </div>
           </button>
@@ -439,3 +460,4 @@ export const PotCalculator: React.FC<Props> = ({
     </div>
   );
 };
+
