@@ -453,6 +453,7 @@ export const BalconyDrawer: React.FC<BalconyDrawerProps> = ({
         <div className="p-5 sm:p-6 border-t border-stone-200 dark:border-stone-800 bg-white/90 dark:bg-stone-900/90 backdrop-blur-md space-y-2.5">
           <button
             id="drawer-open-full-setup-btn"
+            data-testid="drawer-open-full-setup"
             type="button"
             onClick={() => {
               onClose();

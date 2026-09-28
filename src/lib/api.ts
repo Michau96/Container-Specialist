@@ -1,7 +1,8 @@
 import { UserBalconySpec, Plant, CalendarResponse, WeatherData, RegionInfo, PolandRegionKey, Orientation } from '../types';
 import defaultPlantsData from '../data/plants.json';
+import { validatePlantCatalog } from './catalogValidation';
 
-const fallbackPlants = defaultPlantsData as unknown as Plant[];
+const fallbackPlants = validatePlantCatalog(defaultPlantsData).validPlants;
 
 export const DEFAULT_BALCONY_SPEC: UserBalconySpec = {
   region: 'mazowieckie',

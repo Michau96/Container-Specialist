@@ -185,7 +185,19 @@
       "Tumbling Tom Red",
       "Koralik"
     ],
-    "wind_tolerance": "Średnia (krzaczasty pokrój jest odporniejszy niż wysokie odmiany)"
+    "wind_tolerance": "Średnia (krzaczasty pokrój jest odporniejszy niż wysokie odmiany)",
+    "common_name": "Pomidor",
+    "search_keywords": [
+      "Pomidor",
+      "pomidory",
+      "pomidorek",
+      "koktajlowy",
+      "pomidory koktajlowe",
+      "Vilma",
+      "Maskotka",
+      "Bajaja",
+      "tomato"
+    ]
   },
   {
     "category": "Psiankowate",
@@ -6619,7 +6631,8 @@
         "badge": "Polecana do donic",
         "reason": "Brak pergaminowej wyściółki, wysoki"
       }
-    ]
+    ],
+    "summary": "Chrupiące, słodkie strąki prosto z balkonowej kratki. Doskonały na wczesnowiosenny siew, wzbogaca glebę w azot i nie wymaga intensywnego nawożenia."
   },
   {
     "category": "Kapustowate",
@@ -6710,7 +6723,8 @@
         "badge": "Polecana do donic",
         "reason": "Mniejsza, bardziej chrupka, zielone ogonki"
       }
-    ]
+    ],
+    "summary": "Błyskawicznie rosnąca kapusta azjatycka o soczystych, chrupkich ogonkach. Idealna do uprawy wiosną i późnym latem, gotowa do zbioru już po 30-40 dniach."
   },
   {
     "category": "Rutowate",
@@ -6795,7 +6809,8 @@
         "badge": "Polecana do donic",
         "reason": "Owoce okrągłe, słodsze"
       }
-    ]
+    ],
+    "summary": "Dekoracyjne mini-drzewko cytrusowe o aromatycznych, jadalnych w całości owocach. Zachwyca zapachem kwiatów i cytrusowym plonem na słonecznym balkonie."
   },
   {
     "category": "Morwowate",
@@ -6882,7 +6897,8 @@
         "badge": "Polecana do donic",
         "reason": "Szybko owocująca, mniejsze zielono-żółte owoce"
       }
-    ]
+    ],
+    "summary": "Śródziemnomorska roślina o pięknych, dłoniastych liściach i słodkich owocach. Wyjątkowo trwała w dużych donicach na ciepłym, osłoniętym balkonie."
   },
   {
     "category": "Psiankowate",
@@ -6970,7 +6986,8 @@
         "badge": "Polecana do donic",
         "reason": "Niższa, drobniejsze owoce, szybciej owocująca"
       }
-    ]
+    ],
+    "summary": "Egzotyczna krewna pomidora o słodko-kwaśnych owocach w lampionikach. Bogata w antyoksydanty, tworzy bujny, owocujący krzew."
   },
   {
     "category": "Dyniowate",
@@ -7050,7 +7067,8 @@
         "badge": "Polecana do donic",
         "reason": "Egzotyczny smak, duża plonność pod osłonami"
       }
-    ]
+    ],
+    "summary": "Afrykański ogórek rogaty o orzeźwiającym, bananowo-limonkowym smaku. Efektowne pnącze, które w upalne lato szybko zazielenia balkonową kratkę."
   },
   {
     "category": "Ślazowate",
@@ -7135,7 +7153,8 @@
         "badge": "Polecana do donic",
         "reason": "Klasyczna odmiana, zielone strąki, rodzi dużo owoców"
       }
-    ]
+    ],
+    "summary": "Ciepłolubny piżmian jadalny o zjawiskowych kwiatach przypominających hibiskus. Młode strąki są niezastąpione w kuchni i bogate w błonnik."
   },
   {
     "category": "Powojowate",
@@ -7220,7 +7239,8 @@
         "badge": "Polecana do donic",
         "reason": "Zwykły sklepowy batat z pomarańczowym miąższem"
       }
-    ]
+    ],
+    "summary": "Słodki ziemniak o bujnych, dekoracyjnych pnączach. Tworzy smaczne bulwy w głębokich workach lub donicach, zachwycając gęstą ścianą zieleni."
   },
   {
     "category": "Kapustowate",
@@ -7307,7 +7327,8 @@
         "badge": "Polecana do donic",
         "reason": "Czerwona/purpurowa odmiana, bardzo ozdobna"
       }
-    ]
+    ],
+    "summary": "Chrupiąca kapusta na zbiór jesienny i wczesnowiosenny. Tworzy zwięzłe główki bogate w witaminy, doskonale sprawdzając się w chłodniejsze dni."
   },
   {
     "category": "Wiechlinowate",
@@ -7387,6 +7408,7 @@
         "badge": "Polecana do donic",
         "reason": "Pospolita odmiana sklepowa, najlepsza w smaku"
       }
-    ]
+    ],
+    "summary": "Aromatyczna trawa o intensywnym cytrusowym zapachu. Niezastąpiona w kuchni azjatyckiej i naparach, odstrasza komary na letnim balkonie."
   }
 ]

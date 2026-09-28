@@ -199,6 +199,8 @@ export type PlantVarietyRaw = string | { name: string; features?: string };
 export interface Plant {
   id: string;
   name: string;
+  common_name?: string;
+  search_keywords?: string[];
   plant_group: 'warzywa' | 'owoce' | 'ziola' | 'ozdobne' | 'kielki' | 'grzyby';
   category: string;
   varieties: PlantVarietyRaw[];

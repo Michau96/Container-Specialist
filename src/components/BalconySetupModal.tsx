@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Compass,
   Building,
@@ -33,6 +34,7 @@ import {
   PanelTop,
   CheckCircle2,
   ArrowRight,
+  AlertCircle,
 } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import {
@@ -46,6 +48,282 @@ import {
   CareTime,
 } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS, OrientationOption } from '../lib/api';
+
+export const getFloorSemanticKey = (floor: number): string => {
+  switch (floor) {
+    case 0:
+      return 'ground';
+    case 2:
+      return 'floor-1-3';
+    case 5:
+      return 'floor-4-6';
+    case 8:
+      return 'floor-7-plus';
+    default:
+      return `floor-${floor}`;
+  }
+};
+
+export const getSunlightSemanticKey = (key: string): string => {
+  switch (key) {
+    case 'S':
+      return 'full-sun';
+    case 'E':
+      return 'morning-sun';
+    case 'W':
+      return 'afternoon-sun';
+    case 'N':
+      return 'shade';
+    case 'SE':
+      return 'south-east';
+    case 'SW':
+      return 'south-west';
+    case 'NE':
+      return 'north-east';
+    case 'NW':
+      return 'north-west';
+    default:
+      return key.toLowerCase().replace(/_/g, '-');
+  }
+};
+
+export const getRecommendedOrientation = (
+  region: PolandRegionKey | null,
+  floor: number | null
+): Orientation | null => {
+  if (!region && floor === null) return null;
+  // High floor (>= 4 floors) receives optimal light from south without tree/roof obstructions
+  if (floor !== null && floor >= 4) {
+    return 'S';
+  }
+  // Ground floor benefits from warm South sun
+  if (floor === 0) {
+    return 'S';
+  }
+  // Warm southwestern regions (dolnośląskie, opolskie)
+  if (region === 'dolnoslaskie' || region === 'opolskie') {
+    return 'SE';
+  }
+  // Cooler northeastern / mountain regions (podlaskie, warmińsko-mazurskie)
+  if (region === 'podlaskie' || region === 'warminsko_mazurskie') {
+    return 'S';
+  }
+  return 'S';
+};
+
+export interface StepValidationResult {
+  isValid: boolean;
+  missingFields: string[];
+  validationMessage: string;
+}
+
+export interface FullProfileValidationResult {
+  isValid: boolean;
+  step1: StepValidationResult;
+  step2: StepValidationResult;
+  step3: StepValidationResult;
+  firstInvalidStep: 1 | 2 | 3 | null;
+  firstInvalidField: string | null;
+  validationMessage: string;
+}
+
+export const validateStep1 = (
+  region: PolandRegionKey | string | null | undefined,
+  floor: number | null | undefined,
+  language: 'pl' | 'en' = 'pl'
+): StepValidationResult => {
+  const isEn = language === 'en';
+  const missingFields: string[] = [];
+
+  const validRegions = Object.keys(POLAND_REGIONS);
+  const isValidRegion =
+    Boolean(region && typeof region === 'string' && region.trim().length > 0 && validRegions.includes(region));
+
+  if (!isValidRegion) {
+    missingFields.push('region');
+  }
+
+  const isValidFloor =
+    floor !== null &&
+    floor !== undefined &&
+    typeof floor === 'number' &&
+    !isNaN(floor) &&
+    floor >= 0 &&
+    floor <= 30;
+
+  if (!isValidFloor) {
+    missingFields.push('floor');
+  }
+
+  if (missingFields.length === 2) {
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isEn
+        ? 'Please select both province/city and floor to proceed.'
+        : 'Wybierz województwo oraz piętro swojego balkonu, aby przejść dalej.',
+    };
+  }
+
+  if (!isValidRegion) {
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isEn
+        ? 'Please select your balcony location (province/city) to proceed.'
+        : 'Wybierz województwo (lokalizację) swojego balkonu, aby przejść dalej.',
+    };
+  }
+
+  if (!isValidFloor) {
+    const isInvalidNumber =
+      floor !== null && floor !== undefined && (floor < 0 || floor > 30 || isNaN(floor));
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isInvalidNumber
+        ? (isEn ? 'Please specify a valid floor number (0-30).' : 'Podaj prawidłowy numer piętra (0-30).')
+        : (isEn ? 'Please select the floor of your balcony to proceed.' : 'Wybierz piętro, na którym znajduje się Twój balkon, aby przejść dalej.'),
+    };
+  }
+
+  return {
+    isValid: true,
+    missingFields: [],
+    validationMessage: '',
+  };
+};
+
+export const validateStep2 = (
+  orientation: Orientation | string | null | undefined,
+  language: 'pl' | 'en' = 'pl'
+): StepValidationResult => {
+  const isEn = language === 'en';
+  const missingFields: string[] = [];
+
+  const validOrientations: string[] = [
+    'S', 'E', 'W', 'N', 'SE', 'SW', 'NE', 'NW',
+    'SSE', 'SSW', 'ESE', 'ENE', 'WSW', 'WNW', 'NNE', 'NNW',
+    'S_SE', 'S_SW', 'W_SW', 'W_NW', 'E_SE', 'E_NE', 'N_NW', 'N_NE',
+  ];
+
+  const isValid = Boolean(orientation && validOrientations.includes(orientation));
+  if (!isValid) {
+    missingFields.push('orientation');
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isEn
+        ? 'Please select the sun exposure / orientation of your balcony to proceed.'
+        : 'Wybierz kierunek świata (ekspozycję) swojego balkonu, aby przejść dalej.',
+    };
+  }
+
+  return {
+    isValid: true,
+    missingFields: [],
+    validationMessage: '',
+  };
+};
+
+export const validateStep3 = (
+  pots: ContainerType[] | string[] | null | undefined,
+  careTime: CareTime | string | null | undefined,
+  language: 'pl' | 'en' = 'pl'
+): StepValidationResult => {
+  const isEn = language === 'en';
+  const missingFields: string[] = [];
+
+  const isValidPots = Array.isArray(pots) && pots.length > 0;
+  if (!isValidPots) {
+    missingFields.push('pots');
+  }
+
+  const isValidCareTime = Boolean(
+    careTime && typeof careTime === 'string' && careTime.trim().length > 0
+  );
+  if (!isValidCareTime) {
+    missingFields.push('care_time');
+  }
+
+  if (missingFields.length === 2) {
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isEn
+        ? 'Please select your containers and watering frequency.'
+        : 'Wybierz co najmniej jeden rodzaj donicy oraz częstotliwość podlewania.',
+    };
+  }
+
+  if (!isValidPots) {
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isEn
+        ? 'Please select at least one container type to proceed.'
+        : 'Wybierz co najmniej jeden rodzaj donicy, aby zapisać konfigurację.',
+    };
+  }
+
+  if (!isValidCareTime) {
+    return {
+      isValid: false,
+      missingFields,
+      validationMessage: isEn
+        ? 'Please select how often you can water plants.'
+        : 'Wybierz częstotliwość podlewania, aby zapisać konfigurację.',
+    };
+  }
+
+  return {
+    isValid: true,
+    missingFields: [],
+    validationMessage: '',
+  };
+};
+
+export const validateFullProfile = (
+  spec: Partial<UserBalconySpec> | null | undefined,
+  language: 'pl' | 'en' = 'pl'
+): FullProfileValidationResult => {
+  const safeSpec = spec || {};
+  const step1 = validateStep1(
+    safeSpec.region || null,
+    typeof safeSpec.floor === 'number' ? safeSpec.floor : null,
+    language
+  );
+  const step2 = validateStep2(safeSpec.orientation || null, language);
+  const step3 = validateStep3(safeSpec.pots || [], safeSpec.care_time || null, language);
+
+  let firstInvalidStep: 1 | 2 | 3 | null = null;
+  let firstInvalidField: string | null = null;
+  let validationMessage = '';
+
+  if (!step1.isValid) {
+    firstInvalidStep = 1;
+    firstInvalidField = step1.missingFields[0] || null;
+    validationMessage = step1.validationMessage;
+  } else if (!step2.isValid) {
+    firstInvalidStep = 2;
+    firstInvalidField = step2.missingFields[0] || null;
+    validationMessage = step2.validationMessage;
+  } else if (!step3.isValid) {
+    firstInvalidStep = 3;
+    firstInvalidField = step3.missingFields[0] || null;
+    validationMessage = step3.validationMessage;
+  }
+
+  return {
+    isValid: step1.isValid && step2.isValid && step3.isValid,
+    step1,
+    step2,
+    step3,
+    firstInvalidStep,
+    firstInvalidField,
+    validationMessage,
+  };
+};
 
 interface Props {
   isOpen: boolean;
@@ -308,31 +586,181 @@ export const BalconySetupModal: React.FC<Props> = ({
   const [isRoofingDropdownOpen, setIsRoofingDropdownOpen] = useState(false);
   const [barierkaViewMode, setBarierkaViewMode] = useState<'dropdown' | 'cards'>('dropdown');
   const [roofingViewMode, setRoofingViewMode] = useState<'dropdown' | 'cards'>('dropdown');
+  const [isCloseTooltipVisible, setIsCloseTooltipVisible] = useState(false);
+  const triggerElementRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
-  // Close dropdowns when clicking outside or pressing ESC
+  // Capture currently active element when modal opens to restore focus on dismissal
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-dropdown-container="barierka"]')) {
-        setIsBarierkaDropdownOpen(false);
+    if (isOpen) {
+      triggerElementRef.current = document.activeElement as HTMLElement | null;
+    }
+  }, [isOpen]);
+
+  const handleDismiss = useCallback(() => {
+    if (onClose) {
+      onClose();
+      // Restore focus to the element that opened the modal after dismissal
+      if (triggerElementRef.current && typeof triggerElementRef.current.focus === 'function') {
+        const el = triggerElementRef.current;
+        setTimeout(() => {
+          el.focus();
+        }, 0);
       }
-      if (!target.closest('[data-dropdown-container="roofing"]')) {
-        setIsRoofingDropdownOpen(false);
-      }
+    }
+  }, [onClose]);
+
+  // Mark the application background as inert and aria-hidden while the modal is open
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const rootEl = document.getElementById('root');
+    const modalRoot = document.getElementById('modal-root');
+    const nodesToInert: HTMLElement[] = [];
+
+    if (rootEl) {
+      nodesToInert.push(rootEl);
+    } else {
+      document.body.childNodes.forEach((node) => {
+        if (
+          node instanceof HTMLElement &&
+          node !== modalRoot &&
+          (!dialogRef.current || !node.contains(dialogRef.current))
+        ) {
+          nodesToInert.push(node);
+        }
+      });
+    }
+
+    nodesToInert.forEach((node) => {
+      node.setAttribute('inert', '');
+      (node as any).inert = true;
+      node.setAttribute('aria-hidden', 'true');
+    });
+
+    return () => {
+      nodesToInert.forEach((node) => {
+        node.removeAttribute('inert');
+        (node as any).inert = false;
+        node.removeAttribute('aria-hidden');
+      });
     };
+  }, [isOpen]);
+
+  // Initial focus management: move focus to heading when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const id = requestAnimationFrame(() => {
+      if (headingRef.current) {
+        headingRef.current.focus();
+      } else if (dialogRef.current) {
+        const firstFocusable = dialogRef.current.querySelector<HTMLElement>(
+          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        );
+        firstFocusable?.focus();
+      }
+    });
+
+    return () => cancelAnimationFrame(id);
+  }, [isOpen]);
+
+  // Robust focus trap on keydown (Tab & Shift+Tab) and focus containment
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const FOCUSABLE_SELECTOR = [
+      'a[href]',
+      'button:not([disabled]):not([aria-hidden="true"])',
+      'input:not([disabled]):not([aria-hidden="true"])',
+      'select:not([disabled]):not([aria-hidden="true"])',
+      'textarea:not([disabled]):not([aria-hidden="true"])',
+      '[tabindex]:not([tabindex="-1"]):not([disabled]):not([aria-hidden="true"])',
+    ].join(', ');
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setIsBarierkaDropdownOpen(false);
-        setIsRoofingDropdownOpen(false);
+        if (isBarierkaDropdownOpen || isRoofingDropdownOpen) {
+          setIsBarierkaDropdownOpen(false);
+          setIsRoofingDropdownOpen(false);
+          return;
+        }
+        if (isOpen && onClose) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDismiss();
+          return;
+        }
+      }
+
+      if (e.key === 'Tab') {
+        if (!dialogRef.current) return;
+
+        const focusableElements = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+        ).filter((el) => {
+          return (
+            el.offsetParent !== null &&
+            !el.hasAttribute('disabled') &&
+            el.getAttribute('aria-hidden') !== 'true'
+          );
+        });
+
+        if (focusableElements.length === 0) {
+          e.preventDefault();
+          return;
+        }
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+        const currentActive = document.activeElement;
+
+        if (e.shiftKey) {
+          // Shift + Tab: wrap to last element if on first element or on heading/outside
+          if (
+            currentActive === firstElement ||
+            currentActive === headingRef.current ||
+            !dialogRef.current.contains(currentActive)
+          ) {
+            e.preventDefault();
+            lastElement.focus();
+          }
+        } else {
+          // Tab: wrap to first element if on last element or outside
+          if (
+            currentActive === lastElement ||
+            currentActive === headingRef.current ||
+            !dialogRef.current.contains(currentActive)
+          ) {
+            e.preventDefault();
+            firstElement.focus();
+          }
+        }
       }
     };
-    document.addEventListener('click', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
+
+    const handleFocusIn = (e: FocusEvent) => {
+      if (!dialogRef.current) return;
+      if (!dialogRef.current.contains(e.target as Node)) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const focusable = dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
+        if (focusable.length > 0) {
+          focusable[0].focus();
+        } else if (headingRef.current) {
+          headingRef.current.focus();
+        }
+      }
     };
-  }, []);
+
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('focusin', handleFocusIn, true);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('focusin', handleFocusIn, true);
+    };
+  }, [isOpen, onClose, handleDismiss, isBarierkaDropdownOpen, isRoofingDropdownOpen]);
 
   const selectedBarierkaOption =
     BALCONY_TYPE_OPTIONS.find((o) => o.key === spec.balcony_type) || BALCONY_TYPE_OPTIONS[0];
@@ -348,6 +776,25 @@ export const BalconySetupModal: React.FC<Props> = ({
   const [selectedOrientation, setSelectedOrientation] = useState<Orientation | null>(
     isFirstTime ? null : initialSpec?.orientation || null
   );
+
+  const [isModalReady, setIsModalReady] = useState(false);
+  const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
+
+  useEffect(() => {
+    setIsGuidanceOpen(false);
+  }, [step]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setIsModalReady(false);
+      const rafId = requestAnimationFrame(() => {
+        setIsModalReady(true);
+      });
+      return () => cancelAnimationFrame(rafId);
+    } else {
+      setIsModalReady(false);
+    }
+  }, [isOpen, step]);
 
   useEffect(() => {
     if (isOpen) {
@@ -381,11 +828,49 @@ export const BalconySetupModal: React.FC<Props> = ({
     setSpec((prev) => ({ ...prev, orientation: orientKey }));
   };
 
-  const isStep1Valid = selectedRegion !== null && selectedFloor !== null;
-  const isStep2Valid = selectedOrientation !== null;
+  const [stepError, setStepError] = useState<string | null>(null);
+
+  const step1Validation = useMemo(
+    () => validateStep1(selectedRegion, selectedFloor, language),
+    [selectedRegion, selectedFloor, language]
+  );
+
+  const step2Validation = useMemo(
+    () => validateStep2(selectedOrientation, language),
+    [selectedOrientation, language]
+  );
+
+  const step3Validation = useMemo(
+    () => validateStep3(spec.pots, spec.care_time, language),
+    [spec.pots, spec.care_time, language]
+  );
+
+  const currentStepValidation = useMemo<StepValidationResult>(() => {
+    if (step === 1) return step1Validation;
+    if (step === 2) return step2Validation;
+    return step3Validation;
+  }, [step, step1Validation, step2Validation, step3Validation]);
+
+  const fullProfileValidation = useMemo(
+    () =>
+      validateFullProfile(
+        {
+          ...spec,
+          region: selectedRegion || undefined,
+          floor: selectedFloor ?? undefined,
+          orientation: selectedOrientation || undefined,
+        },
+        language
+      ),
+    [spec, selectedRegion, selectedFloor, selectedOrientation, language]
+  );
+
+  const isStep1Valid = step1Validation.isValid;
+  const isStep2Valid = step2Validation.isValid;
+  const isStep3Valid = step3Validation.isValid;
   const isStep1Complete = isStep1Valid;
   const isStep2Complete = isStep1Complete && isStep2Valid;
-  const isStep3Complete = isStep1Complete && isStep2Complete && spec.pots.length > 0 && Boolean(spec.care_time);
+  const isStep3Complete = isStep1Complete && isStep2Complete && isStep3Valid;
 
   const isStepComplete = (stepNum: 1 | 2 | 3): boolean => {
     if (stepNum === 1) return isStep1Complete;
@@ -397,37 +882,67 @@ export const BalconySetupModal: React.FC<Props> = ({
   const completedStepsCount = (isStep1Complete ? 1 : 0) + (isStep2Complete ? 1 : 0) + (isStep3Complete ? 1 : 0);
   const progressPercent = Math.round((completedStepsCount / 3) * 100);
 
-  const getStep1InactivityReason = (): string => {
-    if (selectedRegion === null && selectedFloor === null) {
-      return isEn
-        ? 'Please select both province/city and floor to proceed.'
-        : 'Wybierz województwo oraz piętro swojego balkonu, aby przejść dalej.';
-    }
-    if (selectedRegion === null) {
-      return isEn
-        ? 'Please select your balcony location (province/city) to proceed.'
-        : 'Wybierz województwo (lokalizację) swojego balkonu, aby przejść dalej.';
-    }
-    if (selectedFloor === null) {
-      return isEn
-        ? 'Please select the floor of your balcony to proceed.'
-        : 'Wybierz piętro, na którym znajduje się Twój balkon, aby przejść dalej.';
-    }
-    return '';
-  };
+  const isNextDisabled = !currentStepValidation.isValid;
+  const isSaveDisabled = !fullProfileValidation.isValid;
 
-  const getStep2InactivityReason = (): string => {
-    if (selectedOrientation === null) {
-      return isEn
-        ? 'Please select the sun exposure / orientation of your balcony to proceed.'
-        : 'Wybierz kierunek świata (ekspozycję) swojego balkonu, aby przejść dalej.';
-    }
-    return '';
-  };
+  const getStep1InactivityReason = (): string => step1Validation.validationMessage;
+  const getStep2InactivityReason = (): string => step2Validation.validationMessage;
+  const getStep3InactivityReason = (): string => step3Validation.validationMessage;
 
-  const isNextDisabled =
-    (step === 1 && !isStep1Valid) ||
-    (step === 2 && !isStep2Valid);
+  useEffect(() => {
+    setStepError(null);
+  }, [step, selectedRegion, selectedFloor, selectedOrientation, spec.pots, spec.care_time]);
+
+  const focusFirstInvalidElement = useCallback((field: string | null) => {
+    setTimeout(() => {
+      if (!field) return;
+      if (field === 'region') {
+        const searchInput = document.getElementById('balcony-region-search');
+        if (searchInput) {
+          searchInput.focus();
+          return;
+        }
+        const firstOption = document.querySelector<HTMLElement>('[data-testid^="location-option-"]');
+        if (firstOption) firstOption.focus();
+      } else if (field === 'floor') {
+        const floorBtn =
+          document.getElementById('floor-option-ground') ||
+          document.querySelector<HTMLElement>('[data-testid^="floor-option-"]');
+        if (floorBtn) floorBtn.focus();
+      } else if (field === 'orientation') {
+        const orientCard =
+          document.getElementById('orient-card-S') ||
+          document.querySelector<HTMLElement>('[data-testid^="sunlight-option-"]');
+        if (orientCard) orientCard.focus();
+      } else if (field === 'pots') {
+        const firstPot = document.querySelector<HTMLElement>('[data-testid^="pot-option-"]');
+        if (firstPot) firstPot.focus();
+      } else if (field === 'care_time') {
+        const firstCare = document.querySelector<HTMLElement>('[data-testid^="care-option-"]');
+        if (firstCare) firstCare.focus();
+      }
+    }, 50);
+  }, []);
+
+  const handleNextStep = useCallback(() => {
+    if (step === 1) {
+      if (!step1Validation.isValid) {
+        setStepError(step1Validation.validationMessage);
+        focusFirstInvalidElement(step1Validation.missingFields[0] || 'region');
+        return;
+      }
+      setStepError(null);
+      setStep(2);
+    } else if (step === 2) {
+      if (!step2Validation.isValid) {
+        setStepError(step2Validation.validationMessage);
+        focusFirstInvalidElement(step2Validation.missingFields[0] || 'orientation');
+        return;
+      }
+      setStepError(null);
+      setStep(3);
+    }
+  }, [step, step1Validation, step2Validation, focusFirstInvalidElement]);
 
   // Close tooltip when clicking outside
   useEffect(() => {
@@ -461,6 +976,10 @@ export const BalconySetupModal: React.FC<Props> = ({
     return ORIENTATION_OPTIONS;
   }, [exposureFilter]);
 
+  const recommendedOrientation = useMemo(() => {
+    return getRecommendedOrientation(selectedRegion, selectedFloor);
+  }, [selectedRegion, selectedFloor]);
+
   const togglePot = (pot: ContainerType) => {
     setSpec((prev) => {
       const exists = prev.pots.includes(pot);
@@ -471,185 +990,167 @@ export const BalconySetupModal: React.FC<Props> = ({
 
   const handleSave = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    onSave(spec);
+    const fullValidation = validateFullProfile(
+      {
+        ...spec,
+        region: selectedRegion || undefined,
+        floor: selectedFloor ?? undefined,
+        orientation: selectedOrientation || undefined,
+      },
+      language
+    );
+
+    if (!fullValidation.isValid) {
+      setStepError(fullValidation.validationMessage);
+      if (fullValidation.firstInvalidStep && fullValidation.firstInvalidStep !== step) {
+        setStep(fullValidation.firstInvalidStep);
+      }
+      focusFirstInvalidElement(fullValidation.firstInvalidField);
+      return;
+    }
+
+    setStepError(null);
+    onSave({
+      ...spec,
+      region: selectedRegion!,
+      floor: selectedFloor!,
+      orientation: selectedOrientation!,
+    });
   };
 
   if (!isOpen) return null;
 
+  const modalTarget =
+    typeof document !== 'undefined'
+      ? document.getElementById('modal-root') || document.body
+      : null;
+
+  if (!modalTarget) return null;
+
   const currentRegion = selectedRegion ? POLAND_REGIONS[selectedRegion] : null;
   const currentExposure = ORIENTATION_OPTIONS.find((o) => o.key === spec.orientation);
 
-  return (
+  return createPortal(
     <div
       id="balcony-setup-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm overflow-y-auto animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm overflow-hidden animate-fade-in"
     >
       <div
+        ref={dialogRef}
         id="balcony-setup-dialog"
-        className="bg-stone-50 dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-stone-200/90 dark:border-stone-800 overflow-hidden transition-all"
+        data-testid="onboarding-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-modal-heading"
+        data-modal-ready={isModalReady ? 'true' : 'false'}
+        className="bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl max-w-[560px] w-full max-h-[90dvh] flex flex-col shadow-xl border border-stone-200/90 dark:border-stone-800 overflow-hidden transition-all"
       >
-        {/* Top Header & Wizard Stepper */}
-        <div className="bg-white dark:bg-stone-950 p-5 sm:p-6 border-b border-stone-200/80 dark:border-stone-800">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/60 mb-2">
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>{isEn ? 'Balcony Setup Wizard' : 'Kreator Twojego Balkonu'}</span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-                {step === 1 && (isEn ? 'Where is your balcony garden?' : 'Gdzie rośnie Twój ogród?')}
-                {step === 2 && (isEn ? 'Which direction does the sun face?' : 'W którą stronę pada słońce?')}
-                {step === 3 && (isEn ? 'Containers & care time' : 'Twoja przestrzeń i donice')}
-              </h2>
-              <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1">
-                {step === 1 && (isEn ? 'We tailor plants to your local microclimate and building height.' : 'Dopasujemy rośliny do klimatu w Twojej okolicy i wysokości budynku.')}
-                {step === 2 && (isEn ? 'Sunlight is key — indicate orientation to get crops that thrive in this light.' : 'Słońce to klucz do sukcesu – wskaż kierunek, a dobierzemy gatunki, które pokochają to światło.')}
-                {step === 3 && (isEn ? 'Specify container types and how often you can water your balcony pots.' : 'Określ rodzaj donic i czas, jaki chcesz poświęcić na podlewanie.')}
-              </p>
+        {/* Top Header focused on: one concise heading, one short benefit statement, one secondary dismiss action */}
+        <div className="shrink-0 bg-white dark:bg-stone-950 p-4 sm:p-7 pb-3 sm:pb-4 border-b border-stone-200/80 dark:border-stone-800">
+          <div className="flex items-center justify-between gap-3 mb-3 text-xs font-semibold text-stone-500 dark:text-stone-400">
+            <div className="flex items-center gap-1.5 sm:gap-2" role="tablist" aria-label={isEn ? 'Balcony setup steps' : 'Kroki konfiguracji balkonu'}>
+              {[
+                { num: 1 as const, label: isEn ? 'Location' : 'Lokalizacja' },
+                { num: 2 as const, label: isEn ? 'Exposure' : 'Ekspozycja' },
+                { num: 3 as const, label: isEn ? 'Pots & care' : 'Donice i opieka' },
+              ].map((s, idx) => {
+                const isActive = step === s.num;
+                const isCompleted = isStepComplete(s.num);
+                const isDisabledTab =
+                  (s.num === 2 && !isStep1Valid) ||
+                  (s.num === 3 && (!isStep1Valid || !isStep2Valid));
+                return (
+                  <React.Fragment key={s.num}>
+                    {idx > 0 && <span className="text-stone-300 dark:text-stone-700 select-none">/</span>}
+                    <button
+                      type="button"
+                      id={`wizard-step-tab-${s.num}`}
+                      data-testid={`onboarding-step-${s.num}-tab`}
+                      role="tab"
+                      aria-selected={isActive}
+                      disabled={isDisabledTab}
+                      onClick={() => {
+                        if (isDisabledTab) return;
+                        setStep(s.num);
+                      }}
+                      className={`transition-colors cursor-pointer flex items-center gap-1 ${
+                        isActive
+                          ? 'text-emerald-700 dark:text-emerald-400 font-bold'
+                          : isCompleted
+                          ? 'text-stone-700 dark:text-stone-300 hover:text-emerald-600'
+                          : isDisabledTab
+                          ? 'text-stone-300 dark:text-stone-600 cursor-not-allowed'
+                          : 'text-stone-500 hover:text-stone-800'
+                      }`}
+                    >
+                      <span>{s.num}.</span>
+                      <span>{s.label}</span>
+                      {isCompleted && <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />}
+                    </button>
+                  </React.Fragment>
+                );
+              })}
             </div>
 
-            {onClose && !isFirstTime && (
-              <button
-                id="close-balcony-modal-btn"
-                type="button"
-                onClick={onClose}
-                className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
-                aria-label={isEn ? 'Close' : 'Zamknij'}
-              >
-                <X className="w-5 h-5 stroke-[2.5]" />
-              </button>
+            {onClose && (
+              <div className="relative inline-flex items-center">
+                <button
+                  id="close-balcony-modal-btn"
+                  data-testid="onboarding-close"
+                  type="button"
+                  onClick={handleDismiss}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      handleDismiss();
+                    }
+                  }}
+                  onMouseEnter={() => setIsCloseTooltipVisible(true)}
+                  onMouseLeave={() => setIsCloseTooltipVisible(false)}
+                  onFocus={() => setIsCloseTooltipVisible(true)}
+                  onBlur={() => setIsCloseTooltipVisible(false)}
+                  className="min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 hover:text-stone-950 dark:text-stone-100 dark:hover:text-white border border-stone-300 dark:border-stone-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-600 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-stone-900 transition-all cursor-pointer"
+                  aria-label="Zamknij"
+                  aria-describedby="close-modal-tooltip"
+                  title="Zamknij"
+                >
+                  <X className="w-5 h-5 stroke-[2.5]" aria-hidden="true" />
+                </button>
+                <span
+                  id="close-modal-tooltip"
+                  role="tooltip"
+                  className={`absolute top-full mt-1.5 right-0 px-2.5 py-1 bg-stone-900 dark:bg-stone-800 text-white text-[11px] font-medium rounded-md shadow-lg pointer-events-none transition-all duration-150 z-50 whitespace-nowrap border border-stone-700 ${
+                    isCloseTooltipVisible ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1'
+                  }`}
+                >
+                  Zamknij
+                </span>
+              </div>
             )}
           </div>
 
-          {/* Stepper Progress Bar & Info */}
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-1.5 font-semibold text-stone-600 dark:text-stone-300">
-                <span>{isEn ? 'Progress:' : 'Postęp:'}</span>
-                <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                  {isEn ? `${completedStepsCount} of 3 steps completed` : `${completedStepsCount} z 3 kroków ukończone`}
-                </span>
-              </div>
-              <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100/90 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80">
-                {progressPercent}%
-              </span>
-            </div>
-
-            {/* Visual Progress Bar Track */}
-            <div className="w-full bg-stone-100 dark:bg-stone-850 h-2 rounded-full overflow-hidden p-0.5 border border-stone-200/70 dark:border-stone-800">
-              <div
-                className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-300 ease-out shadow-xs"
-                style={{ width: `${Math.max(10, progressPercent)}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Stepper Tabs */}
-          <div className="mt-3.5 grid grid-cols-3 gap-2" role="tablist" aria-label={isEn ? 'Balcony setup steps' : 'Kroki konfiguracji balkonu'}>
-            {[
-              {
-                num: 1 as const,
-                label: isEn ? 'Location' : 'Lokalizacja',
-                icon: <MapPin className="w-3.5 h-3.5" />,
-              },
-              {
-                num: 2 as const,
-                label: isEn ? 'Exposure' : 'Ekspozycja',
-                icon: <Sun className="w-3.5 h-3.5" />,
-              },
-              {
-                num: 3 as const,
-                label: isEn ? 'Pots & care' : 'Donice i opieka',
-                icon: <Maximize2 className="w-3.5 h-3.5" />,
-              },
-            ].map((s) => {
-              const isActive = step === s.num;
-              const isCompleted = isStepComplete(s.num);
-              const isDisabledTab =
-                (s.num === 2 && !isStep1Valid) ||
-                (s.num === 3 && (!isStep1Valid || !isStep2Valid));
-
-              return (
-                <button
-                  key={s.num}
-                  type="button"
-                  id={`wizard-step-tab-${s.num}`}
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => {
-                    if (isDisabledTab) return;
-                    setStep(s.num);
-                  }}
-                  title={
-                    isDisabledTab
-                      ? (s.num === 2 ? getStep1InactivityReason() : (!isStep1Valid ? getStep1InactivityReason() : getStep2InactivityReason()))
-                      : isCompleted
-                      ? (isEn ? `Step ${s.num}: ${s.label} — Completed` : `Krok ${s.num}: ${s.label} — Ukończono`)
-                      : (isEn ? `Step ${s.num}: ${s.label}` : `Krok ${s.num}: ${s.label}`)
-                  }
-                  className={`flex items-center justify-between gap-1.5 py-2.5 px-2.5 sm:px-3 rounded-2xl text-xs font-semibold transition-all border cursor-pointer ${
-                    isCompleted && isActive
-                      ? 'bg-emerald-700 text-white border-emerald-600 shadow-sm ring-2 ring-emerald-500/40'
-                      : isCompleted && !isActive
-                      ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 border-emerald-400 dark:border-emerald-700/80 hover:bg-emerald-100/90 dark:hover:bg-emerald-900/60 shadow-xs'
-                      : isActive && !isCompleted
-                      ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 border-stone-800 dark:border-white shadow-sm ring-2 ring-emerald-500/30'
-                      : isDisabledTab
-                      ? 'bg-stone-100 dark:bg-stone-800/40 text-stone-400 dark:text-stone-600 border-stone-200/40 dark:border-stone-800/40 cursor-not-allowed opacity-60'
-                      : 'bg-stone-100 dark:bg-stone-800/60 text-stone-600 dark:text-stone-400 border-stone-200/70 dark:border-stone-750 hover:bg-stone-200/70 dark:hover:bg-stone-700'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                    <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-transform ${
-                        isCompleted
-                          ? isActive
-                            ? 'bg-white text-emerald-700 shadow-xs'
-                            : 'bg-emerald-600 text-white shadow-xs'
-                          : isActive
-                          ? 'bg-emerald-500 text-white'
-                          : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-300'
-                      }`}
-                    >
-                      {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : s.num}
-                    </span>
-
-                    <span className="truncate text-xs font-bold leading-tight">
-                      {s.label}
-                    </span>
-                  </div>
-
-                  {isCompleted ? (
-                    <span
-                      id={`step-${s.num}-check-indicator`}
-                      className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 transition-all ${
-                        isActive
-                          ? 'bg-emerald-800/90 text-emerald-100 border border-emerald-600 shadow-2xs'
-                          : 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 shadow-2xs'
-                      }`}
-                      title={isEn ? 'Step completed' : 'Krok ukończony'}
-                    >
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500 dark:text-emerald-400 stroke-[2.5]" />
-                      <span className="text-[9.5px]">
-                        {isEn ? 'Done' : 'Gotowe'}
-                      </span>
-                    </span>
-                  ) : isActive ? (
-                    <span className="hidden sm:inline-block text-[10px] font-semibold text-stone-400 dark:text-stone-500 shrink-0">
-                      {isEn ? 'Active' : 'W trakcie'}
-                    </span>
-                  ) : null}
-                </button>
-              );
-            })}
-          </div>
+          <h2
+            ref={headingRef}
+            id="onboarding-modal-heading"
+            tabIndex={-1}
+            className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100 leading-tight focus:outline-none"
+          >
+            {step === 1 && (isEn ? 'Where is your balcony garden?' : 'Gdzie rośnie Twój ogród?')}
+            {step === 2 && (isEn ? 'Which direction does the sun face?' : 'W którą stronę pada słońce?')}
+            {step === 3 && (isEn ? 'Containers & care time' : 'Twoja przestrzeń i donice')}
+          </h2>
+          <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1.5 leading-relaxed">
+            {step === 1 && (isEn ? 'We tailor plants to your local microclimate and building height.' : 'Dopasujemy rośliny do klimatu w Twojej okolicy i wysokości budynku.')}
+            {step === 2 && (isEn ? 'Sunlight is key — indicate orientation to get crops that thrive in this light.' : 'Słońce to klucz do sukcesu – wskaż kierunek, a dobierzemy gatunki, które pokochają to światło.')}
+            {step === 3 && (isEn ? 'Specify container types and how often you can water your balcony pots.' : 'Określ rodzaj donic i czas, jaki chcesz poświęcić na podlewanie.')}
+          </p>
         </div>
 
         {/* Step Body */}
-        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8 py-4 sm:py-5 pb-12 space-y-5 overscroll-contain">
           {/* ================= STEP 1: LOKALIZACJA I PIĘTRO ================= */}
           {step === 1 && (
-            <div className="space-y-6 animate-fade-in">
+            <div data-testid="onboarding-step-1" className="space-y-6 animate-fade-in">
               {/* Region selection */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
@@ -659,7 +1160,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   </label>
                   <span className="text-[11px] text-stone-500">
                     {isEn ? 'Selected: ' : 'Wybrano: '}
-                    <strong className={currentRegion ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-400 dark:text-stone-500 font-normal'}>
+                    <strong className={currentRegion ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-stone-600 dark:text-stone-300 font-medium'}>
                       {currentRegion ? currentRegion.name.split('(')[0].trim() : (isEn ? 'None' : 'Nie wybrano')}
                     </strong>
                   </span>
@@ -670,6 +1171,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                   <input
                     type="text"
                     id="region-search-input"
+                    data-testid="location-search"
+                    aria-label={isEn ? 'Search city or region' : 'Wyszukaj miasto lub województwo'}
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
                     placeholder={isEn ? 'Search city or region, e.g. Warsaw, Krakow, Wroclaw, Gdansk...' : 'Wpisz np. Warszawa, Kraków, Wrocław, Gdańsk, Poznań...'}
@@ -686,6 +1189,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                         type="button"
                         key={regKey}
                         id={`region-${regKey}`}
+                        data-testid={`location-option-${regKey}`}
+                        data-region={regKey}
                         onClick={() => handleSelectRegion(regKey)}
                         className={`group p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer ${
                           isSelected
@@ -723,10 +1228,10 @@ export const BalconySetupModal: React.FC<Props> = ({
 
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   {[
-                    { floor: 0, label: isEn ? 'Ground floor' : 'Parter', hint: isEn ? 'Sheltered, higher humidity' : 'Osłonięty, wilgotniej' },
-                    { floor: 2, label: isEn ? 'Floor 1 – 3' : 'Piętro 1 – 3', hint: isEn ? 'Balanced conditions' : 'Zrównoważone warunki' },
-                    { floor: 5, label: isEn ? 'Floor 4 – 6' : 'Piętro 4 – 6', hint: isEn ? 'Breezier microclimate' : 'Przewiewniej' },
-                    { floor: 8, label: isEn ? 'Floor 7+' : 'Piętro 7+', hint: isEn ? 'Strong wind gusts' : 'Mocniejsze powiewy' },
+                    { floor: 0, semanticKey: 'ground', label: isEn ? 'Ground floor' : 'Parter', hint: isEn ? 'Sheltered, higher humidity' : 'Osłonięty, wilgotniej' },
+                    { floor: 2, semanticKey: 'floor-1-3', label: isEn ? 'Floor 1 – 3' : 'Piętro 1-3', hint: isEn ? 'Balanced conditions' : 'Zrównoważone warunki' },
+                    { floor: 5, semanticKey: 'floor-4-6', label: isEn ? 'Floor 4 – 6' : 'Piętro 4-6', hint: isEn ? 'Breezier microclimate' : 'Przewiewniej' },
+                    { floor: 8, semanticKey: 'floor-7-plus', label: isEn ? 'Floor 7+' : 'Piętro 7+', hint: isEn ? 'Strong wind gusts' : 'Mocniejsze powiewy' },
                   ].map((item) => {
                     const isSelected =
                       selectedFloor !== null &&
@@ -739,6 +1244,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                         type="button"
                         key={item.floor}
                         id={`floor-btn-${item.floor}`}
+                        data-testid={`floor-option-${item.semanticKey}`}
+                        data-floor={item.floor}
                         onClick={() => handleSelectFloor(item.floor)}
                         className={`group p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
                           isSelected
@@ -758,7 +1265,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                         </div>
                         <span className="text-[10px] text-stone-500 dark:text-stone-400 self-start text-left">{item.hint}</span>
                         <div className="w-full pt-1 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between text-[10px]">
-                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-stone-400 group-hover:text-blue-800'}>
+                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-stone-600 dark:text-stone-300 group-hover:text-blue-800'}>
                             {isSelected ? (isEn ? 'Selected floor' : 'Wybrane piętro') : (isEn ? 'Select' : 'Wybierz')}
                           </span>
                           <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-600' : 'text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform'}`} />
@@ -788,7 +1295,7 @@ export const BalconySetupModal: React.FC<Props> = ({
 
           {/* ================= STEP 2: EKSPOZYCJA (WIZUALNA SIATKA + TOOLTIPY) ================= */}
           {step === 2 && (
-            <div className="space-y-4 animate-fade-in">
+            <div data-testid="onboarding-step-2" className="space-y-4 animate-fade-in">
               {/* Category Filter for Orientation */}
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
@@ -798,6 +1305,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                 <div className="flex items-center gap-1 text-xs">
                   <button
                     type="button"
+                    id="sunlight-filter-main-btn"
+                    data-testid="sunlight-filter-main"
                     onClick={() => setExposureFilter('main')}
                     className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
                       exposureFilter === 'main'
@@ -809,6 +1318,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                   </button>
                   <button
                     type="button"
+                    id="sunlight-filter-all-btn"
+                    data-testid="sunlight-filter-all"
                     onClick={() => setExposureFilter('all')}
                     className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
                       exposureFilter === 'all'
@@ -821,10 +1332,35 @@ export const BalconySetupModal: React.FC<Props> = ({
                 </div>
               </div>
 
-              {/* Visual Grid of Exposure Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+              {/* Non-blocking Recommendation Banner */}
+              {recommendedOrientation && (
+                <div
+                  data-testid="sunlight-recommendation-banner"
+                  className="p-3 rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-between text-xs text-amber-950 dark:text-amber-200 shadow-2xs animate-fade-in"
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-lg bg-amber-200/70 dark:bg-amber-900/60 flex items-center justify-center shrink-0 text-amber-800 dark:text-amber-300">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <div>
+                      <span className="font-bold">
+                        {isEn ? 'Balcony recommendation: ' : 'Wskazówka dla Twojego balkonu: '}
+                      </span>
+                      <span className="text-amber-800 dark:text-amber-300">
+                        {isEn
+                          ? `Based on your floor and location, South (${recommendedOrientation}) is typically optimal.`
+                          : `Na podstawie wybranego piętra i regionu sugerujemy wystawę południową (${recommendedOrientation}).`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Responsive Compact Grid of Exposure Cards (1 col on mobile, 2 cols on md) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {visibleOrientations.map((item) => {
                   const isSelected = selectedOrientation === item.key;
+                  const isRecommended = item.key === recommendedOrientation;
                   const visual = EXPOSURE_VISUALS[item.key] || {
                     title: item.label.split('(')[0].trim(),
                     titleEn: item.label.split('(')[0].trim(),
@@ -834,35 +1370,79 @@ export const BalconySetupModal: React.FC<Props> = ({
                     accentColor: 'hover:border-amber-400',
                   };
                   const isTooltipOpen = activeTooltip === item.key;
+                  const sunlightSemanticKey = getSunlightSemanticKey(item.key);
 
                   return (
                     <div
                       key={item.key}
+                      role="button"
+                      tabIndex={0}
+                      aria-label={isEn ? visual.titleEn : visual.title}
+                      aria-pressed={isSelected}
                       data-tooltip-container
                       id={`orient-card-${item.key}`}
+                      data-testid={`sunlight-option-${sunlightSemanticKey}`}
+                      data-orientation={item.key}
+                      data-selected={isSelected ? 'true' : 'false'}
                       onClick={() => handleSelectOrientation(item.key)}
-                      className={`group relative p-4 rounded-2xl border transition-all duration-200 cursor-pointer flex flex-col justify-between select-none ${
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          handleSelectOrientation(item.key);
+                        }
+                      }}
+                      className={`group relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer min-h-[56px] flex flex-col justify-between select-none ${
                         isSelected
-                          ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 shadow-md ring-2 ring-blue-400/20'
-                          : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800/80 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-800 dark:text-stone-200 shadow-2xs'
+                          ? 'border-2 border-emerald-600 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-100 shadow-md ring-2 ring-emerald-500/20'
+                          : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-stone-50/80 dark:hover:bg-stone-850 text-stone-800 dark:text-stone-200 shadow-2xs'
                       }`}
                     >
-                      {/* Card Top: Icon & Tooltip Trigger [i] & Visual Indicator */}
+                      {/* Card Top: Icon + Title + Badges + Help trigger + Select pill */}
                       <div className="flex items-start justify-between gap-2">
-                        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-700/60 flex items-center justify-center shrink-0">
-                          {visual.icon}
+                        <div className="flex items-center gap-2.5">
+                          <div
+                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                              isSelected
+                                ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
+                                : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                            }`}
+                          >
+                            {visual.icon}
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100 leading-tight">
+                                {isEn ? visual.titleEn : item.label}
+                              </h4>
+                              {isRecommended && (
+                                <span
+                                  data-testid="sunlight-recommended-badge"
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/80"
+                                >
+                                  <Sparkles className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                                  <span>{isEn ? 'Recommended' : 'Rekomendowane'}</span>
+                                </span>
+                              )}
+                            </div>
+                            <span className="inline-block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mt-0.5">
+                              ☀️ {item.badge}
+                            </span>
+                          </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
                             type="button"
                             id={`tooltip-trigger-${item.key}`}
-                            title={isEn ? 'Show detailed sunlight description' : 'Pokaż szczegółowy opis nasłonecznienia'}
+                            data-testid={`sunlight-info-${sunlightSemanticKey}`}
+                            aria-label={isEn ? `Show detailed sunlight description for ${visual.titleEn}` : `Pokaż szczegóły dla ${item.label}`}
+                            aria-expanded={isTooltipOpen}
+                            title={isEn ? 'Show details' : 'Pokaż szczegóły'}
                             onClick={(e) => {
                               e.stopPropagation();
                               setActiveTooltip(isTooltipOpen ? null : item.key);
                             }}
-                            className={`p-1.5 rounded-lg text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700/80 transition cursor-pointer ${
+                            className={`min-w-8 min-h-8 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer ${
                               isTooltipOpen ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-900/50' : ''
                             }`}
                           >
@@ -870,12 +1450,12 @@ export const BalconySetupModal: React.FC<Props> = ({
                           </button>
 
                           {isSelected ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-600 text-white text-[10.5px] font-bold shadow-xs">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-xs">
                               <span>{isEn ? 'Selected' : 'Wybrano'}</span>
-                              <Check className="w-3 h-3 stroke-[3]" />
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-700/80 text-stone-500 dark:text-stone-400 group-hover:bg-blue-100 group-hover:text-blue-800 text-[10.5px] font-semibold transition-all">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-800 text-[11px] font-semibold transition-all">
                               <span>{isEn ? 'Select' : 'Wybierz'}</span>
                               <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                             </span>
@@ -883,46 +1463,25 @@ export const BalconySetupModal: React.FC<Props> = ({
                         </div>
                       </div>
 
-                      {/* Card Title & Clean Badge */}
-                      <div className="mt-3">
-                        <h4 className="text-base font-bold text-stone-900 dark:text-stone-100 leading-tight">
-                          {isEn ? visual.titleEn : visual.title}
-                        </h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
-                            ☀️ {item.badge}
-                          </span>
-                        </div>
-                        <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-1">
-                          {isEn ? visual.subEn : visual.sub}
-                        </p>
-                      </div>
+                      {/* Short user-facing description - no long technical explanations inside card */}
+                      <p className="text-xs text-stone-600 dark:text-stone-300 mt-2 font-medium leading-relaxed">
+                        {isEn ? visual.subEn : visual.sub}
+                      </p>
 
-                      {/* Visual Indicator footer bar */}
-                      <div className="mt-3 pt-2 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between text-[11px]">
-                        <span className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-300 font-bold' : 'text-stone-500 dark:text-stone-400 group-hover:text-blue-900 dark:group-hover:text-blue-200'}`}>
-                          ☀️ {item.badge}
-                        </span>
-                        <div className="flex items-center gap-1 font-semibold text-[10.5px]">
-                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300' : 'text-stone-400 dark:text-stone-400 group-hover:text-blue-800 dark:group-hover:text-blue-200'}>
-                            {isSelected ? (isEn ? 'Active' : 'Aktywna') : (isEn ? 'Set orientation' : 'Wskaż kierunek')}
-                          </span>
-                          <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-600 dark:text-blue-400' : 'text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform'}`} />
-                        </div>
-                      </div>
-
-                      {/* Floating Tooltip for Descriptions */}
+                      {/* Progressive disclosure: Expandable detailed description section triggered by visible help control */}
                       {isTooltipOpen && (
                         <div
-                          className="absolute z-30 left-2 right-2 bottom-full mb-2 p-3.5 rounded-xl bg-stone-900 text-white dark:bg-stone-950 dark:border dark:border-stone-700 text-xs shadow-xl animate-fade-in"
+                          data-testid={`sunlight-details-${sunlightSemanticKey}`}
+                          className="mt-3 p-3 rounded-lg bg-stone-900 text-white dark:bg-stone-950 dark:border dark:border-stone-700 text-xs shadow-xl animate-fade-in"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <strong className="font-bold text-emerald-300">{item.label}</strong>
+                            <strong className="font-bold text-emerald-300 text-xs">{item.label}</strong>
                             <button
                               type="button"
                               onClick={() => setActiveTooltip(null)}
-                              className="text-stone-400 hover:text-white"
+                              className="text-stone-400 hover:text-white p-0.5 cursor-pointer"
+                              aria-label={isEn ? 'Close details' : 'Zamknij szczegóły'}
                             >
                               <X className="w-3.5 h-3.5" />
                             </button>
@@ -930,7 +1489,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <p className="text-stone-300 text-[11px] leading-relaxed">
                             {item.desc}
                           </p>
-                          <div className="mt-2 pt-1.5 border-t border-stone-800 text-[10px] text-stone-400">
+                          <div className="mt-2 pt-1.5 border-t border-stone-800 text-[10.5px] text-stone-400">
                             🌡️ {item.thermal}
                           </div>
                         </div>
@@ -977,7 +1536,7 @@ export const BalconySetupModal: React.FC<Props> = ({
 
           {/* ================= STEP 3: DONICE I OPIEKA ================= */}
           {step === 3 && (
-            <div className="space-y-6 animate-fade-in">
+            <div data-testid="onboarding-step-3" className="space-y-6 animate-fade-in">
               {/* Barierka (Balustrada) Selection Component */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
@@ -990,6 +1549,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       id="barierka-view-dropdown-btn"
+                      data-testid="railing-view-dropdown"
                       onClick={() => setBarierkaViewMode('dropdown')}
                       className={`px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
                         barierkaViewMode === 'dropdown'
@@ -1003,6 +1563,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       id="barierka-view-cards-btn"
+                      data-testid="railing-view-cards"
                       onClick={() => setBarierkaViewMode('cards')}
                       className={`px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
                         barierkaViewMode === 'cards'
@@ -1021,6 +1582,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       id="balcony-type-select"
+                      data-testid="railing-select"
                       onClick={() => setIsBarierkaDropdownOpen(!isBarierkaDropdownOpen)}
                       className={`w-full p-3 rounded-2xl border text-left bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 flex items-center justify-between transition-all cursor-pointer shadow-2xs ${
                         isBarierkaDropdownOpen
@@ -1077,8 +1639,10 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <button
                             type="button"
                             id="barierka-dropdown-close-btn"
+                            data-testid="railing-dropdown-close"
                             onClick={() => setIsBarierkaDropdownOpen(false)}
                             className="p-1 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition cursor-pointer"
+                            aria-label={isEn ? 'Close dropdown' : 'Zamknij listę'}
                             title={isEn ? 'Close dropdown' : 'Zamknij listę'}
                           >
                             <X className="w-4 h-4" />
@@ -1093,6 +1657,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 type="button"
                                 key={opt.key}
                                 id={`barierka-opt-${opt.key}`}
+                                data-testid={`railing-option-${opt.key}`}
+                                data-railing={opt.key}
                                 onClick={() => {
                                   setSpec({ ...spec, balcony_type: opt.key });
                                   setIsBarierkaDropdownOpen(false);
@@ -1163,6 +1729,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <button
                             type="button"
                             id="barierka-dropdown-done-btn"
+                            data-testid="railing-dropdown-done"
                             onClick={() => setIsBarierkaDropdownOpen(false)}
                             className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                           >
@@ -1182,6 +1749,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                           type="button"
                           key={opt.key}
                           id={`barierka-card-${opt.key}`}
+                          data-testid={`railing-card-${opt.key}`}
+                          data-railing={opt.key}
                           onClick={() => setSpec({ ...spec, balcony_type: opt.key })}
                           className={`group p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
                             isSelected
@@ -1246,6 +1815,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       id="roofing-view-dropdown-btn"
+                      data-testid="roofing-view-dropdown"
                       onClick={() => setRoofingViewMode('dropdown')}
                       className={`px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
                         roofingViewMode === 'dropdown'
@@ -1259,6 +1829,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       id="roofing-view-cards-btn"
+                      data-testid="roofing-view-cards"
                       onClick={() => setRoofingViewMode('cards')}
                       className={`px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
                         roofingViewMode === 'cards'
@@ -1277,6 +1848,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       id="balcony-roofing-select"
+                      data-testid="roofing-select"
                       onClick={() => setIsRoofingDropdownOpen(!isRoofingDropdownOpen)}
                       className={`w-full p-3 rounded-2xl border text-left bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 flex items-center justify-between transition-all cursor-pointer shadow-2xs ${
                         isRoofingDropdownOpen
@@ -1333,8 +1905,10 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <button
                             type="button"
                             id="roofing-dropdown-close-btn"
+                            data-testid="roofing-dropdown-close"
                             onClick={() => setIsRoofingDropdownOpen(false)}
                             className="p-1 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition cursor-pointer"
+                            aria-label={isEn ? 'Close list' : 'Zamknij listę'}
                             title={isEn ? 'Close list' : 'Zamknij listę'}
                           >
                             <X className="w-4 h-4" />
@@ -1349,6 +1923,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 type="button"
                                 key={opt.key}
                                 id={`roofing-opt-${opt.key}`}
+                                data-testid={`roofing-option-${opt.key}`}
+                                data-roofing={opt.key}
                                 onClick={() => {
                                   setSpec({ ...spec, roofing: opt.key });
                                   setIsRoofingDropdownOpen(false);
@@ -1419,6 +1995,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <button
                             type="button"
                             id="roofing-dropdown-done-btn"
+                            data-testid="roofing-dropdown-done"
                             onClick={() => setIsRoofingDropdownOpen(false)}
                             className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
                           >
@@ -1438,6 +2015,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                           type="button"
                           key={opt.key}
                           id={`roofing-card-${opt.key}`}
+                          data-testid={`roofing-card-${opt.key}`}
+                          data-roofing={opt.key}
                           onClick={() => setSpec({ ...spec, roofing: opt.key })}
                           className={`group p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
                             isSelected
@@ -1539,6 +2118,9 @@ export const BalconySetupModal: React.FC<Props> = ({
                         type="button"
                         key={item.id}
                         id={`pot-type-${item.id}`}
+                        data-testid={`pot-option-${item.id}`}
+                        data-pot={item.id}
+                        aria-label={item.label}
                         onClick={() => togglePot(item.id as ContainerType)}
                         className={`group p-3.5 rounded-2xl border text-left transition-all duration-150 flex items-start gap-3 cursor-pointer active:scale-[0.98] ${
                           isSelected
@@ -1567,7 +2149,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                                   <Check className="w-3 h-3 stroke-[3]" />
                                 </span>
                               ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-stone-400 dark:text-stone-400 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-stone-600 dark:text-stone-300 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors">
                                   <span>{isEn ? 'Select' : 'Wybierz'}</span>
                                   <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                                 </span>
@@ -1603,6 +2185,9 @@ export const BalconySetupModal: React.FC<Props> = ({
                         type="button"
                         key={item.id}
                         id={`care-time-${item.id}`}
+                        data-testid={`care-option-${item.id}`}
+                        data-care={item.id}
+                        aria-label={item.label}
                         onClick={() => setSpec({ ...spec, care_time: item.id as CareTime })}
                         className={`group p-3 rounded-xl border text-left text-xs transition cursor-pointer flex flex-col justify-between ${
                           isSelected
@@ -1622,7 +2207,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug">{item.sub}</div>
                         </div>
                         <div className="mt-2 pt-1.5 border-t border-stone-200/50 dark:border-stone-700/50 flex items-center justify-between text-[10px]">
-                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-stone-400 group-hover:text-blue-800'}>
+                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-stone-600 dark:text-stone-300 group-hover:text-blue-800'}>
                             {isSelected ? (isEn ? 'Active' : 'Wybrano') : (isEn ? 'Choose' : 'Wybierz')}
                           </span>
                           <ChevronRight className={`w-3 h-3 ${isSelected ? 'text-blue-600' : 'text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform'}`} />
@@ -1636,65 +2221,79 @@ export const BalconySetupModal: React.FC<Props> = ({
           )}
         </div>
 
-        {/* ================= BOTTOM BAR WITH "DALEJ" / "ZAPISZ I PRZELICZ" ================= */}
-        <div className="p-4 sm:p-5 bg-white dark:bg-stone-950 border-t border-stone-200/80 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
-            {step > 1 ? (
-              <button
-                type="button"
-                id="wizard-prev-step-btn"
-                onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
-                className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer"
-              >
-                <ChevronLeft className="w-4 h-4" />
-                <span>{isEn ? 'Back' : 'Wstecz'}</span>
-              </button>
-            ) : onClose && !isFirstTime ? (
-              <button
-                type="button"
-                id="cancel-setup-btn"
-                onClick={onClose}
-                className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
-              >
-                {isEn ? 'Cancel' : 'Anuluj'}
-              </button>
-            ) : null}
-
-            <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 font-medium">
-              <span>{isEn ? `Step ${step} of 3` : `Krok ${step} z 3`}</span>
-              {completedStepsCount > 0 && (
-                <>
-                  <span className="text-stone-300 dark:text-stone-700">•</span>
-                  <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                    <span>{isEn ? `Completed ${completedStepsCount}/3` : `Ukończono ${completedStepsCount}/3`}</span>
-                  </span>
-                </>
-              )}
+        {/* ================= STICKY ACTION FOOTER WITH "DALEJ" / "ZAPISZ I PRZEJDŹ" ================= */}
+        <div
+          data-testid="onboarding-footer"
+          className="sticky bottom-0 z-20 shrink-0 border-t border-stone-200/90 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur p-3.5 sm:p-5 shadow-lg flex flex-col gap-2.5"
+        >
+          {/* Visible helper message when CTA is disabled */}
+          {((step < 3 && isNextDisabled) || (step === 3 && isSaveDisabled)) && (
+            <div
+              data-testid="onboarding-cta-helper"
+              role="status"
+              className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 px-3 py-1.5 rounded-lg flex items-center gap-1.5 animate-fade-in"
+            >
+              <Info className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <span>
+                {step === 1
+                  ? getStep1InactivityReason()
+                  : step === 2
+                  ? getStep2InactivityReason()
+                  : getStep3InactivityReason()}
+              </span>
             </div>
-          </div>
+          )}
 
-          <div className="w-full sm:w-auto flex justify-end">
-            {step < 3 ? (
-              <div
-                className="relative group w-full sm:w-auto"
-                onClick={() => {
-                  if (isNextDisabled) {
-                    setActiveTooltip(activeTooltip === 'next-btn' ? null : 'next-btn');
-                  }
-                }}
-              >
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
+              {step > 1 ? (
+                <button
+                  type="button"
+                  id="wizard-prev-step-btn"
+                  data-testid="onboarding-prev"
+                  onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
+                  className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>{isEn ? 'Back' : 'Wstecz'}</span>
+                </button>
+              ) : onClose && !isFirstTime ? (
+                <button
+                  type="button"
+                  id="cancel-setup-btn"
+                  data-testid="onboarding-cancel"
+                  onClick={onClose}
+                  className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
+                >
+                  {isEn ? 'Cancel' : 'Anuluj'}
+                </button>
+              ) : null}
+
+              <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 font-medium">
+                <span>{isEn ? `Step ${step} of 3` : `Krok ${step} z 3`}</span>
+                {completedStepsCount > 0 && (
+                  <>
+                    <span className="text-stone-300 dark:text-stone-700">•</span>
+                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                      <span>{isEn ? `Completed ${completedStepsCount}/3` : `Ukończono ${completedStepsCount}/3`}</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="w-full sm:w-auto flex justify-end">
+              {step < 3 ? (
                 <button
                   type="button"
                   id="wizard-next-step-btn"
+                  data-testid="onboarding-next"
                   disabled={isNextDisabled}
                   aria-disabled={isNextDisabled}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (isNextDisabled) {
-                      setActiveTooltip(activeTooltip === 'next-btn' ? null : 'next-btn');
-                      return;
-                    }
+                    if (isNextDisabled) return;
                     setStep((s) => (s + 1) as 1 | 2 | 3);
                   }}
                   className={`w-full sm:w-auto px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 ${
@@ -1706,95 +2305,46 @@ export const BalconySetupModal: React.FC<Props> = ({
                   <span>{isEn ? 'Next' : 'Dalej'}</span>
                   <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
-
-                {isNextDisabled && (
-                  <div
-                    className={`absolute bottom-full mb-2 right-0 w-64 p-2.5 bg-stone-900 dark:bg-stone-800 text-white text-xs rounded-xl shadow-xl pointer-events-none transition-opacity duration-200 z-50 text-center font-medium border border-stone-700 ${
-                      activeTooltip === 'next-btn' ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-1.5 justify-center">
-                      <Info className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                      <span>{step === 1 ? getStep1InactivityReason() : getStep2InactivityReason()}</span>
-                    </div>
-                    <div className="absolute top-full right-6 -mt-1 border-4 border-transparent border-t-stone-900 dark:border-t-stone-800" />
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center sm:items-end w-full sm:w-auto gap-2">
-                <div
-                  className="relative group w-full sm:w-auto"
-                  data-tooltip-container="save-btn"
-                >
+              ) : (
+                <div className="flex flex-col items-center sm:items-end w-full sm:w-auto gap-2">
                   <div className="flex items-center gap-1.5 w-full sm:w-auto">
                     <button
                       type="button"
                       id="save-balcony-spec-btn"
+                      data-testid="onboarding-save-and-continue"
+                      disabled={isSaveDisabled}
+                      aria-disabled={isSaveDisabled}
                       onClick={() => handleSave()}
-                      className="w-full sm:w-auto px-7 py-3 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-sm sm:text-base font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer ring-1 ring-emerald-600"
+                      className={`w-full sm:w-auto px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                        isSaveDisabled
+                          ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-stone-700 cursor-not-allowed opacity-60'
+                          : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white shadow-md hover:shadow-lg ring-1 ring-emerald-600 cursor-pointer'
+                      }`}
                       aria-describedby="save-balcony-benefit-text"
                     >
                       <Sparkles className="w-4 h-4 text-emerald-200" />
-                      <span>{isEn ? 'Save & Calculate' : 'Zapisz i przelicz'}</span>
+                      <span>{isEn ? 'Save & Continue' : 'Zapisz i przejdź'}</span>
                     </button>
 
                     <button
                       type="button"
                       id="save-balcony-info-btn"
+                      data-testid="onboarding-save-info"
                       onClick={() => setActiveTooltip(activeTooltip === 'save-btn' ? null : 'save-btn')}
                       className="p-3 text-stone-500 hover:text-emerald-700 dark:text-stone-400 dark:hover:text-emerald-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-200 dark:border-stone-700 shrink-0"
-                      aria-label={isEn ? 'Why save and calculate?' : 'Dlaczego warto zapisać i przeliczyć?'}
-                      title={isEn ? 'Why save and calculate?' : 'Dlaczego warto zapisać i przeliczyć?'}
+                      aria-label={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
+                      title={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
                     >
                       <HelpCircle className="w-4 h-4" />
                     </button>
                   </div>
-
-                  <div
-                    role="tooltip"
-                    id="save-balcony-tooltip"
-                    className={`absolute bottom-full mb-2.5 right-1/2 translate-x-1/2 sm:translate-x-0 sm:right-0 w-72 sm:w-80 p-3.5 bg-stone-900 dark:bg-stone-850 text-white text-xs rounded-xl shadow-2xl transition-all duration-200 z-50 text-left border border-stone-700 ${
-                      activeTooltip === 'save-btn'
-                        ? 'opacity-100 visible'
-                        : 'opacity-0 group-hover:opacity-100 invisible group-hover:visible'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-950/80 border border-emerald-700/60 flex items-center justify-center shrink-0 mt-0.5 text-emerald-400">
-                        <Sparkles className="w-3.5 h-3.5" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-white text-xs mb-1">
-                          {isEn ? 'What you gain by clicking:' : 'Co zyskasz po zapisaniu?'}
-                        </div>
-                        <div className="text-stone-300 text-[11px] leading-relaxed">
-                          {isEn
-                            ? 'Save your configuration and see personalized plant recommendations, tailored soil mixes, and exact pot volume calculations suited for your balcony.'
-                            : 'Otrzymasz spersonalizowany dobór roślin dopasowanych do Twojej wystawy i piętra, precyzyjne receptury podłoży oraz kalkulator pojemności donic.'}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="absolute top-full right-1/2 translate-x-1/2 sm:translate-x-0 sm:right-8 -mt-1 border-4 border-transparent border-t-stone-900 dark:border-t-stone-850" />
-                  </div>
                 </div>
-
-                <p
-                  id="save-balcony-benefit-text"
-                  className="text-[11px] sm:text-xs text-stone-600 dark:text-stone-300 flex items-center gap-1.5 text-center sm:text-right font-medium max-w-xs sm:max-w-sm leading-snug bg-emerald-50/70 dark:bg-emerald-950/40 px-2.5 py-1.5 rounded-lg border border-emerald-200/60 dark:border-emerald-800/60"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 inline" />
-                  <span>
-                    {isEn
-                      ? 'Save your configuration and see personalized plant recommendations'
-                      : 'Zapisz konfigurację i zobacz spersonalizowane rekomendacje roślin'}
-                  </span>
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    modalTarget
   );
 };

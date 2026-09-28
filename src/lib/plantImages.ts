@@ -320,7 +320,7 @@ export const PLANT_IMAGE_MAP: Record<string, PlantVisualData> = {
 // High quality group fallbacks if a completely new custom crop is added in the future
 export const GROUP_FALLBACK_IMAGES: Record<string, PlantVisualData> = {
   warzywa: {
-    imageUrl: 'https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=800&q=80',
+    imageUrl: 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80',
     alt: 'Świeże warzywa z uprawy balkonowej',
     placeholderBg: 'from-emerald-950/60 via-amber-950/30 to-stone-900',
     emoji: '🥕',

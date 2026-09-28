@@ -61,6 +61,8 @@ export const PlantCard: React.FC<Props> = ({
   return (
     <div
       id={`plant-card-${plant.id}`}
+      data-testid={`plant-card-${plant.id}`}
+      data-plant-id={plant.id}
       onClick={() => onSelect(plant)}
       className="group relative flex flex-col rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-sm hover:shadow-xl hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-300 overflow-hidden cursor-pointer"
     >
@@ -78,6 +80,8 @@ export const PlantCard: React.FC<Props> = ({
         {/* Real Plant Photography */}
         {!imageError && (
           <img
+            data-testid={`plant-image-${plant.id}`}
+            data-plant-id={plant.id}
             src={visual.imageUrl}
             alt={visual.alt}
             referrerPolicy="no-referrer"
@@ -136,27 +140,48 @@ export const PlantCard: React.FC<Props> = ({
       {/* 40% CONTENT SECTION (Clean, Bold, Emotion-Driven) */}
       <div className="p-5 flex flex-col justify-between flex-1 gap-4 bg-white dark:bg-stone-900">
         <div className="space-y-2.5">
-          {/* Plant Name (Bold, High Contrast) */}
+          {/* Category, Plant Name, and Summary */}
           <div>
-            <h3 className="text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+            <div className="flex items-center gap-2 mb-1">
+              <span
+                data-testid={`plant-category-${plant.id}`}
+                data-plant-id={plant.id}
+                className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400"
+              >
+                {plant.category}
+              </span>
+            </div>
+
+            <h3
+              data-testid={`plant-title-${plant.id}`}
+              data-plant-id={plant.id}
+              className="text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors"
+            >
               {plant.name}
             </h3>
-            <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-1">
-              {plant.varieties && plant.varieties.length > 0 ? (
-                <>
-                  {language === 'en' ? 'Container varieties: ' : 'Odmiany do donic: '}
-                  <span className="font-semibold text-stone-700 dark:text-stone-300">
-                    {plant.varieties
-                      .slice(0, 3)
-                      .map((v) => (typeof v === 'string' ? v : v?.name || ''))
-                      .filter(Boolean)
-                      .join(', ')}
-                  </span>
-                </>
-              ) : (
-                plant.summary
-              )}
+
+            <p
+              data-testid={`plant-description-${plant.id}`}
+              data-plant-id={plant.id}
+              className="text-xs text-stone-600 dark:text-stone-300 mt-1.5 line-clamp-2 leading-relaxed"
+            >
+              {plant.summary}
             </p>
+
+            {plant.varieties && plant.varieties.length > 0 && (
+              <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1.5 line-clamp-1">
+                <span className="font-semibold text-stone-700 dark:text-stone-300">
+                  {language === 'en' ? 'Varieties: ' : 'Odmiany: '}
+                </span>
+                <span>
+                  {plant.varieties
+                    .slice(0, 3)
+                    .map((v) => (typeof v === 'string' ? v : v?.name || ''))
+                    .filter(Boolean)
+                    .join(', ')}
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Friendly Lifestyle Pills/Chips (e.g. "Szybko rosnące", "Zero wysiłku", "Do sałatki") */}
@@ -179,6 +204,8 @@ export const PlantCard: React.FC<Props> = ({
           {onRequestAddVariety ? (
             <button
               id={`add-plant-cta-${plant.id}`}
+              data-testid={`plant-add-btn-${plant.id}`}
+              data-plant-id={plant.id}
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
@@ -209,6 +236,8 @@ export const PlantCard: React.FC<Props> = ({
           ) : onToggleMyCrop ? (
             <button
               id={`toggle-my-crop-btn-${plant.id}`}
+              data-testid={`plant-add-btn-${plant.id}`}
+              data-plant-id={plant.id}
               type="button"
               onClick={(e) => {
                 e.stopPropagation();

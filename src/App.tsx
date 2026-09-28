@@ -40,8 +40,11 @@ import { PlantCard } from './components/PlantCard';
 import { PlantDetailModal } from './components/PlantDetailModal';
 import { CalendarView } from './components/CalendarView';
 import defaultPlantsData from './data/plants.json';
+import { validatePlantCatalog } from './lib/catalogValidation';
+import { PlantSearchIndex } from './lib/plantSearchIndex';
 
-const defaultPlants = defaultPlantsData as unknown as Plant[];
+const defaultCatalogReport = validatePlantCatalog(defaultPlantsData);
+const defaultPlants = defaultCatalogReport.validPlants;
 import { BalconySetupModal } from './components/BalconySetupModal';
 import { BalconyDrawer } from './components/BalconyDrawer';
 import { WelcomeModal } from './components/WelcomeModal';
@@ -126,9 +129,17 @@ export default function App() {
   const [plants, setPlants] = useState<Plant[]>(defaultPlants);
   const [loadingPlants, setLoadingPlants] = useState<boolean>(false);
 
+  const validatedPlants = useMemo(() => {
+    return validatePlantCatalog(plants).validPlants;
+  }, [plants]);
+
   const translatedPlants = useMemo(() => {
-    return plants.map((p) => getTranslatedPlant(p, language));
-  }, [plants, language]);
+    return validatedPlants.map((p) => getTranslatedPlant(p, language));
+  }, [validatedPlants, language]);
+
+  const plantSearchIndex = useMemo(() => {
+    return new PlantSearchIndex(translatedPlants);
+  }, [translatedPlants]);
 
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [weatherLoading, setWeatherLoading] = useState<boolean>(true);
@@ -546,20 +557,22 @@ export default function App() {
 
   // Filtered & Sorted recommendations
   const filteredPlants = useMemo(() => {
+    const isSearchActive = searchQuery.trim().length > 0;
+
+    if (isSearchActive) {
+      // Use PlantSearchIndex which guarantees exact query matching,
+      // case-insensitive and partial search, and strictly returns [] when no results
+      // (preventing unrelated fallback cards from displaying).
+      return plantSearchIndex.search(searchQuery, {
+        group: selectedGroup,
+        category: selectedCategory,
+        timingFilter,
+        todayDate,
+      });
+    }
+
     return groupFilteredPlants
       .filter((p) => {
-        const query = searchQuery.toLowerCase();
-        const trans = getTranslatedPlant(p, language);
-        const matchesSearch =
-          p.name.toLowerCase().includes(query) ||
-          trans.name.toLowerCase().includes(query) ||
-          p.varieties.some((v) => {
-            const str = typeof v === 'string' ? v : `${v?.name || ''} ${v?.features || ''}`;
-            return str.toLowerCase().includes(query);
-          }) ||
-          p.summary.toLowerCase().includes(query) ||
-          trans.summary.toLowerCase().includes(query);
-
         const plantPills = getPlantLifestylePills(p, language);
         const matchesCategory =
           selectedCategory === 'Wszystkie' ||
@@ -569,7 +582,7 @@ export default function App() {
             (pill) => pill.id === selectedCategory || pill.label === selectedCategory
           );
 
-        if (!matchesSearch || !matchesCategory) return false;
+        if (!matchesCategory) return false;
 
         const timing = getPlantTimingInfo(p, todayDate);
 
@@ -603,7 +616,7 @@ export default function App() {
         const nameB = getTranslatedPlant(b, language).name;
         return nameA.localeCompare(nameB);
       });
-  }, [groupFilteredPlants, searchQuery, selectedCategory, timingFilter, sortOrder, todayDate, language]);
+  }, [plantSearchIndex, groupFilteredPlants, searchQuery, selectedCategory, selectedGroup, timingFilter, sortOrder, todayDate, language]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 to-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors relative overflow-x-hidden"><div className="absolute top-0 right-0 -mr-32 -mt-32 w-[32rem] h-[32rem] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" /><div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[40rem] h-[40rem] bg-teal-100/20 dark:bg-teal-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
@@ -1316,14 +1329,20 @@ export default function App() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-6">
+              <div data-testid="no-results-container" className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-6">
                 <Info className="w-8 h-8 text-stone-400 mx-auto mb-2" />
-                <h3 className="text-base font-semibold text-stone-800 dark:text-stone-200">
+                <h3
+                  data-testid="no-results-heading"
+                  className="text-base font-semibold text-stone-800 dark:text-stone-200"
+                >
                   {searchQuery
                     ? (isEn ? 'No search results found' : 'Brak wyników wyszukiwania')
                     : (isEn ? 'No items in this category' : 'Brak pozycji w tej kategorii')}
                 </h3>
-                <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto">
+                <p
+                  data-testid="no-results-message"
+                  className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto"
+                >
                   {searchQuery
                     ? (isEn
                         ? `No plant matches search "${searchQuery}". Try resetting filters.`
@@ -1333,6 +1352,7 @@ export default function App() {
                         : 'Brak roślin w wybranej podkategorii. Zmień filtry lub wybierz inną grupę.')}
                 </p>
                 <button
+                  data-testid="reset-search-btn"
                   onClick={() => {
                     setSearchQuery('');
                     setSelectedCategory('Wszystkie');
