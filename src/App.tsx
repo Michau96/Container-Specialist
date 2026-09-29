@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   Sparkles,
   Search,
@@ -13,6 +13,7 @@ import {
   X,
   ShieldCheck,
   CheckCircle2,
+  RotateCcw,
 } from 'lucide-react';
 import { UserBalconySpec, Plant, WeatherData, PlantGroup, MyCropItem, UserAccount, getFloorCategoryLabel } from './types';
 import {
@@ -50,6 +51,7 @@ import { BalconyDrawer } from './components/BalconyDrawer';
 import { WelcomeModal } from './components/WelcomeModal';
 import { PotCalculator } from './components/PotCalculator';
 import { MyCropsView } from './components/MyCropsView';
+import { CatalogSkeletonGrid } from './components/PlantCardSkeleton';
 import { SelectVarietyModal } from './components/SelectVarietyModal';
 import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
@@ -106,6 +108,25 @@ export default function App() {
     initialVariety?: string;
   } | null>(null);
 
+  // Adding plant pending state & feedback banner
+  const [addingPlantId, setAddingPlantId] = useState<string | null>(null);
+  const pendingPlantAddsRef = useRef<Set<string>>(new Set());
+  const [addFeedback, setAddFeedback] = useState<{
+    type: 'success' | 'duplicate' | 'error';
+    message: string;
+    plantName: string;
+    plantId: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (addFeedback && addFeedback.type !== 'error') {
+      const timer = setTimeout(() => {
+        setAddFeedback(null);
+      }, 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [addFeedback]);
+
   // Dark mode state - default to light mode by default, enable dark mode only if explicitly selected by user
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
@@ -128,6 +149,23 @@ export default function App() {
 
   const [plants, setPlants] = useState<Plant[]>(defaultPlants);
   const [loadingPlants, setLoadingPlants] = useState<boolean>(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  const loadPlantsCatalog = useCallback((spec: UserBalconySpec = userSpec) => {
+    setLoadingPlants(true);
+    setCatalogError(null);
+
+    return fetchRecommendations(spec)
+      .then((data) => {
+        setPlants(data);
+        setLoadingPlants(false);
+      })
+      .catch((err: any) => {
+        console.error('Failed to fetch recommendations:', err);
+        setCatalogError(err.message || 'Wystąpił problem z połączeniem z serwerem bazy upraw.');
+        setLoadingPlants(false);
+      });
+  }, [userSpec]);
 
   const validatedPlants = useMemo(() => {
     return validatePlantCatalog(plants).validPlants;
@@ -161,23 +199,34 @@ export default function App() {
   const [cardViewMode, setCardViewMode] = useState<'compact' | 'detailed'>('compact');
   const [isFiltersExpanded, setIsFiltersExpanded] = useState<boolean>(true);
   const [showSeasonalityBanner, setShowSeasonalityBanner] = useState<boolean>(true);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
+
+  const activeAdvancedFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedGroup !== 'wszystkie') count++;
+    if (selectedCategory !== 'Wszystkie') count++;
+    if (timingFilter !== 'all') count++;
+    if (sortOrder !== 'timing_first') count++;
+    return count;
+  }, [selectedGroup, selectedCategory, timingFilter, sortOrder]);
 
   // Load recommendations & weather when userSpec changes
   useEffect(() => {
     let isMounted = true;
     setLoadingPlants(true);
+    setCatalogError(null);
 
     fetchRecommendations(userSpec)
       .then((data) => {
         if (isMounted) {
-          setPlants(data && data.length > 0 ? data : defaultPlants);
+          setPlants(data);
           setLoadingPlants(false);
         }
       })
       .catch((err) => {
         console.error('Failed to fetch recommendations:', err);
         if (isMounted) {
-          setPlants((prev) => (prev.length > 0 ? prev : defaultPlants));
+          setCatalogError(err.message || 'Nie udało się połączyć z serwerem bazy upraw.');
           setLoadingPlants(false);
         }
       });
@@ -387,6 +436,52 @@ export default function App() {
 
     if (openConfigurator) {
       setActiveTab('my_crops');
+    }
+  };
+
+  const handleAddCropToBalcony = async (plant: Plant, forceError: boolean = false) => {
+    if (pendingPlantAddsRef.current.has(plant.id) || addingPlantId === plant.id) return; // Prevent multiple submissions while pending
+
+    pendingPlantAddsRef.current.add(plant.id);
+    setAddingPlantId(plant.id);
+    try {
+      if (forceError) {
+        throw new Error('Simulation of add crop failure');
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const isAlreadyInCrops = myCrops.some((c) => c.plantId === plant.id);
+
+      const variety =
+        plant.top_varieties?.[0]?.name ||
+        (typeof plant.varieties?.[0] === 'string'
+          ? plant.varieties[0]
+          : plant.varieties?.[0]?.name) ||
+        plant.name;
+      const varietyBadge = plant.top_varieties?.[0]?.badge || 'Zalecana do donic';
+
+      handleAddCropWithVariety(plant.id, variety, varietyBadge, 1, false);
+
+      setAddFeedback({
+        type: isAlreadyInCrops ? 'duplicate' : 'success',
+        message: isAlreadyInCrops
+          ? `Dodano kolejną doniczkę: ${plant.name}`
+          : `Pomyślnie dodano: ${plant.name} do Moich upraw!`,
+        plantName: plant.name,
+        plantId: plant.id,
+      });
+    } catch (err) {
+      console.error('Error adding crop:', err);
+      setAddFeedback({
+        type: 'error',
+        message: `Nie udało się dodać ${plant.name}. Spróbuj ponownie.`,
+        plantName: plant.name,
+        plantId: plant.id,
+      });
+    } finally {
+      pendingPlantAddsRef.current.delete(plant.id);
+      setAddingPlantId(null);
     }
   };
 
@@ -658,6 +753,9 @@ export default function App() {
             userSpec={userSpec}
             dailyRecommendation={dailyRecommendation}
             currentUser={currentUser}
+            isLoading={loadingPlants && plants.length === 0}
+            error={catalogError && plants.length === 0 ? catalogError : null}
+            onRetry={() => loadPlantsCatalog(userSpec)}
             onRemoveCrop={handleRemoveCrop}
             onUpdateCrop={handleUpdateCrop}
             onAddCropWithVariety={handleAddCropWithVariety}
@@ -671,6 +769,266 @@ export default function App() {
         {/* Tab 2: Szukaj nowych upraw (pełna baza wiedzy) */}
         {activeTab === 'search_crops' && (
           <div className="space-y-6">
+            {/* 1. Primary Catalog Search Control (Prominent at top of catalog, uncluttered) */}
+            <div
+              data-testid="catalog-search-card"
+              className="bg-white dark:bg-stone-900 rounded-[2rem] p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3.5"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <label
+                  htmlFor="search-vegetables-input"
+                  data-testid="catalog-search-label"
+                  className="block text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100"
+                >
+                  {isEn ? 'Search Container Crop Catalog' : 'Szukaj w katalogu upraw'}
+                </label>
+
+                {/* Clearly labeled control to reveal/hide advanced filters (Req 6) */}
+                <button
+                  id="toggle-advanced-filters-btn"
+                  data-testid="toggle-advanced-filters-btn"
+                  type="button"
+                  aria-expanded={showAdvancedFilters}
+                  aria-controls="advanced-filters-panel"
+                  onClick={() => setShowAdvancedFilters((prev) => !prev)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between sm:justify-start gap-2 cursor-pointer border ${
+                    showAdvancedFilters || activeAdvancedFiltersCount > 0
+                      ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 shadow-2xs'
+                      : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-750'
+                  }`}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                    <span>
+                      {showAdvancedFilters
+                        ? isEn
+                          ? 'Hide advanced filters'
+                          : 'Ukryj filtry zaawansowane'
+                        : isEn
+                        ? 'Advanced filters'
+                        : 'Filtry zaawansowane'}
+                    </span>
+                  </div>
+                  {activeAdvancedFiltersCount > 0 && (
+                    <span
+                      data-testid="active-filters-count-badge"
+                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700 text-white"
+                    >
+                      {activeAdvancedFiltersCount}
+                    </span>
+                  )}
+                  {showAdvancedFilters ? (
+                    <ChevronUp className="w-3.5 h-3.5 ml-0.5" />
+                  ) : (
+                    <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
+                  )}
+                </button>
+              </div>
+
+              <div className="relative">
+                <Search className="w-5 h-5 text-stone-400 dark:text-stone-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  id="search-vegetables-input"
+                  data-testid="catalog-search-input"
+                  type="search"
+                  role="searchbox"
+                  aria-label={isEn ? 'Search crops' : 'Szukaj w katalogu upraw'}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') {
+                      setSearchQuery('');
+                    }
+                  }}
+                  placeholder={
+                    isEn
+                      ? 'Search plant or variety (e.g. tomato, Vilma, radish, basil)...'
+                      : 'Szukaj rośliny lub odmiany (np. pomidor, Vilma, rzodkiewka, bazylia)...'
+                  }
+                  className="w-full pl-11 pr-24 py-3 sm:py-3.5 text-sm sm:text-base rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/80 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition shadow-inner"
+                />
+
+                {searchQuery && (
+                  <button
+                    id="clear-search-btn"
+                    data-testid="clear-search-btn"
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('');
+                      document.getElementById('search-vegetables-input')?.focus();
+                    }}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-semibold text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white bg-stone-200/80 dark:bg-stone-700/80 hover:bg-stone-300 dark:hover:bg-stone-600 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+                    aria-label={isEn ? 'Clear search' : 'Wyczyść wyszukiwanie'}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>{isEn ? 'Clear' : 'Wyczyść'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Result count and query context after searching */}
+              {searchQuery.trim() && (
+                <div
+                  data-testid="search-results-context"
+                  className="flex items-center justify-between text-xs sm:text-sm text-stone-700 dark:text-stone-300 bg-emerald-50/80 dark:bg-emerald-950/40 px-4 py-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60"
+                >
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold text-emerald-900 dark:text-emerald-200">
+                      {isEn ? `Results for query "${searchQuery}":` : `Wyniki dla zapytania „${searchQuery}”:`}
+                    </span>
+                    <span data-testid="search-results-count" className="font-bold text-stone-900 dark:text-stone-100">
+                      {filteredPlants.length}{' '}
+                      {isEn
+                        ? filteredPlants.length === 1 ? 'plant' : 'plants'
+                        : filteredPlants.length === 1
+                        ? 'roślina'
+                        : filteredPlants.length % 10 >= 2 &&
+                          filteredPlants.length % 10 <= 4 &&
+                          (filteredPlants.length < 10 || filteredPlants.length > 20)
+                        ? 'rośliny'
+                        : 'roślin'}
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="text-emerald-700 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-200 font-semibold text-xs cursor-pointer hover:underline"
+                  >
+                    {isEn ? 'Show all plants' : 'Pokaż wszystkie rośliny'}
+                  </button>
+                </div>
+              )}
+
+              {/* Active Filters Summary (Visible when advanced filters are collapsed) */}
+              {!showAdvancedFilters && activeAdvancedFiltersCount > 0 && (
+                <div
+                  data-testid="active-filters-summary"
+                  className="flex items-center gap-2 flex-wrap pt-1 text-xs"
+                >
+                  <span className="font-semibold text-stone-500 dark:text-stone-400 text-[11px] uppercase tracking-wider">
+                    {isEn ? 'Active filters:' : 'Aktywne filtry:'}
+                  </span>
+                  {selectedGroup !== 'wszystkie' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 font-medium">
+                      <span>{isEn ? 'Group: ' : 'Grupa: '}{selectedGroup}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedGroup('wszystkie')}
+                        className="hover:text-rose-600 cursor-pointer ml-0.5"
+                        title={isEn ? 'Remove filter' : 'Usuń filtr'}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {timingFilter !== 'all' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-900 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 font-medium">
+                      <span>{isEn ? 'Timing: ' : 'Termin: '}{timingFilter === 'good_now' ? (isEn ? 'Good now' : 'Teraz') : timingFilter}</span>
+                      <button
+                        type="button"
+                        onClick={() => setTimingFilter('all')}
+                        className="hover:text-rose-600 cursor-pointer ml-0.5"
+                        title={isEn ? 'Remove filter' : 'Usuń filtr'}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  {selectedCategory !== 'Wszystkie' && (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-700 font-medium">
+                      <span>{isEn ? 'Category: ' : 'Kategoria: '}{selectedCategory}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedCategory('Wszystkie')}
+                        className="hover:text-rose-600 cursor-pointer ml-0.5"
+                        title={isEn ? 'Remove filter' : 'Usuń filtr'}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    data-testid="quick-reset-filters-btn"
+                    onClick={() => {
+                      setSelectedGroup('wszystkie');
+                      setTimingFilter('all');
+                      setSelectedCategory('Wszystkie');
+                      setSortOrder('timing_first');
+                    }}
+                    className="text-stone-500 hover:text-stone-900 dark:hover:text-stone-100 underline cursor-pointer text-xs ml-1"
+                  >
+                    {isEn ? 'Reset all' : 'Resetuj wszystkie'}
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Feedback / Toast Confirmation Banner for Add Crop */}
+            {addFeedback && (
+              <div
+                role="status"
+                aria-live="polite"
+                data-testid="add-crop-feedback-banner"
+                className={`p-4 rounded-2xl flex items-center justify-between gap-3 shadow-md transition-all ${
+                  addFeedback.type === 'error'
+                    ? 'bg-rose-50 dark:bg-rose-950/80 border border-rose-300 dark:border-rose-800 text-rose-900 dark:text-rose-100'
+                    : addFeedback.type === 'duplicate'
+                    ? 'bg-amber-50 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-100'
+                    : 'bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">
+                    {addFeedback.type === 'error' ? '⚠️' : '✓'}
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold" data-testid="add-crop-feedback-message">
+                      {addFeedback.message}
+                    </p>
+                    <p className="text-xs opacity-80">
+                      {isEn
+                        ? 'Updated in "My Crops" tab without page reload.'
+                        : 'Zaktualizowano w zakładce „Moje uprawy” bez przeładowywania strony.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {addFeedback.type === 'error' ? (
+                    <button
+                      data-testid="add-crop-retry-btn"
+                      onClick={() => {
+                        const p = plants.find((x) => x.id === addFeedback.plantId);
+                        if (p) handleAddCropToBalcony(p);
+                      }}
+                      className="px-3 py-1.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-semibold transition cursor-pointer"
+                    >
+                      {isEn ? 'Retry' : 'Spróbuj ponownie'}
+                    </button>
+                  ) : (
+                    <button
+                      data-testid="go-to-my-crops-btn"
+                      onClick={() => setActiveTab('my_crops')}
+                      className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1"
+                    >
+                      <span>{isEn ? `My Crops (${myCrops.length})` : `Moje uprawy (${myCrops.length})`}</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  <button
+                    data-testid="close-feedback-btn"
+                    onClick={() => setAddFeedback(null)}
+                    className="p-1.5 rounded-lg hover:bg-black/10 dark:hover:bg-white/10 transition cursor-pointer"
+                    aria-label={isEn ? 'Close message' : 'Zamknij komunikat'}
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Navigation Quick Bar */}
             <div className="bg-white dark:bg-stone-900 rounded-[2rem] p-4 sm:p-5 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-xs">
               <div className="flex items-center gap-3">
@@ -707,9 +1065,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Banner & Filter Bar */}
-            <div className="bg-white dark:bg-stone-900 rounded-[2rem] p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-xs">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Banner & Filter Bar - Hidden behind labeled control (Req 6) */}
+            {showAdvancedFilters && (
+              <div
+                id="advanced-filters-panel"
+                data-testid="advanced-filters-panel"
+                className="bg-white dark:bg-stone-900 rounded-[2rem] p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-xs space-y-4"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider mb-1">
                     <Sparkles className="w-4 h-4 text-amber-500" />
@@ -1119,47 +1482,18 @@ export default function App() {
                 </div>
               )}
 
-              {/* Search, Sort, and Card View Mode Controls */}
-              <div className="mt-4 pt-4 border-t border-stone-100 dark:border-stone-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-                {/* Search */}
-                <div className="relative flex-1 max-w-md">
-                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    id="search-vegetables-input"
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder={
-                      isEn
-                        ? selectedGroup === 'owoce'
-                          ? 'Search fruit (e.g. strawberry, blueberry)...'
-                          : selectedGroup === 'ziola'
-                          ? 'Search herb (e.g. basil, mint, rosemary)...'
-                          : selectedGroup === 'ozdobne'
-                          ? 'Search flower / ornamental (e.g. geranium, lavender)...'
-                          : 'Search plant or variety (e.g. tomato, Vilma, radish)...'
-                        : selectedGroup === 'owoce'
-                        ? 'Szukaj owocu (np. truskawka, borówka, poziomka)...'
-                        : selectedGroup === 'ziola'
-                        ? 'Szukaj zioła (np. bazylia, mięta, rozmaryn)...'
-                        : selectedGroup === 'ozdobne'
-                        ? 'Szukaj rośliny ozdobnej (np. pelargonia, surfinia, lawenda)...'
-                        : 'Szukaj rośliny lub odmiany (np. pomidor, Vilma, rzodkiewka)...'
-                    }
-                    className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50/60 dark:bg-stone-800 text-stone-800 dark:text-stone-200 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-stone-500"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 cursor-pointer"
-                    >
-                      {isEn ? 'Clear' : 'Wyczyść'}
-                    </button>
+              {/* Sort and Card View Mode Controls */}
+              <div className="mt-4 pt-4 border-t border-stone-100 dark:border-stone-800 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="text-xs text-stone-500 dark:text-stone-400 font-medium">
+                  {isEn ? (
+                    <>Displaying <strong>{filteredPlants.length}</strong> available crops</>
+                  ) : (
+                    <>Wyświetlanie <strong>{filteredPlants.length}</strong> upraw w katalogu</>
                   )}
                 </div>
 
                 {/* Right controls: View mode selector & Sort dropdown */}
-                <div className="flex items-center gap-2.5 flex-wrap self-end md:self-auto">
+                <div className="flex items-center gap-2.5 flex-wrap self-end sm:self-auto">
                   {/* View Mode Toggle: Compact vs Detailed */}
                   <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700">
                     <button
@@ -1299,17 +1633,154 @@ export default function App() {
                 })}
               </div>
             </div>
+            )}
 
-            {/* Plants Grid */}
+            {/* Plants Grid & Separate UI States: loading, error, empty, filtered-no-results, success */}
             {loadingPlants ? (
-              <div className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800">
-                <div className="inline-block animate-spin w-8 h-8 border-4 border-stone-700 dark:border-stone-300 border-t-transparent rounded-full mb-2" />
-                <p className="text-xs text-stone-500 dark:text-stone-400">
-                  {isEn ? 'Recalculating container knowledge base...' : 'Przeliczanie bazy wiedzy o donicach...'}
-                </p>
+              <CatalogSkeletonGrid
+                count={6}
+                message={
+                  isEn
+                    ? 'Recalculating container knowledge base for your balcony...'
+                    : 'Przeliczanie bazy wiedzy o donicach dla Twojego balkonu...'
+                }
+              />
+            ) : catalogError ? (
+              <div
+                role="alert"
+                data-testid="catalog-error-state"
+                className="bg-white dark:bg-stone-900 rounded-[2rem] border-2 border-rose-300 dark:border-rose-900/80 p-6 sm:p-8 text-center space-y-4 shadow-sm"
+              >
+                <div className="w-16 h-16 bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+                  ⚠️
+                </div>
+                <div className="space-y-1">
+                  <h3
+                    data-testid="catalog-error-heading"
+                    className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-100"
+                  >
+                    {isEn ? 'Server connection error' : 'Błąd połączenia z serwerem'}
+                  </h3>
+                  <p
+                    data-testid="catalog-error-message"
+                    className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed"
+                  >
+                    {catalogError}
+                  </p>
+                </div>
+
+                {searchQuery && (
+                  <div
+                    data-testid="catalog-preserved-query-badge"
+                    className="text-xs text-stone-700 dark:text-stone-200 bg-stone-100 dark:bg-stone-800 px-3.5 py-1.5 rounded-xl inline-block border border-stone-200 dark:border-stone-700 font-medium"
+                  >
+                    {isEn ? `Your search query "${searchQuery}" is preserved.` : `Twoje zapytanie „${searchQuery}” zostało zachowane.`}
+                  </div>
+                )}
+
+                <div className="pt-2 flex items-center justify-center gap-3 flex-wrap">
+                  <button
+                    id="catalog-retry-btn"
+                    data-testid="catalog-retry-btn"
+                    onClick={() => loadPlantsCatalog(userSpec)}
+                    className="px-5 py-2.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-sm hover:shadow-md cursor-pointer flex items-center gap-2 min-h-[44px]"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    <span>{isEn ? 'Retry' : 'Spróbuj ponownie'}</span>
+                  </button>
+                  <button
+                    data-testid="catalog-use-fallback-btn"
+                    onClick={() => {
+                      setPlants(defaultPlants);
+                      setCatalogError(null);
+                    }}
+                    className="px-4 py-2.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer min-h-[44px]"
+                  >
+                    {isEn ? 'Load offline catalog' : 'Wczytaj bazę lokalną'}
+                  </button>
+                </div>
               </div>
-            ) : filteredPlants.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            ) : plants.length === 0 ? (
+              <div
+                data-testid="catalog-empty-state"
+                className="bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-8 text-center space-y-4 shadow-sm"
+              >
+                <div className="w-16 h-16 bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 rounded-full flex items-center justify-center mx-auto text-2xl shadow-inner">
+                  🪴
+                </div>
+                <div className="space-y-1">
+                  <h3
+                    data-testid="catalog-empty-heading"
+                    className="text-lg font-bold text-stone-900 dark:text-stone-100"
+                  >
+                    {isEn ? 'Plant catalog is empty' : 'Brak roślin w katalogu'}
+                  </h3>
+                  <p
+                    data-testid="catalog-empty-message"
+                    className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 max-w-md mx-auto"
+                  >
+                    {isEn
+                      ? 'No container plant records are currently available for this balcony.'
+                      : 'Brak dostępnych roślin w bazie dla wybranej konfiguracji balkonu.'}
+                  </p>
+                </div>
+                <div className="pt-2">
+                  <button
+                    data-testid="catalog-reload-empty-btn"
+                    onClick={() => loadPlantsCatalog(userSpec)}
+                    className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs sm:text-sm font-bold transition cursor-pointer min-h-[44px]"
+                  >
+                    {isEn ? 'Reload plant database' : 'Załaduj bazę ponownie'}
+                  </button>
+                </div>
+              </div>
+            ) : filteredPlants.length === 0 ? (
+              <div
+                data-testid="catalog-filtered-no-results"
+                className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-6 space-y-3 shadow-xs"
+              >
+                <div data-testid="no-results-container">
+                  <Info className="w-8 h-8 text-stone-400 mx-auto mb-2" />
+                  <h3
+                    data-testid="no-results-heading"
+                    className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100"
+                  >
+                    {searchQuery
+                      ? (isEn ? `No search results for "${searchQuery}"` : `Brak wyników wyszukiwania dla „${searchQuery}”`)
+                      : (isEn ? 'No items in this category' : 'Brak pozycji w tej kategorii')}
+                  </h3>
+                  <p
+                    data-testid="no-results-message"
+                    className="text-xs sm:text-sm text-stone-600 dark:text-stone-400 mt-1 max-w-md mx-auto leading-relaxed"
+                  >
+                    {searchQuery
+                      ? (isEn
+                          ? `No plant matches search "${searchQuery}". Check the spelling or reset active filters.`
+                          : `Żadna roślina nie spełnia kryteriów wyszukiwania "${searchQuery}". Spróbuj zresetować filtry lub sprawdź pisownię.`)
+                      : (isEn
+                          ? 'No plants found in selected subcategory. Adjust filters or choose another group.'
+                          : 'Brak roślin w wybranej podkategorii. Zmień filtry lub wybierz inną grupę.')}
+                  </p>
+                  <button
+                    id="reset-search-btn"
+                    data-testid="reset-search-btn"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedCategory('Wszystkie');
+                      setSelectedGroup('wszystkie');
+                      setTimingFilter('all');
+                    }}
+                    className="mt-4 px-5 py-2.5 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl text-xs sm:text-sm font-semibold hover:bg-stone-800 dark:hover:bg-stone-200 transition cursor-pointer min-h-[44px]"
+                  >
+                    {isEn ? `Show all plants (${plants.length})` : `Pokaż wszystkie rośliny (${plants.length})`}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                data-testid="catalog-success-grid"
+                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              >
                 {filteredPlants.map((plant) => {
                   const matchingCrops = myCrops.filter((c) => c.plantId === plant.id);
                   const cropCount = matchingCrops.reduce((acc, c) => acc + (c.potCount || 1), 0);
@@ -1321,47 +1792,14 @@ export default function App() {
                       onOpenPotCalc={handleOpenPotCalcForPlant}
                       isMyCrop={matchingCrops.length > 0}
                       cropCount={cropCount}
+                      onAddCrop={handleAddCropToBalcony}
+                      isAdding={addingPlantId === plant.id}
                       onRequestAddVariety={(p) => setVarietyPickerPlant({ plant: p })}
                       onToggleMyCrop={handleToggleMyCrop}
                       forceDetailed={cardViewMode === 'detailed'}
                     />
                   );
                 })}
-              </div>
-            ) : (
-              <div data-testid="no-results-container" className="text-center py-16 bg-white dark:bg-stone-900 rounded-[2rem] border border-stone-200 dark:border-stone-800 p-6">
-                <Info className="w-8 h-8 text-stone-400 mx-auto mb-2" />
-                <h3
-                  data-testid="no-results-heading"
-                  className="text-base font-semibold text-stone-800 dark:text-stone-200"
-                >
-                  {searchQuery
-                    ? (isEn ? 'No search results found' : 'Brak wyników wyszukiwania')
-                    : (isEn ? 'No items in this category' : 'Brak pozycji w tej kategorii')}
-                </h3>
-                <p
-                  data-testid="no-results-message"
-                  className="text-xs text-stone-500 dark:text-stone-400 mt-1 max-w-sm mx-auto"
-                >
-                  {searchQuery
-                    ? (isEn
-                        ? `No plant matches search "${searchQuery}". Try resetting filters.`
-                        : `Żadna roślina nie spełnia kryteriów wyszukiwania "${searchQuery}". Spróbuj zresetować filtry.`)
-                    : (isEn
-                        ? 'No plants found in selected subcategory. Adjust filters or choose another group.'
-                        : 'Brak roślin w wybranej podkategorii. Zmień filtry lub wybierz inną grupę.')}
-                </p>
-                <button
-                  data-testid="reset-search-btn"
-                  onClick={() => {
-                    setSearchQuery('');
-                    setSelectedCategory('Wszystkie');
-                    setSelectedGroup('wszystkie');
-                  }}
-                  className="mt-4 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl text-xs font-semibold hover:bg-stone-800 dark:hover:bg-stone-200 transition cursor-pointer"
-                >
-                  {isEn ? `Show all plants (${plants.length})` : `Pokaż wszystkie rośliny (${plants.length})`}
-                </button>
               </div>
             )}
           </div>

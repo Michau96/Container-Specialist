@@ -215,6 +215,7 @@ export const Header: React.FC<Props> = ({
             <Sprout className="w-4 h-4" />
             <span>{t('tabMyCrops')}</span>
             <span
+              data-testid="my-crops-count"
               className={`text-xs px-2 py-0.2 rounded-full font-bold ${
                 activeTab === 'my_crops'
                   ? 'bg-emerald-950 text-emerald-200'

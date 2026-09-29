@@ -69,6 +69,9 @@ interface Props {
   userSpec: UserBalconySpec;
   dailyRecommendation: DailyCropsRecommendation;
   currentUser?: UserAccount | null;
+  isLoading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
   onRemoveCrop: (cropIdOrPlantId: string) => void;
   onUpdateCrop: (updated: MyCropItem) => void;
   onAddCropWithVariety: (
@@ -126,6 +129,9 @@ export const MyCropsView: React.FC<Props> = ({
   userSpec,
   dailyRecommendation,
   currentUser,
+  isLoading = false,
+  error = null,
+  onRetry,
   onRemoveCrop,
   onUpdateCrop,
   onAddCropWithVariety,
@@ -348,20 +354,91 @@ export const MyCropsView: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* 2. Empty State when no crops are added */}
-      {myCrops.length === 0 && (
-        <div className="text-center py-16 bg-gradient-to-b from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-stone-900 rounded-[2rem] border border-emerald-100/50 dark:border-stone-800 p-8 space-y-6 shadow-sm">
-          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto shadow-inner">
-            <Sprout className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
+      {/* 2. Loading State */}
+      {isLoading && (
+        <div
+          role="status"
+          aria-busy="true"
+          data-testid="my-crops-loading-state"
+          className="space-y-4"
+        >
+          <div className="flex items-center gap-2.5 text-stone-800 dark:text-stone-200 text-xs sm:text-sm font-bold bg-emerald-50 dark:bg-emerald-950/60 px-4 py-3 rounded-2xl border border-emerald-200 dark:border-emerald-800 shadow-xs">
+            <div className="w-4 h-4 rounded-full border-2 border-emerald-600 dark:border-emerald-400 border-t-transparent animate-spin shrink-0" />
+            <span data-testid="dashboard-loading-status-text">
+              {isEn ? 'Loading your crops schedule and tasks...' : 'Ładowanie terminarza Twoich upraw i zadań...'}
+            </span>
           </div>
-          <div>
-            <h4 className="text-2xl font-black text-stone-800 dark:text-stone-100 tracking-tight">
-              {isEn ? 'Start your balcony garden! 🌱' : 'Zacznij swój balkonowy ogród! 🌱'}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="h-64 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-6 animate-pulse" />
+            <div className="h-64 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-6 animate-pulse hidden md:block" />
+            <div className="h-64 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 p-6 animate-pulse hidden lg:block" />
+          </div>
+        </div>
+      )}
+
+      {/* 3. Error State */}
+      {!isLoading && error && (
+        <div
+          role="alert"
+          data-testid="my-crops-error-state"
+          className="bg-white dark:bg-stone-900 rounded-[2rem] border-2 border-rose-300 dark:border-rose-900/80 p-6 sm:p-8 text-center space-y-4 shadow-sm"
+        >
+          <div className="w-16 h-16 bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 rounded-full flex items-center justify-center mx-auto text-2xl">
+            ⚠️
+          </div>
+          <h3 data-testid="my-crops-error-heading" className="text-lg sm:text-xl font-black text-stone-900 dark:text-stone-100">
+            {isEn ? 'Dashboard error' : 'Błąd ładowania upraw'}
+          </h3>
+          <p data-testid="my-crops-error-message" className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 max-w-md mx-auto leading-relaxed">
+            {error}
+          </p>
+          {onRetry && (
+            <div className="pt-2">
+              <button
+                id="my-crops-retry-btn"
+                data-testid="my-crops-retry-btn"
+                onClick={onRetry}
+                className="px-5 py-2.5 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs sm:text-sm font-bold transition shadow-sm cursor-pointer"
+              >
+                {isEn ? 'Retry' : 'Spróbuj ponownie'}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 4. Empty State when no crops are added */}
+      {!isLoading && !error && myCrops.length === 0 && (
+        <div
+          data-testid="my-crops-empty-state"
+          className="text-center py-16 bg-gradient-to-b from-emerald-50/70 to-white dark:from-emerald-950/30 dark:to-stone-900 rounded-[2rem] border-2 border-emerald-200/80 dark:border-stone-800 p-6 sm:p-10 space-y-6 shadow-sm"
+        >
+          <div className="w-20 h-20 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto shadow-inner">
+            <Sprout className="w-10 h-10 text-emerald-700 dark:text-emerald-400" />
+          </div>
+          <div className="space-y-3">
+            <div
+              data-testid="empty-collection-badge"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100/90 dark:bg-emerald-950 text-emerald-900 dark:text-emerald-200 text-xs sm:text-sm font-bold border border-emerald-300 dark:border-emerald-800 shadow-2xs"
+            >
+              <span data-testid="empty-collection-label">Moje uprawy</span>
+              <span>•</span>
+              <span data-testid="empty-collection-count">0</span>
+            </div>
+
+            <h4
+              data-testid="my-crops-empty-heading"
+              className="text-2xl sm:text-3xl font-black text-stone-900 dark:text-stone-100 tracking-tight"
+            >
+              {isEn ? 'Moje uprawy (0): Start your balcony garden! 🌱' : 'Moje uprawy (0): Zacznij swój balkonowy ogród! 🌱'}
             </h4>
-            <p className="text-sm text-stone-500 dark:text-stone-400 mt-2 max-w-md mx-auto leading-relaxed">
+            <p
+              data-testid="my-crops-empty-message"
+              className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-2 max-w-md mx-auto leading-relaxed"
+            >
               {isEn
-                ? 'Your balcony has great potential. Add your first crop by selecting one of the easiest and most popular plants below.'
-                : 'Twój balkon ma duży potencjał. Dodaj swoją pierwszą uprawę wybierając jedną z najłatwiejszych i najchętniej wybieranych roślin poniżej.'}
+                ? 'Your balcony collection "Moje uprawy" has 0 plants right now. Add your first crop by selecting one of the easiest and most popular plants below.'
+                : 'Twoja kolekcja „Moje uprawy” zawiera obecnie 0 roślin. Dodaj swoją pierwszą uprawę wybierając jedną z najłatwiejszych i najchętniej wybieranych roślin poniżej.'}
             </p>
           </div>
 
@@ -371,7 +448,7 @@ export const MyCropsView: React.FC<Props> = ({
                 <button
                   key={p.id}
                   onClick={() => setVarietyPickerPlant(p)}
-                  className="px-4 py-2.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-stone-700 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 rounded-2xl border border-stone-200/80 dark:border-stone-700 text-xs font-bold transition shadow-xs hover:shadow-sm flex items-center gap-2 cursor-pointer"
+                  className="px-4 py-2.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/40 text-stone-800 dark:text-stone-200 hover:text-emerald-900 dark:hover:text-emerald-200 rounded-2xl border border-stone-300 dark:border-stone-700 text-xs font-bold transition shadow-xs hover:shadow-sm flex items-center gap-2 cursor-pointer min-h-[44px]"
                 >
                   <Plus className="w-3.5 h-3.5 text-emerald-600" />
                   <span>{p.name}</span>
@@ -380,19 +457,22 @@ export const MyCropsView: React.FC<Props> = ({
             </div>
           )}
 
-          <div>
+          <div className="pt-2">
             <button
+              id="empty-action-navigate-search"
+              data-testid="empty-action-navigate-search"
               onClick={onNavigateToSearch}
-              className="mt-4 px-6 py-3 bg-emerald-700 dark:bg-emerald-600 text-white dark:text-white rounded-2xl text-sm font-bold hover:bg-emerald-800 dark:hover:bg-emerald-700 shadow-sm hover:shadow-md transition cursor-pointer inline-flex items-center gap-2"
+              className="px-6 py-3.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-2xl text-sm font-bold shadow-md hover:shadow-lg transition cursor-pointer inline-flex items-center gap-2 min-h-[44px]"
             >
-              {isEn ? 'Browse full plant catalog' : 'Przeglądaj pełny katalog roślin'}
+              <Plus className="w-4 h-4" />
+              <span>{isEn ? 'Browse full plant catalog' : 'Przeglądaj pełny katalog roślin'}</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* 3. When crops exist: Sub-views based on activeSection */}
-      {myCrops.length > 0 && (
+      {/* 5. When crops exist: Sub-views based on activeSection */}
+      {!isLoading && !error && myCrops.length > 0 && (
         <>
           {/* SECTION 1: ROŚLINY W DONICACH (CROPS VIEW) */}
           {activeSection === 'crops' && (

@@ -464,7 +464,10 @@ export function clearGuestData(): void {
   }
 }
 
-export async function fetchRecommendations(userSpec: UserBalconySpec): Promise<Plant[]> {
+export async function fetchRecommendations(
+  userSpec: UserBalconySpec,
+  options?: { fallbackOnError?: boolean }
+): Promise<Plant[]> {
   try {
     const res = await fetch('/api/recommendations', {
       method: 'POST',
@@ -472,13 +475,20 @@ export async function fetchRecommendations(userSpec: UserBalconySpec): Promise<P
       body: JSON.stringify({ user_spec: userSpec }),
     });
     if (!res.ok) {
-      throw new Error(`Failed to fetch recommendations: ${res.statusText}`);
+      throw new Error(`Błąd serwera (${res.status}): ${res.statusText || 'Nie udało się pobrać rekomendacji roślin'}`);
     }
     const data = await res.json();
-    const recommendations: Plant[] = data.recommendations || [];
+    if (!data || typeof data !== 'object') {
+      throw new Error('Nieprawidłowa odpowiedź serwera: brak poprawnego obiektu danych');
+    }
+    if (!Array.isArray(data.recommendations)) {
+      throw new Error('Nieprawidłowa odpowiedź serwera: brak listy recommendations');
+    }
+    const recommendations: Plant[] = data.recommendations;
     
+    // Explicit empty state support when the server returns 0 plants
     if (recommendations.length === 0) {
-      return fallbackPlants;
+      return [];
     }
 
     // Backwards compatibility for plants with missing 'soil' property
@@ -499,9 +509,12 @@ export async function fetchRecommendations(userSpec: UserBalconySpec): Promise<P
       }
       return plant;
     });
-  } catch (err) {
-    console.warn('[API] fetchRecommendations error, using fallback plants:', err);
-    return fallbackPlants;
+  } catch (err: any) {
+    if (options?.fallbackOnError) {
+      console.warn('[API] fetchRecommendations error, using fallback plants:', err);
+      return fallbackPlants;
+    }
+    throw err;
   }
 }
 
