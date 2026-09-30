@@ -206,10 +206,10 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-my-crops"
             onClick={() => onTabChange('my_crops')}
-            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
               activeTab === 'my_crops'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
             }`}
           >
             <Sprout className="w-4 h-4" />
@@ -219,7 +219,7 @@ export const Header: React.FC<Props> = ({
               className={`text-xs px-2 py-0.2 rounded-full font-bold ${
                 activeTab === 'my_crops'
                   ? 'bg-emerald-950 text-emerald-200'
-                  : 'bg-stone-200 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                  : 'bg-stone-200 dark:bg-stone-800 text-stone-800 dark:text-stone-200'
               }`}
             >
               {myCropsCount}
@@ -229,10 +229,10 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-search-crops"
             onClick={() => onTabChange('search_crops')}
-            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
               activeTab === 'search_crops'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
             }`}
           >
             <Search className="w-4 h-4" />
@@ -242,10 +242,10 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-calendar"
             onClick={() => onTabChange('calendar')}
-            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
               activeTab === 'calendar'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
             }`}
           >
             <Calendar className="w-4 h-4" />
@@ -255,10 +255,10 @@ export const Header: React.FC<Props> = ({
           <button
             id="tab-calculator"
             onClick={() => onTabChange('calculator')}
-            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer ${
+            className={`min-h-[44px] px-4 py-2 rounded-full text-xs sm:text-sm font-semibold transition flex items-center gap-2 shrink-0 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
               activeTab === 'calculator'
                 ? 'bg-emerald-800 text-white shadow-xs dark:bg-emerald-700'
-                : 'text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
+                : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
             }`}
           >
             <Ruler className="w-4 h-4" />

@@ -342,4 +342,150 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     expect(savedSpec.floor).toBe(0);
     expect(savedSpec.orientation).toBe('S');
   });
+
+  test('prevents impossible values in Step 3: rejects zero/negative pot count, displays Polish validation messages and disables submission', async ({ page }) => {
+    await page.goto('/');
+
+    // Complete Step 1: select location and floor
+    await page.getByTestId('location-option-pomorskie').click();
+    await page.getByTestId('floor-option-ground').click();
+    await page.getByTestId('onboarding-next').click();
+
+    // Complete Step 2: select sunlight orientation
+    await page.getByTestId('sunlight-option-full-sun').click();
+    await page.getByTestId('onboarding-next').click();
+
+    // We are on Step 3
+    const step3 = page.getByTestId('onboarding-step-3');
+    await expect(step3).toBeVisible();
+
+    // Select container and care time
+    await page.getByTestId('pot-option-boxes_balcony_15cm').click();
+    await page.getByTestId('care-option-daily').click();
+
+    const potCountInput = page.getByTestId('pot-count-input');
+    await expect(potCountInput).toBeVisible();
+
+    // 1. Test impossible pot quantity: 0
+    await potCountInput.fill('0');
+    const potCountError = page.getByTestId('pot-count-error');
+    await expect(potCountError).toBeVisible();
+    await expect(potCountError).toContainText(/Liczba donic musi być większa od zera/i);
+
+    // Save button should be disabled when pot count is 0
+    const saveBtn = page.getByTestId('onboarding-save-and-continue');
+    await expect(saveBtn).toBeDisabled();
+
+    // 2. Test impossible pot quantity: negative (-5)
+    await potCountInput.fill('-5');
+    await expect(potCountError).toBeVisible();
+    await expect(saveBtn).toBeDisabled();
+
+    // 3. Fix pot count to valid value (4)
+    await potCountInput.fill('4');
+    await expect(potCountError).not.toBeVisible();
+    await expect(saveBtn).toBeEnabled();
+
+    // 4. Test impossible dimension: negative height
+    const heightInput = page.getByTestId('pot-height-input');
+    await heightInput.fill('-10');
+    const dimError = page.getByTestId('pot-dimensions-error');
+    await expect(dimError).toBeVisible();
+    await expect(dimError).toContainText(/Głębokość donicy musi być dodatnia/i);
+    await expect(saveBtn).toBeDisabled();
+
+    // Restore valid height (18)
+    await heightInput.fill('18');
+    await expect(dimError).not.toBeVisible();
+    await expect(saveBtn).toBeEnabled();
+  });
+
+  test('validates French balcony cross-field conditions: disables large pots with explanatory tooltip/notice', async ({ page }) => {
+    await page.goto('/');
+
+    // Step 1
+    await page.getByTestId('location-option-pomorskie').click();
+    await page.getByTestId('floor-option-ground').click();
+    await page.getByTestId('onboarding-next').click();
+
+    // Step 2
+    await page.getByTestId('sunlight-option-full-sun').click();
+    await page.getByTestId('onboarding-next').click();
+
+    // Step 3
+    const step3 = page.getByTestId('onboarding-step-3');
+    await expect(step3).toBeVisible();
+
+    // Open railing dropdown and select French balcony
+    const railingSelect = page.getByTestId('railing-select');
+    await railingSelect.click();
+
+    const frenchOption = page.getByTestId('railing-option-french');
+    await expect(frenchOption).toBeVisible();
+    await frenchOption.click();
+
+    // Verify explanatory notice for French balcony adjustment
+    const frenchNotice = page.getByTestId('french-balcony-adjusted-notice');
+    if (await frenchNotice.isVisible()) {
+      await expect(frenchNotice).toContainText(/balkon/i);
+    }
+
+    // Large pots option should now be disabled with descriptive reason
+    const largePotBtn = page.getByTestId('pot-option-pots_large_15_30');
+    await expect(largePotBtn).toBeDisabled();
+    await expect(largePotBtn).toHaveAttribute('aria-disabled', 'true');
+
+    // Verify explanatory tooltip / inline helper for disabled option
+    const disabledReason = page.getByTestId('disabled-reason-pots_large_15_30');
+    await expect(disabledReason).toBeVisible();
+    await expect(disabledReason).toContainText(/brak płyty posadzkowej wyklucza duże donice stojące/i);
+  });
+
+  test('pot dimension presets populate fields, calculate volume, and save complete domain profile', async ({ page }) => {
+    await page.goto('/');
+
+    // Complete Step 1
+    await page.getByTestId('location-option-pomorskie').click();
+    await page.getByTestId('floor-option-ground').click();
+    await page.getByTestId('onboarding-next').click();
+
+    // Complete Step 2
+    await page.getByTestId('sunlight-option-full-sun').click();
+    await page.getByTestId('onboarding-next').click();
+
+    // Step 3: Choose preset box 60cm
+    const presetBox60 = page.getByTestId('preset-box60');
+    await expect(presetBox60).toBeVisible();
+    await presetBox60.click();
+
+    // Verify fields populated
+    await expect(page.getByTestId('pot-length-input')).toHaveValue('60');
+    await expect(page.getByTestId('pot-width-input')).toHaveValue('20');
+    await expect(page.getByTestId('pot-height-input')).toHaveValue('18');
+
+    // Verify calculated volume displayed
+    const calculatedVol = page.getByTestId('calculated-pot-volume');
+    await expect(calculatedVol).toBeVisible();
+    await expect(calculatedVol).toContainText('21.6');
+
+    // Select container and care time
+    await page.getByTestId('pot-option-boxes_balcony_15cm').click();
+    await page.getByTestId('care-option-daily').click();
+
+    // Save and continue
+    const saveBtn = page.getByTestId('onboarding-save-and-continue');
+    await expect(saveBtn).toBeEnabled();
+    await saveBtn.click();
+
+    await expect(page.getByTestId('onboarding-modal')).not.toBeVisible();
+
+    // Check saved spec in localStorage has pot_count and pot_dimensions
+    const savedSpecJson = await page.evaluate(() => localStorage.getItem('balkonowy_guest_spec'));
+    expect(savedSpecJson).not.toBeNull();
+    const savedSpec = JSON.parse(savedSpecJson!);
+    expect(savedSpec.pot_count).toBeGreaterThanOrEqual(1);
+    expect(savedSpec.pot_dimensions).toBeDefined();
+    expect(savedSpec.pot_dimensions.height_cm).toBe(18);
+    expect(savedSpec.pot_dimensions.length_cm).toBe(60);
+  });
 });

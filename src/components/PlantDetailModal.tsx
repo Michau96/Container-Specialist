@@ -55,6 +55,7 @@ export const PlantDetailModal: React.FC<Props> = ({
 }) => {
   const { language } = useLanguage();
   const isEn = language === 'en';
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   if (!plant) return null;
 
@@ -62,7 +63,6 @@ export const PlantDetailModal: React.FC<Props> = ({
   const score = suit?.score ?? 75;
   const timing = getPlantTimingInfo(plant, new Date(), isEn);
   const greenhouse = getPlantGreenhouseInfo(plant);
-  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const topVarieties = getPlantVarieties(plant);
 

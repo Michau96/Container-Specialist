@@ -3,6 +3,7 @@ import path from 'path';
 import crypto from 'crypto';
 import express, { Request, Response } from 'express';
 import { UserAccount, UserBalconySpec, MyCropItem } from '../src/types';
+import { validateOnboardingProfile } from '../src/lib/onboardingDomain';
 
 interface StoredUser {
   id: string;
@@ -326,6 +327,17 @@ export function createAuthRouter(): express.Router {
       const { balconySpec, myCrops } = req.body || {};
       if (!balconySpec || typeof balconySpec !== 'object') {
         res.status(400).json({ error: 'Nieprawidłowe dane specyfikacji balkonu.' });
+        return;
+      }
+
+      // Domain-level validation before persistence on the server
+      const validation = validateOnboardingProfile(balconySpec);
+      if (!validation.isValid) {
+        res.status(400).json({
+          error: validation.summaryMessage || 'Nieprawidłowe dane specyfikacji balkonu.',
+          errors: validation.errors,
+          fieldErrors: validation.fieldErrors,
+        });
         return;
       }
 

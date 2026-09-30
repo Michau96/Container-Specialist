@@ -46,8 +46,24 @@ import {
   RoofingType,
   ContainerType,
   CareTime,
+  PotShape,
+  PotDimensionsSpec,
 } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS, OrientationOption } from '../lib/api';
+import {
+  validateRegion,
+  validateFloor,
+  validateExposure,
+  validateContainers,
+  validateCareTime,
+  validatePotQuantity,
+  validatePotDimensions,
+  validateCrossFieldCombinations,
+  getDisabledOptionReason,
+  validateOnboardingProfile,
+  calculatePotVolumeLiters,
+  PotDimensionsDomain,
+} from '../lib/onboardingDomain';
 
 export const getFloorSemanticKey = (floor: number): string => {
   switch (floor) {
@@ -229,7 +245,15 @@ export const validateStep2 = (
 export const validateStep3 = (
   pots: ContainerType[] | string[] | null | undefined,
   careTime: CareTime | string | null | undefined,
-  language: 'pl' | 'en' = 'pl'
+  language: 'pl' | 'en' = 'pl',
+  extra?: {
+    balconyType?: BalconyType;
+    roofing?: RoofingType;
+    floor?: number;
+    orientation?: Orientation;
+    potCount?: number;
+    potDimensions?: PotDimensionsDomain;
+  }
 ): StepValidationResult => {
   const isEn = language === 'en';
   const missingFields: string[] = [];
@@ -276,6 +300,53 @@ export const validateStep3 = (
     };
   }
 
+  // Pot count domain validation
+  if (extra?.potCount !== undefined && extra.potCount !== null) {
+    const countErr = validatePotQuantity(extra.potCount, language);
+    if (countErr) {
+      return {
+        isValid: false,
+        missingFields: ['pot_count'],
+        validationMessage: countErr.message,
+      };
+    }
+  }
+
+  // Pot dimensions domain validation
+  if (extra?.potDimensions) {
+    const dimErrors = validatePotDimensions(extra.potDimensions, language);
+    if (dimErrors.length > 0) {
+      return {
+        isValid: false,
+        missingFields: [dimErrors[0].field],
+        validationMessage: dimErrors[0].message,
+      };
+    }
+  }
+
+  // Cross-field combination validation
+  const crossErrors = validateCrossFieldCombinations(
+    {
+      balcony_type: extra?.balconyType,
+      roofing: extra?.roofing,
+      floor: extra?.floor,
+      orientation: extra?.orientation,
+      pots: (pots as ContainerType[]) || [],
+      care_time: (careTime as CareTime) || undefined,
+      pot_count: extra?.potCount,
+      pot_dimensions: extra?.potDimensions,
+    },
+    language
+  );
+
+  if (crossErrors.length > 0) {
+    return {
+      isValid: false,
+      missingFields: [crossErrors[0].field],
+      validationMessage: crossErrors[0].message,
+    };
+  }
+
   return {
     isValid: true,
     missingFields: [],
@@ -294,7 +365,14 @@ export const validateFullProfile = (
     language
   );
   const step2 = validateStep2(safeSpec.orientation || null, language);
-  const step3 = validateStep3(safeSpec.pots || [], safeSpec.care_time || null, language);
+  const step3 = validateStep3(safeSpec.pots || [], safeSpec.care_time || null, language, {
+    balconyType: safeSpec.balcony_type,
+    roofing: safeSpec.roofing,
+    floor: safeSpec.floor,
+    orientation: safeSpec.orientation,
+    potCount: safeSpec.pot_count,
+    potDimensions: safeSpec.pot_dimensions,
+  });
 
   let firstInvalidStep: 1 | 2 | 3 | null = null;
   let firstInvalidField: string | null = null;
@@ -777,6 +855,32 @@ export const BalconySetupModal: React.FC<Props> = ({
     isFirstTime ? null : initialSpec?.orientation || null
   );
 
+  // Pot count and dimensions state
+  const [potCount, setPotCount] = useState<number>(initialSpec?.pot_count ?? 1);
+  const [potShape, setPotShape] = useState<PotShape>(initialSpec?.pot_dimensions?.shape ?? 'rectangular');
+  const [potLength, setPotLength] = useState<number>(initialSpec?.pot_dimensions?.length_cm ?? 60);
+  const [potWidth, setPotWidth] = useState<number>(initialSpec?.pot_dimensions?.width_cm ?? 20);
+  const [potDiameter, setPotDiameter] = useState<number>(initialSpec?.pot_dimensions?.diameter_cm ?? 30);
+  const [potHeight, setPotHeight] = useState<number>(initialSpec?.pot_dimensions?.height_cm ?? 18);
+  const [potVolume, setPotVolume] = useState<number | undefined>(initialSpec?.pot_dimensions?.volume_liters);
+  const [frenchBalconyNotice, setFrenchBalconyNotice] = useState<string | null>(null);
+
+  const currentPotDimensions = useMemo<PotDimensionsDomain>(() => ({
+    shape: potShape,
+    length_cm: potShape === 'rectangular' ? potLength : undefined,
+    width_cm: potShape === 'rectangular' ? potWidth : undefined,
+    diameter_cm: potShape === 'round' ? potDiameter : undefined,
+    height_cm: potHeight,
+    volume_liters: potVolume,
+  }), [potShape, potLength, potWidth, potDiameter, potHeight, potVolume]);
+
+  const calculatedPotVolume = useMemo(() => calculatePotVolumeLiters(currentPotDimensions), [currentPotDimensions]);
+
+  const potDimensionsErrors = useMemo(
+    () => validatePotDimensions(currentPotDimensions, language),
+    [currentPotDimensions, language]
+  );
+
   const [isModalReady, setIsModalReady] = useState(false);
   const [isGuidanceOpen, setIsGuidanceOpen] = useState(false);
 
@@ -804,6 +908,14 @@ export const BalconySetupModal: React.FC<Props> = ({
       setSelectedRegion(isFirstTime ? null : (initialSpec?.region || null));
       setSelectedFloor(isFirstTime ? null : (typeof initialSpec?.floor === 'number' ? initialSpec.floor : null));
       setSelectedOrientation(isFirstTime ? null : (initialSpec?.orientation || null));
+      setPotCount(initialSpec?.pot_count ?? 1);
+      setPotShape(initialSpec?.pot_dimensions?.shape ?? 'rectangular');
+      setPotLength(initialSpec?.pot_dimensions?.length_cm ?? 60);
+      setPotWidth(initialSpec?.pot_dimensions?.width_cm ?? 20);
+      setPotDiameter(initialSpec?.pot_dimensions?.diameter_cm ?? 30);
+      setPotHeight(initialSpec?.pot_dimensions?.height_cm ?? 18);
+      setPotVolume(initialSpec?.pot_dimensions?.volume_liters);
+      setFrenchBalconyNotice(null);
     }
   }, [isOpen, initialSpec, isFirstTime]);
 
@@ -828,6 +940,34 @@ export const BalconySetupModal: React.FC<Props> = ({
     setSpec((prev) => ({ ...prev, orientation: orientKey }));
   };
 
+  const handleSelectBalconyType = (type: BalconyType) => {
+    if (type === 'french') {
+      const hadIncompatible = spec.pots.some(
+        (p) => p === 'pots_large_15_30' || p === 'grow_bags' || p === 'pots_medium_5_15'
+      );
+      const filteredPots = spec.pots.filter(
+        (p) => p !== 'pots_large_15_30' && p !== 'grow_bags' && p !== 'pots_medium_5_15'
+      );
+      const nextPots: ContainerType[] = filteredPots.length > 0 ? filteredPots : ['boxes_balcony_15cm'];
+      setSpec((prev) => ({
+        ...prev,
+        balcony_type: type,
+        pots: nextPots,
+        roofing: prev.roofing === 'covered' ? 'uncovered' : prev.roofing,
+      }));
+      if (hadIncompatible) {
+        setFrenchBalconyNotice(
+          isEn
+            ? 'Adjusted containers: Standing floor containers were deselected as French balconies have no floor slab.'
+            : 'Dostosowano pojemniki: wyłączono donice stojące na posadzce ze względu na brak płyty balkonowej.'
+        );
+      }
+    } else {
+      setFrenchBalconyNotice(null);
+      setSpec((prev) => ({ ...prev, balcony_type: type }));
+    }
+  };
+
   const [stepError, setStepError] = useState<string | null>(null);
 
   const step1Validation = useMemo(
@@ -841,8 +981,16 @@ export const BalconySetupModal: React.FC<Props> = ({
   );
 
   const step3Validation = useMemo(
-    () => validateStep3(spec.pots, spec.care_time, language),
-    [spec.pots, spec.care_time, language]
+    () =>
+      validateStep3(spec.pots, spec.care_time, language, {
+        balconyType: spec.balcony_type,
+        roofing: spec.roofing,
+        floor: selectedFloor ?? spec.floor,
+        orientation: selectedOrientation ?? spec.orientation,
+        potCount,
+        potDimensions: currentPotDimensions,
+      }),
+    [spec.pots, spec.care_time, spec.balcony_type, spec.roofing, selectedFloor, spec.floor, selectedOrientation, spec.orientation, potCount, currentPotDimensions, language]
   );
 
   const currentStepValidation = useMemo<StepValidationResult>(() => {
@@ -859,10 +1007,12 @@ export const BalconySetupModal: React.FC<Props> = ({
           region: selectedRegion || undefined,
           floor: selectedFloor ?? undefined,
           orientation: selectedOrientation || undefined,
+          pot_count: potCount,
+          pot_dimensions: currentPotDimensions,
         },
         language
       ),
-    [spec, selectedRegion, selectedFloor, selectedOrientation, language]
+    [spec, selectedRegion, selectedFloor, selectedOrientation, potCount, currentPotDimensions, language]
   );
 
   const isStep1Valid = step1Validation.isValid;
@@ -996,6 +1146,8 @@ export const BalconySetupModal: React.FC<Props> = ({
         region: selectedRegion || undefined,
         floor: selectedFloor ?? undefined,
         orientation: selectedOrientation || undefined,
+        pot_count: potCount,
+        pot_dimensions: currentPotDimensions,
       },
       language
     );
@@ -1015,6 +1167,8 @@ export const BalconySetupModal: React.FC<Props> = ({
       region: selectedRegion!,
       floor: selectedFloor!,
       orientation: selectedOrientation!,
+      pot_count: potCount,
+      pot_dimensions: currentPotDimensions,
     });
   };
 
@@ -1043,12 +1197,12 @@ export const BalconySetupModal: React.FC<Props> = ({
         aria-modal="true"
         aria-labelledby="onboarding-modal-heading"
         data-modal-ready={isModalReady ? 'true' : 'false'}
-        className="bg-white dark:bg-stone-900 text-stone-800 dark:text-stone-100 rounded-2xl max-w-[560px] w-full max-h-[90dvh] flex flex-col shadow-xl border border-stone-200/90 dark:border-stone-800 overflow-hidden transition-all"
+        className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-2xl max-w-[560px] w-full max-h-[90dvh] flex flex-col shadow-2xl border border-stone-300 dark:border-stone-800 overflow-hidden transition-all my-auto"
       >
         {/* Top Header focused on: one concise heading, one short benefit statement, one secondary dismiss action */}
-        <div className="shrink-0 bg-white dark:bg-stone-950 p-4 sm:p-7 pb-3 sm:pb-4 border-b border-stone-200/80 dark:border-stone-800">
-          <div className="flex items-center justify-between gap-3 mb-3 text-xs font-semibold text-stone-500 dark:text-stone-400">
-            <div className="flex items-center gap-1.5 sm:gap-2" role="tablist" aria-label={isEn ? 'Balcony setup steps' : 'Kroki konfiguracji balkonu'}>
+        <div className="shrink-0 bg-white dark:bg-stone-950 p-4 sm:p-7 pb-3 sm:pb-4 border-b border-stone-200 dark:border-stone-800">
+          <div className="flex items-center justify-between gap-3 mb-3 text-xs font-semibold text-stone-700 dark:text-stone-300">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap" role="tablist" aria-label={isEn ? 'Balcony setup steps' : 'Kroki konfiguracji balkonu'}>
               {[
                 { num: 1 as const, label: isEn ? 'Location' : 'Lokalizacja' },
                 { num: 2 as const, label: isEn ? 'Exposure' : 'Ekspozycja' },
@@ -1061,7 +1215,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   (s.num === 3 && (!isStep1Valid || !isStep2Valid));
                 return (
                   <React.Fragment key={s.num}>
-                    {idx > 0 && <span className="text-stone-300 dark:text-stone-700 select-none">/</span>}
+                    {idx > 0 && <span className="text-stone-400 dark:text-stone-600 select-none">/</span>}
                     <button
                       type="button"
                       id={`wizard-step-tab-${s.num}`}
@@ -1073,19 +1227,20 @@ export const BalconySetupModal: React.FC<Props> = ({
                         if (isDisabledTab) return;
                         setStep(s.num);
                       }}
-                      className={`transition-colors cursor-pointer flex items-center gap-1 ${
+                      className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                         isActive
-                          ? 'text-emerald-700 dark:text-emerald-400 font-bold'
+                          ? 'text-emerald-950 dark:text-emerald-100 font-bold bg-emerald-50 dark:bg-emerald-950/80 border-2 border-emerald-700 dark:border-emerald-400 shadow-2xs'
                           : isCompleted
-                          ? 'text-stone-700 dark:text-stone-300 hover:text-emerald-600'
+                          ? 'text-stone-800 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300'
                           : isDisabledTab
-                          ? 'text-stone-300 dark:text-stone-600 cursor-not-allowed'
-                          : 'text-stone-500 hover:text-stone-800'
+                          ? 'text-stone-400 dark:text-stone-600 cursor-not-allowed opacity-60'
+                          : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-stone-100'
                       }`}
                     >
-                      <span>{s.num}.</span>
+                      <span className="font-bold">{s.num}.</span>
                       <span>{s.label}</span>
-                      {isCompleted && <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[3]" />}
+                      {isCompleted && <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 stroke-[3]" />}
+                      {isActive && <span className="sr-only"> ({isEn ? 'Current step' : 'Aktualny krok'})</span>}
                     </button>
                   </React.Fragment>
                 );
@@ -1109,7 +1264,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   onMouseLeave={() => setIsCloseTooltipVisible(false)}
                   onFocus={() => setIsCloseTooltipVisible(true)}
                   onBlur={() => setIsCloseTooltipVisible(false)}
-                  className="min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-800 hover:text-stone-950 dark:text-stone-100 dark:hover:text-white border border-stone-300 dark:border-stone-700 shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-600 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-stone-900 transition-all cursor-pointer"
+                  className="min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 text-stone-900 hover:text-stone-950 dark:text-stone-100 dark:hover:text-white border border-stone-300 dark:border-stone-700 shadow-xs focus-visible:outline-none focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-white dark:focus-visible:ring-offset-stone-900 transition-all cursor-pointer"
                   aria-label="Zamknij"
                   aria-describedby="close-modal-tooltip"
                   title="Zamknij"
@@ -1119,7 +1274,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                 <span
                   id="close-modal-tooltip"
                   role="tooltip"
-                  className={`absolute top-full mt-1.5 right-0 px-2.5 py-1 bg-stone-900 dark:bg-stone-800 text-white text-[11px] font-medium rounded-md shadow-lg pointer-events-none transition-all duration-150 z-50 whitespace-nowrap border border-stone-700 ${
+                  className={`absolute top-full mt-1.5 right-0 px-2.5 py-1 bg-stone-900 dark:bg-stone-800 text-white text-xs font-semibold rounded-md shadow-lg pointer-events-none transition-all duration-150 z-50 whitespace-nowrap border border-stone-700 ${
                     isCloseTooltipVisible ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-1'
                   }`}
                 >
@@ -1139,7 +1294,7 @@ export const BalconySetupModal: React.FC<Props> = ({
             {step === 2 && (isEn ? 'Which direction does the sun face?' : 'W którą stronę pada słońce?')}
             {step === 3 && (isEn ? 'Containers & care time' : 'Twoja przestrzeń i donice')}
           </h2>
-          <p className="text-xs sm:text-sm text-stone-500 dark:text-stone-400 mt-1.5 leading-relaxed">
+          <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1.5 leading-relaxed font-medium">
             {step === 1 && (isEn ? 'We tailor plants to your local microclimate and building height.' : 'Dopasujemy rośliny do klimatu w Twojej okolicy i wysokości budynku.')}
             {step === 2 && (isEn ? 'Sunlight is key — indicate orientation to get crops that thrive in this light.' : 'Słońce to klucz do sukcesu – wskaż kierunek, a dobierzemy gatunki, które pokochają to światło.')}
             {step === 3 && (isEn ? 'Specify container types and how often you can water your balcony pots.' : 'Określ rodzaj donic i czas, jaki chcesz poświęcić na podlewanie.')}
@@ -1154,20 +1309,20 @@ export const BalconySetupModal: React.FC<Props> = ({
               {/* Region selection */}
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                    <MapPin className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                     <span>{isEn ? 'Select your province or nearest city' : 'Wybierz swoje województwo lub najbliższe miasto'}</span>
                   </label>
-                  <span className="text-[11px] text-stone-500">
+                  <span className="text-xs text-stone-700 dark:text-stone-300">
                     {isEn ? 'Selected: ' : 'Wybrano: '}
-                    <strong className={currentRegion ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-stone-600 dark:text-stone-300 font-medium'}>
+                    <strong className={currentRegion ? 'text-emerald-900 dark:text-emerald-200 font-bold' : 'text-stone-800 dark:text-stone-200 font-semibold'}>
                       {currentRegion ? currentRegion.name.split('(')[0].trim() : (isEn ? 'None' : 'Nie wybrano')}
                     </strong>
                   </span>
                 </div>
 
                 <div className="relative">
-                  <Search className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     id="region-search-input"
@@ -1176,11 +1331,11 @@ export const BalconySetupModal: React.FC<Props> = ({
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
                     placeholder={isEn ? 'Search city or region, e.g. Warsaw, Krakow, Wroclaw, Gdansk...' : 'Wpisz np. Warszawa, Kraków, Wrocław, Gdańsk, Poznań...'}
-                    className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full min-h-[44px] pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-medium rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 shadow-xs"
                   />
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-0.5 scrollbar-none">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto p-0.5 scrollbar-none">
                   {filteredRegions.map((regKey) => {
                     const reg = POLAND_REGIONS[regKey];
                     const isSelected = selectedRegion === regKey;
@@ -1191,22 +1346,23 @@ export const BalconySetupModal: React.FC<Props> = ({
                         id={`region-${regKey}`}
                         data-testid={`location-option-${regKey}`}
                         data-region={regKey}
+                        aria-pressed={isSelected}
                         onClick={() => handleSelectRegion(regKey)}
-                        className={`group p-3 rounded-xl border text-left text-xs transition-all flex items-center justify-between cursor-pointer ${
+                        className={`group min-h-[44px] p-3 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isSelected
-                            ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 font-bold shadow-xs'
-                            : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800/80 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300'
+                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 font-bold shadow-xs'
+                            : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100'
                         }`}
                       >
                         <span className="truncate pr-2">{reg.name}</span>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center gap-1.5 shrink-0">
                           {isSelected ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] text-blue-700 dark:text-blue-300 font-bold bg-blue-100/90 dark:bg-blue-900/70 px-2 py-0.5 rounded-md">
-                              <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />
-                              <ArrowRight className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                            <span className="inline-flex items-center gap-1 text-xs text-emerald-950 dark:text-emerald-100 font-bold bg-emerald-100 dark:bg-emerald-900/90 px-2 py-0.5 rounded-md border border-emerald-400 dark:border-emerald-600">
+                              <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 stroke-[3]" />
+                              <span>{isEn ? 'Selected' : 'Wybrano'}</span>
                             </span>
                           ) : (
-                            <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
+                            <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
                           )}
                         </div>
                       </button>
@@ -1219,10 +1375,10 @@ export const BalconySetupModal: React.FC<Props> = ({
               <div
                 ref={floorSectionRef}
                 id="balcony-floor-section"
-                className="space-y-2.5 pt-2 border-t border-stone-200/80 dark:border-stone-800 scroll-mt-2"
+                className="space-y-2.5 pt-2 border-t border-stone-200 dark:border-stone-800 scroll-mt-2"
               >
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
-                  <Building className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                  <Building className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                   <span>{isEn ? 'Which floor is your balcony located on?' : 'Na którym piętrze znajduje się balkon?'}</span>
                 </label>
 
@@ -1246,29 +1402,30 @@ export const BalconySetupModal: React.FC<Props> = ({
                         id={`floor-btn-${item.floor}`}
                         data-testid={`floor-option-${item.semanticKey}`}
                         data-floor={item.floor}
+                        aria-pressed={isSelected}
                         onClick={() => handleSelectFloor(item.floor)}
-                        className={`group p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
+                        className={`group min-h-[56px] p-3 sm:p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isSelected
-                            ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 shadow-xs font-bold'
-                            : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800/80 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300'
+                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs font-bold'
+                            : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100'
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-sm font-bold">{item.label}</span>
+                          <span className="text-sm font-bold leading-tight">{item.label}</span>
                           {isSelected ? (
-                            <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xs">
+                            <div className="w-5 h-5 rounded-full bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
                               <Check className="w-3 h-3 stroke-[3]" />
                             </div>
                           ) : (
-                            <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
+                            <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all" />
                           )}
                         </div>
-                        <span className="text-[10px] text-stone-500 dark:text-stone-400 self-start text-left">{item.hint}</span>
-                        <div className="w-full pt-1 border-t border-stone-200/60 dark:border-stone-700/60 flex items-center justify-between text-[10px]">
-                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-stone-600 dark:text-stone-300 group-hover:text-blue-800'}>
+                        <span className="text-xs text-stone-700 dark:text-stone-300 self-start text-left font-medium leading-tight">{item.hint}</span>
+                        <div className="w-full pt-1 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between text-xs font-semibold">
+                          <span className={isSelected ? 'text-emerald-900 dark:text-emerald-200 font-bold' : 'text-stone-700 dark:text-stone-300 group-hover:text-emerald-700'}>
                             {isSelected ? (isEn ? 'Selected floor' : 'Wybrane piętro') : (isEn ? 'Select' : 'Wybierz')}
                           </span>
-                          <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-600' : 'text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform'}`} />
+                          <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-transform'}`} />
                         </div>
                       </button>
                     );
@@ -1278,15 +1435,15 @@ export const BalconySetupModal: React.FC<Props> = ({
 
               {/* Status / Requirement Warning Banner */}
               {!isStep1Valid && (
-                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/80 flex items-center gap-3 text-amber-900 dark:text-amber-200 text-xs shadow-2xs animate-fade-in">
-                  <div className="w-7 h-7 rounded-xl bg-amber-200/60 dark:bg-amber-900/60 flex items-center justify-center shrink-0 font-bold text-amber-800 dark:text-amber-300">
+                <div className="p-3.5 rounded-2xl bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 flex items-center gap-3 text-amber-950 dark:text-amber-100 text-xs shadow-2xs animate-fade-in">
+                  <div className="w-7 h-7 rounded-xl bg-amber-200 dark:bg-amber-900/80 flex items-center justify-center shrink-0 font-bold text-amber-900 dark:text-amber-200">
                     <Info className="w-4 h-4" />
                   </div>
                   <div className="space-y-0.5">
-                    <div className="font-semibold text-amber-950 dark:text-amber-100">
+                    <div className="font-bold text-amber-950 dark:text-amber-100 text-xs">
                       {isEn ? 'Location and floor selection required' : 'Wymagany wybór miejsca'}
                     </div>
-                    <div className="text-[11px] text-amber-800 dark:text-amber-300/90">{getStep1InactivityReason()}</div>
+                    <div className="text-xs text-amber-900 dark:text-amber-200 font-medium">{getStep1InactivityReason()}</div>
                   </div>
                 </div>
               )}
@@ -1297,21 +1454,21 @@ export const BalconySetupModal: React.FC<Props> = ({
           {step === 2 && (
             <div data-testid="onboarding-step-2" className="space-y-4 animate-fade-in">
               {/* Category Filter for Orientation */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
-                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-stone-700 dark:text-stone-300 flex items-center gap-1.5">
+                  <Sun className="w-4 h-4 text-amber-500" />
                   <span>{isEn ? 'Compass orientation' : 'Kierunek świata'}</span>
                 </span>
-                <div className="flex items-center gap-1 text-xs">
+                <div className="flex items-center gap-1.5 text-xs">
                   <button
                     type="button"
                     id="sunlight-filter-main-btn"
                     data-testid="sunlight-filter-main"
                     onClick={() => setExposureFilter('main')}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-xl font-bold transition cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                       exposureFilter === 'main'
-                        ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-semibold'
-                        : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
+                        ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-bold shadow-xs'
+                        : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white bg-stone-100 dark:bg-stone-800'
                     }`}
                   >
                     {isEn ? 'Main (8)' : 'Główne (8)'}
@@ -1321,10 +1478,10 @@ export const BalconySetupModal: React.FC<Props> = ({
                     id="sunlight-filter-all-btn"
                     data-testid="sunlight-filter-all"
                     onClick={() => setExposureFilter('all')}
-                    className={`px-2.5 py-1 rounded-lg font-medium transition cursor-pointer ${
+                    className={`min-h-[44px] px-3.5 py-2 rounded-xl font-bold transition cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                       exposureFilter === 'all'
-                        ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-semibold'
-                        : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-200'
+                        ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-bold shadow-xs'
+                        : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white bg-stone-100 dark:bg-stone-800'
                     }`}
                   >
                     {isEn ? 'All (23)' : 'Wszystkie (23)'}
@@ -1336,17 +1493,17 @@ export const BalconySetupModal: React.FC<Props> = ({
               {recommendedOrientation && (
                 <div
                   data-testid="sunlight-recommendation-banner"
-                  className="p-3 rounded-xl bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 flex items-center justify-between text-xs text-amber-950 dark:text-amber-200 shadow-2xs animate-fade-in"
+                  className="p-3.5 rounded-xl bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 flex items-center justify-between text-xs text-amber-950 dark:text-amber-100 shadow-2xs animate-fade-in"
                 >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-amber-200/70 dark:bg-amber-900/60 flex items-center justify-center shrink-0 text-amber-800 dark:text-amber-300">
-                      <Sparkles className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-amber-200 dark:bg-amber-900/80 flex items-center justify-center shrink-0 text-amber-900 dark:text-amber-200">
+                      <Sparkles className="w-4 h-4" />
                     </div>
                     <div>
                       <span className="font-bold">
                         {isEn ? 'Balcony recommendation: ' : 'Wskazówka dla Twojego balkonu: '}
                       </span>
-                      <span className="text-amber-800 dark:text-amber-300">
+                      <span className="text-amber-900 dark:text-amber-200 font-medium">
                         {isEn
                           ? `Based on your floor and location, South (${recommendedOrientation}) is typically optimal.`
                           : `Na podstawie wybranego piętra i regionu sugerujemy wystawę południową (${recommendedOrientation}).`}
@@ -1391,20 +1548,20 @@ export const BalconySetupModal: React.FC<Props> = ({
                           handleSelectOrientation(item.key);
                         }
                       }}
-                      className={`group relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer min-h-[56px] flex flex-col justify-between select-none ${
+                      className={`group relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer min-h-[56px] flex flex-col justify-between select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                         isSelected
-                          ? 'border-2 border-emerald-600 bg-emerald-50/90 dark:bg-emerald-950/50 text-emerald-950 dark:text-emerald-100 shadow-md ring-2 ring-emerald-500/20'
-                          : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-emerald-300 dark:hover:border-emerald-700 hover:bg-stone-50/80 dark:hover:bg-stone-850 text-stone-800 dark:text-stone-200 shadow-2xs'
+                          ? 'border-2 border-emerald-600 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-md ring-2 ring-emerald-500/20'
+                          : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-emerald-500 dark:hover:border-emerald-600 hover:bg-emerald-50/40 dark:hover:bg-stone-850 text-stone-900 dark:text-stone-100 shadow-2xs'
                       }`}
                     >
                       {/* Card Top: Icon + Title + Badges + Help trigger + Select pill */}
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2.5">
                           <div
-                            className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
                               isSelected
-                                ? 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300'
-                                : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300'
+                                ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                                : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700'
                             }`}
                           >
                             {visual.icon}
@@ -1417,14 +1574,14 @@ export const BalconySetupModal: React.FC<Props> = ({
                               {isRecommended && (
                                 <span
                                   data-testid="sunlight-recommended-badge"
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-bold bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200 border border-amber-300 dark:border-amber-700/80"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-700"
                                 >
-                                  <Sparkles className="w-2.5 h-2.5 text-amber-600 dark:text-amber-400" />
+                                  <Sparkles className="w-3 h-3 text-amber-700 dark:text-amber-300" />
                                   <span>{isEn ? 'Recommended' : 'Rekomendowane'}</span>
                                 </span>
                               )}
                             </div>
-                            <span className="inline-block text-[11px] font-semibold text-stone-600 dark:text-stone-400 mt-0.5">
+                            <span className="inline-block text-xs font-semibold text-stone-700 dark:text-stone-300 mt-0.5">
                               ☀️ {item.badge}
                             </span>
                           </div>
@@ -1442,20 +1599,20 @@ export const BalconySetupModal: React.FC<Props> = ({
                               e.stopPropagation();
                               setActiveTooltip(isTooltipOpen ? null : item.key);
                             }}
-                            className={`min-w-8 min-h-8 w-8 h-8 rounded-lg flex items-center justify-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer ${
-                              isTooltipOpen ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-100/70 dark:bg-emerald-900/50' : ''
+                            className={`min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
+                              isTooltipOpen ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/70 border-emerald-400' : ''
                             }`}
                           >
                             <Info className="w-4 h-4" />
                           </button>
 
                           {isSelected ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shadow-xs">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs">
                               <span>{isEn ? 'Selected' : 'Wybrano'}</span>
                               <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-800 text-[11px] font-semibold transition-all">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-900 text-xs font-semibold transition-all">
                               <span>{isEn ? 'Select' : 'Wybierz'}</span>
                               <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                             </span>
@@ -1464,7 +1621,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                       </div>
 
                       {/* Short user-facing description - no long technical explanations inside card */}
-                      <p className="text-xs text-stone-600 dark:text-stone-300 mt-2 font-medium leading-relaxed">
+                      <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-2 font-medium leading-relaxed">
                         {isEn ? visual.subEn : visual.sub}
                       </p>
 
@@ -1472,24 +1629,24 @@ export const BalconySetupModal: React.FC<Props> = ({
                       {isTooltipOpen && (
                         <div
                           data-testid={`sunlight-details-${sunlightSemanticKey}`}
-                          className="mt-3 p-3 rounded-lg bg-stone-900 text-white dark:bg-stone-950 dark:border dark:border-stone-700 text-xs shadow-xl animate-fade-in"
+                          className="mt-3 p-3.5 rounded-xl bg-stone-900 text-white dark:bg-stone-950 dark:border dark:border-stone-700 text-xs shadow-xl animate-fade-in"
                           onClick={(e) => e.stopPropagation()}
                         >
                           <div className="flex items-start justify-between gap-2 mb-1.5">
-                            <strong className="font-bold text-emerald-300 text-xs">{item.label}</strong>
+                            <strong className="font-bold text-emerald-300 text-sm">{item.label}</strong>
                             <button
                               type="button"
                               onClick={() => setActiveTooltip(null)}
-                              className="text-stone-400 hover:text-white p-0.5 cursor-pointer"
+                              className="min-w-11 min-h-11 w-11 h-11 flex items-center justify-center text-stone-300 hover:text-white rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 cursor-pointer"
                               aria-label={isEn ? 'Close details' : 'Zamknij szczegóły'}
                             >
-                              <X className="w-3.5 h-3.5" />
+                              <X className="w-4 h-4" />
                             </button>
                           </div>
-                          <p className="text-stone-300 text-[11px] leading-relaxed">
+                          <p className="text-stone-200 text-xs leading-relaxed">
                             {item.desc}
                           </p>
-                          <div className="mt-2 pt-1.5 border-t border-stone-800 text-[10.5px] text-stone-400">
+                          <div className="mt-2 pt-2 border-t border-stone-800 text-xs font-medium text-stone-300">
                             🌡️ {item.thermal}
                           </div>
                         </div>
@@ -1501,15 +1658,15 @@ export const BalconySetupModal: React.FC<Props> = ({
 
               {/* Guidance Banner if orientation is not selected */}
               {!isStep2Valid && (
-                <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200/90 dark:border-amber-800/80 flex items-center gap-3 text-amber-900 dark:text-amber-200 text-xs shadow-2xs animate-fade-in">
-                  <div className="w-7 h-7 rounded-xl bg-amber-200/60 dark:bg-amber-900/60 flex items-center justify-center shrink-0 font-bold text-amber-800 dark:text-amber-300">
+                <div className="p-3.5 rounded-2xl bg-amber-100 dark:bg-amber-950/70 border border-amber-300 dark:border-amber-700 flex items-center gap-3 text-amber-950 dark:text-amber-100 text-xs shadow-2xs animate-fade-in">
+                  <div className="w-7 h-7 rounded-xl bg-amber-200 dark:bg-amber-900/80 flex items-center justify-center shrink-0 font-bold text-amber-900 dark:text-amber-200">
                     <Info className="w-4 h-4" />
                   </div>
                   <div className="space-y-0.5">
-                    <div className="font-semibold text-amber-950 dark:text-amber-100">
+                    <div className="font-bold text-amber-950 dark:text-amber-100">
                       {isEn ? 'Select balcony orientation to unlock "Next"' : 'Wybierz kierunek balkonu, aby odblokować przycisk "Dalej"'}
                     </div>
-                    <div className="text-[11px] text-amber-800 dark:text-amber-300/90">
+                    <div className="text-xs text-amber-900 dark:text-amber-200 font-medium">
                       {getStep2InactivityReason()}
                     </div>
                   </div>
@@ -1518,7 +1675,7 @@ export const BalconySetupModal: React.FC<Props> = ({
 
               {/* Selected exposure info bar */}
               {selectedOrientation && currentExposure && (
-                <div className="p-3 rounded-2xl bg-white dark:bg-stone-800/90 border border-stone-200 dark:border-stone-700/80 flex items-center justify-between text-xs">
+                <div className="p-3 rounded-2xl bg-white dark:bg-stone-800/90 border border-stone-300 dark:border-stone-700 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
                     <Sun className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>
@@ -1526,7 +1683,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                       <strong className="font-bold text-stone-900 dark:text-stone-100">{currentExposure.label}</strong>
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200/80 dark:border-emerald-800/60">
+                  <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-700">
                     {currentExposure.sunHours}
                   </span>
                 </div>
@@ -1641,11 +1798,11 @@ export const BalconySetupModal: React.FC<Props> = ({
                             id="barierka-dropdown-close-btn"
                             data-testid="railing-dropdown-close"
                             onClick={() => setIsBarierkaDropdownOpen(false)}
-                            className="p-1 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 hover:text-stone-950 dark:text-stone-200 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
                             aria-label={isEn ? 'Close dropdown' : 'Zamknij listę'}
                             title={isEn ? 'Close dropdown' : 'Zamknij listę'}
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-5 h-5 stroke-[2.5]" />
                           </button>
                         </div>
 
@@ -1660,20 +1817,20 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 data-testid={`railing-option-${opt.key}`}
                                 data-railing={opt.key}
                                 onClick={() => {
-                                  setSpec({ ...spec, balcony_type: opt.key });
+                                  handleSelectBalconyType(opt.key);
                                   setIsBarierkaDropdownOpen(false);
                                 }}
-                                className={`group w-full p-3 rounded-xl text-left transition-all flex items-start justify-between gap-3 cursor-pointer ${
+                                className={`group w-full min-h-[48px] p-3 rounded-xl text-left transition-all flex items-start justify-between gap-3 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                                   isSelected
-                                    ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/70 text-blue-950 dark:text-blue-100 font-semibold shadow-2xs'
-                                    : 'border border-stone-200/40 dark:border-stone-800/40 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-800 dark:text-stone-200'
+                                    ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-2xs'
+                                    : 'border border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100'
                                 }`}
                               >
                                 <div className="flex items-start gap-3.5 flex-1 min-w-0">
                                   <div className="relative shrink-0 select-none mt-0.5">
                                     <div
                                       className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all shadow-2xs ${opt.iconBg} ${opt.iconBorder} ${
-                                        isSelected ? 'ring-2 ring-blue-500/50 scale-[1.03]' : ''
+                                        isSelected ? 'ring-2 ring-blue-600/50 scale-[1.03]' : ''
                                       }`}
                                     >
                                       {opt.icon}
@@ -1688,18 +1845,18 @@ export const BalconySetupModal: React.FC<Props> = ({
                                       <span className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug">
                                         {isEn ? opt.titleEn : opt.title}
                                       </span>
-                                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${opt.badgeColor}`}>
+                                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${opt.badgeColor}`}>
                                         {isEn ? opt.badgeEn : opt.badge}
                                       </span>
                                     </div>
-                                    <div className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-normal mt-1 leading-snug break-words">
+                                    <div className="text-xs text-stone-700 dark:text-stone-300 font-medium mt-1 leading-snug break-words">
                                       {isEn ? opt.subEn : opt.sub}
                                     </div>
                                     <div className="flex flex-wrap gap-1.5 mt-2">
                                       {opt.traits.map((trait, idx) => (
                                         <span
                                           key={idx}
-                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[10.5px] border border-stone-200/70 dark:border-stone-700/70 font-medium"
+                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs border border-stone-300 dark:border-stone-700 font-semibold"
                                         >
                                           {trait.icon}
                                           <span>{isEn ? trait.labelEn : trait.label}</span>
@@ -1710,8 +1867,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 </div>
                                 <div className="shrink-0 mt-1 flex items-center gap-1.5">
                                   {isSelected ? (
-                                    <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xs">
-                                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                                    <div className="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center shadow-2xs">
+                                      <Check className="w-4 h-4 stroke-[3]" />
                                     </div>
                                   ) : (
                                     <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
@@ -1722,8 +1879,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                           })}
                         </div>
 
-                        <div className="px-3.5 py-2.5 bg-stone-50/60 dark:bg-stone-850 flex items-center justify-between">
-                          <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
+                        <div className="px-3.5 py-2.5 bg-stone-50/80 dark:bg-stone-850 flex items-center justify-between">
+                          <span className="text-xs text-stone-700 dark:text-stone-300 font-semibold">
                             {isEn ? 'Clicking an option selects it automatically' : 'Kliknięcie opcji automatycznie zatwierdza wybór'}
                           </span>
                           <button
@@ -1731,10 +1888,10 @@ export const BalconySetupModal: React.FC<Props> = ({
                             id="barierka-dropdown-done-btn"
                             data-testid="railing-dropdown-done"
                             onClick={() => setIsBarierkaDropdownOpen(false)}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
                           >
                             <span>{isEn ? 'Done' : 'Gotowe'}</span>
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -1751,11 +1908,11 @@ export const BalconySetupModal: React.FC<Props> = ({
                           id={`barierka-card-${opt.key}`}
                           data-testid={`railing-card-${opt.key}`}
                           data-railing={opt.key}
-                          onClick={() => setSpec({ ...spec, balcony_type: opt.key })}
-                          className={`group p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+                          onClick={() => handleSelectBalconyType(opt.key)}
+                          className={`group min-h-[56px] p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                             isSelected
-                              ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 shadow-xs font-semibold'
-                              : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300'
+                              ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 shadow-xs font-bold'
+                              : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100'
                           }`}
                         >
                           <div className="relative shrink-0 select-none mt-0.5">
@@ -1770,25 +1927,25 @@ export const BalconySetupModal: React.FC<Props> = ({
                             <div className="flex items-center justify-between gap-1">
                               <div className="flex flex-wrap items-center gap-1.5">
                                 <span className="text-xs font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${opt.badgeColor}`}>{isEn ? opt.badgeEn : opt.badge}</span>
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${opt.badgeColor}`}>{isEn ? opt.badgeEn : opt.badge}</span>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
                                 {isSelected ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-blue-700 dark:text-blue-300 font-bold bg-blue-100/90 dark:bg-blue-900/70 px-2 py-0.5 rounded-md">
-                                    <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />
-                                    <ArrowRight className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                                  <span className="inline-flex items-center gap-1 text-xs text-blue-800 dark:text-blue-200 font-bold bg-blue-100 dark:bg-blue-900/80 px-2 py-0.5 rounded-md">
+                                    <Check className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400 stroke-[3]" />
+                                    <span>{isEn ? 'Selected' : 'Wybrano'}</span>
                                   </span>
                                 ) : (
                                   <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
                                 )}
                               </div>
                             </div>
-                            <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug break-words">{isEn ? opt.subEn : opt.sub}</p>
+                            <p className="text-xs text-stone-700 dark:text-stone-300 mt-1 leading-snug break-words font-medium">{isEn ? opt.subEn : opt.sub}</p>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {opt.traits.map((trait, idx) => (
                                 <span
                                   key={idx}
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 dark:bg-stone-700/60 text-stone-600 dark:text-stone-300 text-[10px]"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-700/80 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-200 dark:border-stone-700"
                                 >
                                   {trait.icon}
                                   <span>{isEn ? trait.labelEn : trait.label}</span>
@@ -1804,26 +1961,26 @@ export const BalconySetupModal: React.FC<Props> = ({
               </div>
 
               {/* Zadaszenie Selection Component */}
-              <div className="space-y-3 pt-3 border-t border-stone-200/80 dark:border-stone-800">
+              <div className="space-y-3 pt-3 border-t border-stone-200 dark:border-stone-800">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
-                    <Umbrella className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                    <Umbrella className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                     <span>{isEn ? 'Balcony roof covering' : 'Zadaszenie balkonu'}</span>
                   </label>
 
-                  <div className="flex items-center gap-1 bg-stone-200/60 dark:bg-stone-800 p-0.5 rounded-lg text-[11px]">
+                  <div className="flex items-center gap-1 bg-stone-200/80 dark:bg-stone-800 p-1 rounded-xl text-xs">
                     <button
                       type="button"
                       id="roofing-view-dropdown-btn"
                       data-testid="roofing-view-dropdown"
                       onClick={() => setRoofingViewMode('dropdown')}
-                      className={`px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
+                      className={`min-h-[44px] px-3 py-2 rounded-lg font-bold transition flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                         roofingViewMode === 'dropdown'
-                          ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs font-semibold'
-                          : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
+                          ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs font-bold'
+                          : 'text-stone-700 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100'
                       }`}
                     >
-                      <List className="w-3 h-3" />
+                      <List className="w-3.5 h-3.5" />
                       <span>{isEn ? 'Dropdown' : 'Lista rozwijana'}</span>
                     </button>
                     <button
@@ -1831,13 +1988,13 @@ export const BalconySetupModal: React.FC<Props> = ({
                       id="roofing-view-cards-btn"
                       data-testid="roofing-view-cards"
                       onClick={() => setRoofingViewMode('cards')}
-                      className={`px-2 py-0.5 rounded-md font-medium transition flex items-center gap-1 cursor-pointer ${
+                      className={`min-h-[44px] px-3 py-2 rounded-lg font-bold transition flex items-center gap-1 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                         roofingViewMode === 'cards'
-                          ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs font-semibold'
-                          : 'text-stone-500 hover:text-stone-800 dark:hover:text-stone-300'
+                          ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs font-bold'
+                          : 'text-stone-700 hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100'
                       }`}
                     >
-                      <LayoutGrid className="w-3 h-3" />
+                      <LayoutGrid className="w-3.5 h-3.5" />
                       <span>{isEn ? 'Cards' : 'Karty'}</span>
                     </button>
                   </div>
@@ -1850,10 +2007,10 @@ export const BalconySetupModal: React.FC<Props> = ({
                       id="balcony-roofing-select"
                       data-testid="roofing-select"
                       onClick={() => setIsRoofingDropdownOpen(!isRoofingDropdownOpen)}
-                      className={`w-full p-3 rounded-2xl border text-left bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 flex items-center justify-between transition-all cursor-pointer shadow-2xs ${
+                      className={`w-full min-h-[48px] p-3 rounded-2xl border text-left bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 flex items-center justify-between transition-all cursor-pointer shadow-2xs focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                         isRoofingDropdownOpen
-                          ? 'border-emerald-500 ring-2 ring-emerald-500/20'
-                          : 'border-stone-200 dark:border-stone-700 hover:border-stone-300 dark:hover:border-stone-600'
+                          ? 'border-2 border-emerald-700 ring-2 ring-emerald-500/20'
+                          : 'border-stone-300 dark:border-stone-700 hover:border-emerald-600'
                       }`}
                     >
                       <div className="flex items-start gap-3.5 pr-2 min-w-0 flex-1">
@@ -1871,18 +2028,18 @@ export const BalconySetupModal: React.FC<Props> = ({
                             <span className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug">
                               {isEn ? selectedRoofingOption.titleEn : selectedRoofingOption.title}
                             </span>
-                            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${selectedRoofingOption.badgeColor}`}>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${selectedRoofingOption.badgeColor}`}>
                               {isEn ? selectedRoofingOption.badgeEn : selectedRoofingOption.badge}
                             </span>
                           </div>
-                          <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 leading-snug">
+                          <div className="text-xs text-stone-700 dark:text-stone-300 font-medium mt-1 leading-snug">
                             {isEn ? selectedRoofingOption.subEn : selectedRoofingOption.sub}
                           </div>
                           <div className="flex flex-wrap gap-1.5 mt-2">
                             {selectedRoofingOption.traits.map((trait, idx) => (
                               <span
                                 key={idx}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-700/60 text-stone-700 dark:text-stone-300 text-[10.5px] border border-stone-200/60 dark:border-stone-700/60 font-medium"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-700/60 text-stone-800 dark:text-stone-200 text-xs border border-stone-300 dark:border-stone-700 font-semibold"
                               >
                                 {trait.icon}
                                 <span>{isEn ? trait.labelEn : trait.label}</span>
@@ -1891,15 +2048,15 @@ export const BalconySetupModal: React.FC<Props> = ({
                           </div>
                         </div>
                       </div>
-                      <div className="w-7 h-7 rounded-lg bg-stone-100 dark:bg-stone-700/80 flex items-center justify-center text-stone-600 dark:text-stone-300 shrink-0 ml-2">
+                      <div className="w-7 h-7 rounded-lg bg-stone-100 dark:bg-stone-700/80 flex items-center justify-center text-stone-700 dark:text-stone-200 shrink-0 ml-2">
                         {isRoofingDropdownOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </div>
                     </button>
 
                     {isRoofingDropdownOpen && (
-                      <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-white dark:bg-stone-900 rounded-2xl border border-stone-200 dark:border-stone-700 shadow-2xl overflow-hidden animate-fade-in divide-y divide-stone-100 dark:divide-stone-800">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-40 bg-white dark:bg-stone-900 rounded-2xl border border-stone-300 dark:border-stone-700 shadow-2xl overflow-hidden animate-fade-in divide-y divide-stone-100 dark:divide-stone-800">
                         <div className="px-3.5 py-2.5 bg-stone-50/80 dark:bg-stone-850 flex items-center justify-between">
-                          <span className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider">
+                          <span className="text-xs font-bold text-stone-800 dark:text-stone-200 uppercase tracking-wider">
                             {isEn ? 'Select roof covering' : 'Wybierz zadaszenie'}
                           </span>
                           <button
@@ -1907,17 +2064,19 @@ export const BalconySetupModal: React.FC<Props> = ({
                             id="roofing-dropdown-close-btn"
                             data-testid="roofing-dropdown-close"
                             onClick={() => setIsRoofingDropdownOpen(false)}
-                            className="p-1 rounded-lg hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 hover:text-stone-950 dark:text-stone-200 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
                             aria-label={isEn ? 'Close list' : 'Zamknij listę'}
                             title={isEn ? 'Close list' : 'Zamknij listę'}
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-5 h-5 stroke-[2.5]" />
                           </button>
                         </div>
 
                         <div className="p-2 space-y-2 overflow-y-auto max-h-[28rem]">
                           {ROOFING_OPTIONS.map((opt) => {
                             const isSelected = spec.roofing === opt.key;
+                            const roofingDisabledReason = getDisabledOptionReason('roofing', opt.key, spec, language);
+                            const isRoofingDisabled = roofingDisabledReason !== null;
                             return (
                               <button
                                 type="button"
@@ -1925,71 +2084,90 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 id={`roofing-opt-${opt.key}`}
                                 data-testid={`roofing-option-${opt.key}`}
                                 data-roofing={opt.key}
+                                disabled={isRoofingDisabled}
+                                aria-disabled={isRoofingDisabled ? 'true' : 'false'}
                                 onClick={() => {
-                                  setSpec({ ...spec, roofing: opt.key });
-                                  setIsRoofingDropdownOpen(false);
+                                  if (!isRoofingDisabled) {
+                                    setSpec({ ...spec, roofing: opt.key });
+                                    setIsRoofingDropdownOpen(false);
+                                  }
                                 }}
-                                className={`group w-full p-3 rounded-xl text-left transition-all flex items-start justify-between gap-3 cursor-pointer ${
-                                  isSelected
-                                    ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/70 text-blue-950 dark:text-blue-100 font-semibold shadow-2xs'
-                                    : 'border border-stone-200/40 dark:border-stone-800/40 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-800 dark:text-stone-200'
+                                className={`group w-full min-h-[48px] p-3 rounded-xl text-left transition-all flex flex-col gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                                  isRoofingDisabled
+                                    ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-2 border-dashed border-stone-400 dark:border-stone-700'
+                                    : isSelected
+                                    ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-2xs cursor-pointer'
+                                    : 'border border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100 cursor-pointer'
                                 }`}
                               >
-                                <div className="flex items-start gap-3.5 flex-1 min-w-0">
-                                  <div className="relative shrink-0 select-none mt-0.5">
-                                    <div
-                                      className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all shadow-2xs ${opt.iconBg} ${opt.iconBorder} ${
-                                        isSelected ? 'ring-2 ring-blue-500/50 scale-[1.03]' : ''
-                                      }`}
-                                    >
-                                      {opt.icon}
+                                <div className="flex items-start justify-between gap-3 w-full">
+                                  <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                                    <div className="relative shrink-0 select-none mt-0.5">
+                                      <div
+                                        className={`w-11 h-11 rounded-2xl flex items-center justify-center border transition-all shadow-2xs ${opt.iconBg} ${opt.iconBorder} ${
+                                          isSelected ? 'ring-2 ring-blue-600/50 scale-[1.03]' : ''
+                                        }`}
+                                      >
+                                        {opt.icon}
+                                      </div>
+                                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 flex items-center justify-center shadow-xs">
+                                        {opt.cornerIcon}
+                                      </div>
                                     </div>
-                                    <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 flex items-center justify-center shadow-xs">
-                                      {opt.cornerIcon}
-                                    </div>
-                                  </div>
 
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      <span className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug">
-                                        {isEn ? opt.titleEn : opt.title}
-                                      </span>
-                                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${opt.badgeColor}`}>
-                                        {isEn ? opt.badgeEn : opt.badge}
-                                      </span>
-                                    </div>
-                                    <div className="text-[11px] sm:text-xs text-stone-500 dark:text-stone-400 font-normal mt-1 leading-snug break-words">
-                                      {isEn ? opt.subEn : opt.sub}
-                                    </div>
-                                    <div className="flex flex-wrap gap-1.5 mt-2">
-                                      {opt.traits.map((trait, idx) => (
-                                        <span
-                                          key={idx}
-                                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-[10.5px] border border-stone-200/70 dark:border-stone-700/70 font-medium"
-                                        >
-                                          {trait.icon}
-                                          <span>{isEn ? trait.labelEn : trait.label}</span>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex flex-wrap items-center gap-1.5">
+                                        <span className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 leading-snug">
+                                          {isEn ? opt.titleEn : opt.title}
                                         </span>
-                                      ))}
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-md border ${opt.badgeColor}`}>
+                                          {isEn ? opt.badgeEn : opt.badge}
+                                        </span>
+                                      </div>
+                                      <div className="text-xs text-stone-700 dark:text-stone-300 font-medium mt-1 leading-snug break-words">
+                                        {isEn ? opt.subEn : opt.sub}
+                                      </div>
+                                      <div className="flex flex-wrap gap-1.5 mt-2">
+                                        {opt.traits.map((trait, idx) => (
+                                          <span
+                                            key={idx}
+                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs border border-stone-300 dark:border-stone-700 font-semibold"
+                                          >
+                                            {trait.icon}
+                                            <span>{isEn ? trait.labelEn : trait.label}</span>
+                                          </span>
+                                        ))}
+                                      </div>
                                     </div>
                                   </div>
+                                  <div className="shrink-0 mt-1 flex items-center gap-1.5">
+                                    {isSelected ? (
+                                      <div className="w-6 h-6 rounded-full bg-blue-700 text-white flex items-center justify-center shadow-2xs">
+                                        <Check className="w-4 h-4 stroke-[3]" />
+                                      </div>
+                                    ) : (
+                                      <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="shrink-0 mt-1 flex items-center gap-1.5">
-                                  {isSelected ? (
-                                    <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-2xs">
-                                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                                    </div>
-                                  ) : (
-                                    <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
-                                  )}
-                                </div>
+
+                                {roofingDisabledReason && (
+                                  <div
+                                    data-testid={`disabled-reason-roofing-${opt.key}`}
+                                    role="tooltip"
+                                    className="w-full mt-1 p-2 rounded-lg bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-xs text-amber-950 dark:text-amber-100 flex items-start gap-1.5 font-semibold"
+                                  >
+                                    <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                                    <span>{roofingDisabledReason}</span>
+                                  </div>
+                                )}
                               </button>
                             );
                           })}
                         </div>
 
-                        <div className="px-3.5 py-2.5 bg-stone-50/60 dark:bg-stone-850 flex items-center justify-between">
-                          <span className="text-[11px] text-stone-500 dark:text-stone-400 font-medium">
+                        <div className="px-3.5 py-2.5 bg-stone-50/80 dark:bg-stone-850 flex items-center justify-between">
+                          <span className="text-xs text-stone-700 dark:text-stone-300 font-semibold">
                             {isEn ? 'Clicking an option selects it automatically' : 'Kliknięcie opcji automatycznie zatwierdza wybór'}
                           </span>
                           <button
@@ -1997,10 +2175,10 @@ export const BalconySetupModal: React.FC<Props> = ({
                             id="roofing-dropdown-done-btn"
                             data-testid="roofing-dropdown-done"
                             onClick={() => setIsRoofingDropdownOpen(false)}
-                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-xs cursor-pointer"
+                            className="min-h-[44px] min-w-[44px] px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 shadow-xs cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700"
                           >
                             <span>{isEn ? 'Done' : 'Gotowe'}</span>
-                            <Check className="w-3.5 h-3.5" />
+                            <Check className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -2010,6 +2188,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     {ROOFING_OPTIONS.map((opt) => {
                       const isSelected = spec.roofing === opt.key;
+                      const roofingDisabledReason = getDisabledOptionReason('roofing', opt.key, spec, language);
+                      const isRoofingDisabled = roofingDisabledReason !== null;
                       return (
                         <button
                           type="button"
@@ -2017,51 +2197,70 @@ export const BalconySetupModal: React.FC<Props> = ({
                           id={`roofing-card-${opt.key}`}
                           data-testid={`roofing-card-${opt.key}`}
                           data-roofing={opt.key}
-                          onClick={() => setSpec({ ...spec, roofing: opt.key })}
-                          className={`group p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
-                            isSelected
-                              ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 shadow-xs font-semibold'
-                              : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300'
+                          disabled={isRoofingDisabled}
+                          aria-disabled={isRoofingDisabled ? 'true' : 'false'}
+                          onClick={() => {
+                            if (!isRoofingDisabled) setSpec({ ...spec, roofing: opt.key });
+                          }}
+                          className={`group min-h-[56px] p-3.5 rounded-2xl border text-left transition-all flex flex-col gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                            isRoofingDisabled
+                              ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-2 border-dashed border-stone-400 dark:border-stone-700'
+                              : isSelected
+                              ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 shadow-xs font-bold cursor-pointer'
+                              : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100 cursor-pointer'
                           }`}
                         >
-                          <div className="relative shrink-0 select-none mt-0.5">
-                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-2xs ${opt.iconBg} ${opt.iconBorder}`}>
-                              {opt.icon}
-                            </div>
-                            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 flex items-center justify-center shadow-xs">
-                              {opt.cornerIcon}
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-1">
-                              <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-xs font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
-                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border ${opt.badgeColor}`}>{isEn ? opt.badgeEn : opt.badge}</span>
+                          <div className="flex items-start gap-3.5 w-full">
+                            <div className="relative shrink-0 select-none mt-0.5">
+                              <div className={`w-11 h-11 rounded-2xl flex items-center justify-center border shadow-2xs ${opt.iconBg} ${opt.iconBorder}`}>
+                                {opt.icon}
                               </div>
-                              <div className="flex items-center gap-1 shrink-0">
-                                {isSelected ? (
-                                  <span className="inline-flex items-center gap-1 text-[11px] text-blue-700 dark:text-blue-300 font-bold bg-blue-100/90 dark:bg-blue-900/70 px-2 py-0.5 rounded-md">
-                                    <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />
-                                    <ArrowRight className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 flex items-center justify-center shadow-xs">
+                                {opt.cornerIcon}
+                              </div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-1">
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                  <span className="text-xs font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
+                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${opt.badgeColor}`}>{isEn ? opt.badgeEn : opt.badge}</span>
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {isSelected ? (
+                                    <span className="inline-flex items-center gap-1 text-xs text-blue-800 dark:text-blue-200 font-bold bg-blue-100 dark:bg-blue-900/80 px-2 py-0.5 rounded-md">
+                                      <Check className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400 stroke-[3]" />
+                                      <span>{isEn ? 'Selected' : 'Wybrano'}</span>
+                                    </span>
+                                  ) : (
+                                    <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
+                                  )}
+                                </div>
+                              </div>
+                              <p className="text-xs text-stone-700 dark:text-stone-300 mt-1 leading-snug break-words font-medium">{isEn ? opt.subEn : opt.sub}</p>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {opt.traits.map((trait, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-stone-100 dark:bg-stone-700/80 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-200 dark:border-stone-700"
+                                  >
+                                    {trait.icon}
+                                    <span>{isEn ? trait.labelEn : trait.label}</span>
                                   </span>
-                                ) : (
-                                  <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-all" />
-                                )}
+                                ))}
                               </div>
                             </div>
-                            <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug break-words">{isEn ? opt.subEn : opt.sub}</p>
-                            <div className="flex flex-wrap gap-1 mt-2">
-                              {opt.traits.map((trait, idx) => (
-                                <span
-                                  key={idx}
-                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-stone-100 dark:bg-stone-700/60 text-stone-600 dark:text-stone-300 text-[10px]"
-                                >
-                                  {trait.icon}
-                                  <span>{isEn ? trait.labelEn : trait.label}</span>
-                                </span>
-                              ))}
-                            </div>
                           </div>
+
+                          {roofingDisabledReason && (
+                            <div
+                              data-testid={`disabled-reason-roofing-${opt.key}`}
+                              role="tooltip"
+                              className="w-full mt-1 p-2 rounded-lg bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-xs text-amber-950 dark:text-amber-100 flex items-start gap-1.5 font-semibold"
+                            >
+                              <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                              <span>{roofingDisabledReason}</span>
+                            </div>
+                          )}
                         </button>
                       );
                     })}
@@ -2080,6 +2279,16 @@ export const BalconySetupModal: React.FC<Props> = ({
                     {isEn ? 'Multiple choice' : 'Wybór wielokrotny'}
                   </span>
                 </div>
+
+                {frenchBalconyNotice && (
+                  <div
+                    data-testid="french-balcony-adjusted-notice"
+                    className="p-3 rounded-xl bg-sky-50 dark:bg-sky-950/60 border border-sky-200 dark:border-sky-800 text-xs text-sky-900 dark:text-sky-200 flex items-start gap-2"
+                  >
+                    <Info className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 mt-0.5" />
+                    <span>{frenchBalconyNotice}</span>
+                  </div>
+                )}
 
                 <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug">
                   {isEn ? (
@@ -2112,6 +2321,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                       sub: isEn ? 'Superior root aeration and drainage' : 'Idealne napowietrzanie korzeni',
                     },
                   ].map((item) => {
+                    const disabledReason = getDisabledOptionReason('pot', item.id, spec, language);
+                    const isPotDisabled = disabledReason !== null;
                     const isSelected = spec.pots.includes(item.id as ContainerType);
                     return (
                       <button
@@ -2121,64 +2332,348 @@ export const BalconySetupModal: React.FC<Props> = ({
                         data-testid={`pot-option-${item.id}`}
                         data-pot={item.id}
                         aria-label={item.label}
-                        onClick={() => togglePot(item.id as ContainerType)}
-                        className={`group p-3.5 rounded-2xl border text-left transition-all duration-150 flex items-start gap-3 cursor-pointer active:scale-[0.98] ${
-                          isSelected
-                            ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/60 text-blue-950 dark:text-blue-100 ring-2 ring-blue-500/20 shadow-xs font-semibold'
-                            : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300'
+                        disabled={isPotDisabled}
+                        aria-disabled={isPotDisabled ? 'true' : 'false'}
+                        onClick={() => {
+                          if (!isPotDisabled) togglePot(item.id as ContainerType);
+                        }}
+                        className={`group p-3.5 rounded-2xl border text-left transition-all duration-150 flex flex-col gap-2 ${
+                          isPotDisabled
+                            ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-dashed border-stone-300 dark:border-stone-700'
+                            : isSelected
+                            ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/60 text-blue-950 dark:text-blue-100 ring-2 ring-blue-500/20 shadow-xs font-semibold cursor-pointer active:scale-[0.98]'
+                            : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300 cursor-pointer active:scale-[0.98]'
                         }`}
                       >
-                        <div
-                          className={`w-5 h-5 rounded-lg mt-0.5 flex items-center justify-center shrink-0 transition-all duration-150 ${
-                            isSelected
-                              ? 'bg-blue-600 border border-blue-600 text-white shadow-2xs'
-                              : 'border-2 border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 group-hover:border-blue-400'
-                          }`}
-                        >
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-1">
-                            <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-950 dark:text-blue-100' : 'text-stone-900 dark:text-stone-100 group-hover:text-blue-950 dark:group-hover:text-blue-100'}`}>
-                              {item.label}
-                            </span>
-                            <div className="flex items-center gap-1 shrink-0">
-                              {isSelected ? (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100/90 dark:bg-blue-900/70 px-2 py-0.5 rounded-md">
-                                  <span>{isEn ? 'Selected' : 'Wybrano'}</span>
-                                  <Check className="w-3 h-3 stroke-[3]" />
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-stone-600 dark:text-stone-300 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors">
-                                  <span>{isEn ? 'Select' : 'Wybierz'}</span>
-                                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                                </span>
-                              )}
+                        <div className="flex items-start gap-3 w-full">
+                          <div
+                            className={`w-5 h-5 rounded-lg mt-0.5 flex items-center justify-center shrink-0 transition-all duration-150 ${
+                              isPotDisabled
+                                ? 'border border-stone-300 dark:border-stone-700 bg-stone-200 dark:bg-stone-800 text-stone-400'
+                                : isSelected
+                                ? 'bg-blue-600 border border-blue-600 text-white shadow-2xs'
+                                : 'border-2 border-stone-300 dark:border-stone-600 bg-white dark:bg-stone-800 group-hover:border-blue-400'
+                            }`}
+                          >
+                            {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-950 dark:text-blue-100' : 'text-stone-900 dark:text-stone-100 group-hover:text-blue-950 dark:group-hover:text-blue-100'}`}>
+                                {item.label}
+                              </span>
+                              <div className="flex items-center gap-1 shrink-0">
+                                {isPotDisabled ? (
+                                  <span className="text-[10px] font-semibold text-stone-400 dark:text-stone-500 px-1.5 py-0.5 rounded bg-stone-200/60 dark:bg-stone-800">
+                                    {isEn ? 'Unavailable' : 'Niedostępne'}
+                                  </span>
+                                ) : isSelected ? (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100/90 dark:bg-blue-900/70 px-2 py-0.5 rounded-md">
+                                    <span>{isEn ? 'Selected' : 'Wybrano'}</span>
+                                    <Check className="w-3 h-3 stroke-[3]" />
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 text-[10px] font-medium text-stone-600 dark:text-stone-300 group-hover:text-blue-800 dark:group-hover:text-blue-200 transition-colors">
+                                    <span>{isEn ? 'Select' : 'Wybierz'}</span>
+                                    <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug font-normal">
+                              {item.sub}
                             </div>
                           </div>
-                          <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug font-normal">
-                            {item.sub}
-                          </div>
                         </div>
+
+                        {disabledReason && (
+                          <div
+                            id={`pot-disabled-reason-${item.id}`}
+                            data-testid={`disabled-reason-${item.id}`}
+                            role="tooltip"
+                            className="w-full mt-1 p-2 rounded-lg bg-amber-50 dark:bg-amber-950/70 border border-amber-200 dark:border-amber-800 text-[10.5px] text-amber-800 dark:text-amber-200 flex items-start gap-1.5"
+                          >
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <span>{disabledReason}</span>
+                          </div>
+                        )}
                       </button>
                     );
                   })}
                 </div>
               </div>
 
+              {/* ================= SEKCJA: LICZBA I WYMIARY DONIC ================= */}
+              <div className="space-y-3 pt-3 border-t border-stone-200/80 dark:border-stone-800" data-testid="pot-dimensions-section">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
+                    <LayoutGrid className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{isEn ? 'Pot quantity & dimensions' : 'Liczba i wymiary donic'}</span>
+                  </label>
+                  <span className="text-[10.5px] text-stone-500 dark:text-stone-400 font-medium">
+                    {isEn ? 'Physical constraints' : 'Ograniczenia fizyczne'}
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-stone-500 dark:text-stone-400 leading-snug">
+                  {isEn
+                    ? 'Define the quantity and exact dimensions of your primary pots for realistic capacity calculations.'
+                    : 'Podaj liczbę oraz wymiary donic, aby zweryfikować pojemność podłoża i dopasowanie do roślin.'}
+                </p>
+
+                {/* Liczba donic (pot quantity) */}
+                <div className="bg-stone-50/80 dark:bg-stone-850 p-3 rounded-xl border border-stone-200 dark:border-stone-800 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <label htmlFor="balcony-pot-count-input" className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                      {isEn ? 'Number of pots (pcs):' : 'Liczba donic (sztuk):'}
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        id="balcony-pot-count-input"
+                        data-testid="pot-count-input"
+                        type="number"
+                        min="1"
+                        max="150"
+                        step="1"
+                        value={potCount}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setPotCount(isNaN(val) ? 0 : val);
+                        }}
+                        className={`w-24 min-h-[44px] px-3 py-2 rounded-xl border text-sm text-center font-bold transition focus:outline-none focus-visible:ring-2 ${
+                          potCount <= 0 || isNaN(potCount)
+                            ? 'border-2 border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100 focus-visible:ring-red-600'
+                            : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-white focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400'
+                        }`}
+                        aria-label={isEn ? 'Pot quantity' : 'Liczba donic'}
+                      />
+                      <span className="text-xs text-stone-700 dark:text-stone-300 font-semibold">szt.</span>
+                    </div>
+                  </div>
+
+                  {(potCount <= 0 || isNaN(potCount)) && (
+                    <div data-testid="pot-count-error" role="alert" className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1.5 font-semibold">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
+                      <span>{isEn ? 'Pot quantity must be at least 1.' : 'Liczba donic musi być większa od zera (minimum 1 donica).'}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Kształt donicy (Shape selection) */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                    {isEn ? 'Container shape:' : 'Kształt donicy:'}
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      data-testid="pot-shape-rectangular"
+                      onClick={() => setPotShape('rectangular')}
+                      className={`min-h-[44px] px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                        potShape === 'rectangular'
+                          ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs'
+                          : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:border-emerald-600'
+                      }`}
+                    >
+                      {potShape === 'rectangular' && <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[3]" />}
+                      <span>{isEn ? 'Rectangular box' : 'Skrzynka / prostokątna'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="pot-shape-round"
+                      onClick={() => setPotShape('round')}
+                      className={`min-h-[44px] px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                        potShape === 'round'
+                          ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs'
+                          : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:border-emerald-600'
+                      }`}
+                    >
+                      {potShape === 'round' && <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[3]" />}
+                      <span>{isEn ? 'Round pot / bucket' : 'Okrągła / wiadro'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Wymiary geometryczne (Dimensions inputs) */}
+                <div className="bg-stone-50/80 dark:bg-stone-850 p-3 rounded-xl border border-stone-200 dark:border-stone-800 space-y-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                    {potShape === 'rectangular' ? (
+                      <>
+                        <div>
+                          <label htmlFor="pot-length-input" className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                            {isEn ? 'Length (cm)' : 'Długość (cm)'}
+                          </label>
+                          <input
+                            id="pot-length-input"
+                            data-testid="pot-length-input"
+                            type="number"
+                            value={potLength}
+                            onChange={(e) => setPotLength(parseFloat(e.target.value) || 0)}
+                            className={`w-full min-h-[44px] px-3 py-2 rounded-xl border text-xs sm:text-sm font-bold text-stone-900 dark:text-white focus:outline-none focus-visible:ring-2 ${
+                              potLength <= 0
+                                ? 'border-2 border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100 focus-visible:ring-red-600'
+                                : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="pot-width-input" className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                            {isEn ? 'Width (cm)' : 'Szerokość (cm)'}
+                          </label>
+                          <input
+                            id="pot-width-input"
+                            data-testid="pot-width-input"
+                            type="number"
+                            value={potWidth}
+                            onChange={(e) => setPotWidth(parseFloat(e.target.value) || 0)}
+                            className={`w-full min-h-[44px] px-3 py-2 rounded-xl border text-xs sm:text-sm font-bold text-stone-900 dark:text-white focus:outline-none focus-visible:ring-2 ${
+                              potWidth <= 0
+                                ? 'border-2 border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100 focus-visible:ring-red-600'
+                                : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400'
+                            }`}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <label htmlFor="pot-diameter-input" className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                          {isEn ? 'Diameter (cm)' : 'Średnica (cm)'}
+                        </label>
+                        <input
+                          id="pot-diameter-input"
+                          data-testid="pot-diameter-input"
+                          type="number"
+                          value={potDiameter}
+                          onChange={(e) => setPotDiameter(parseFloat(e.target.value) || 0)}
+                          className={`w-full min-h-[44px] px-3 py-2 rounded-xl border text-xs sm:text-sm font-bold text-stone-900 dark:text-white focus:outline-none focus-visible:ring-2 ${
+                            potDiameter <= 0
+                              ? 'border-2 border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100 focus-visible:ring-red-600'
+                              : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400'
+                          }`}
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label htmlFor="pot-height-input" className="block text-xs font-semibold text-stone-700 dark:text-stone-300 mb-1">
+                        {isEn ? 'Depth / Height (cm)' : 'Głębokość (cm)'}
+                      </label>
+                      <input
+                        id="pot-height-input"
+                        data-testid="pot-height-input"
+                        type="number"
+                        value={potHeight}
+                        onChange={(e) => setPotHeight(parseFloat(e.target.value) || 0)}
+                        className={`w-full min-h-[44px] px-3 py-2 rounded-xl border text-xs sm:text-sm font-bold text-stone-900 dark:text-white focus:outline-none focus-visible:ring-2 ${
+                          potHeight <= 0
+                            ? 'border-2 border-red-600 dark:border-red-400 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-100 focus-visible:ring-red-600'
+                            : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400'
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Negative or invalid dimensions error display */}
+                  {potDimensionsErrors.length > 0 && (
+                    <div data-testid="pot-dimensions-error" role="alert" className="text-xs text-red-700 dark:text-red-300 flex items-center gap-1.5 font-semibold">
+                      <AlertCircle className="w-4 h-4 shrink-0 text-red-600 dark:text-red-400" />
+                      <span>{potDimensionsErrors[0].message}</span>
+                    </div>
+                  )}
+
+                  {/* Volume calculation and capacity verification */}
+                  <div className="pt-2 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between flex-wrap gap-2 text-xs">
+                    <div data-testid="calculated-pot-volume" className="text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>{isEn ? `Calculated volume: ~${calculatedPotVolume} L` : `Obliczona pojemność: ~${calculatedPotVolume} l`}</span>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <label htmlFor="pot-volume-input" className="text-xs text-stone-700 dark:text-stone-300 font-semibold">
+                        {isEn ? 'Declared (opt.):' : 'Deklarowana (opcjonalnie):'}
+                      </label>
+                      <input
+                        id="pot-volume-input"
+                        data-testid="pot-volume-input"
+                        type="number"
+                        placeholder={`${calculatedPotVolume}`}
+                        value={potVolume ?? ''}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setPotVolume(isNaN(val) ? undefined : val);
+                        }}
+                        className="w-20 min-h-[44px] px-2.5 py-1.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-xs font-bold text-center text-stone-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
+                      />
+                      <span className="text-xs font-bold text-stone-600 dark:text-stone-400">l</span>
+                    </div>
+                  </div>
+
+                  {/* Presets */}
+                  <div className="pt-2 flex flex-wrap items-center gap-2 text-xs">
+                    <span className="text-stone-700 dark:text-stone-300 font-bold mr-1">{isEn ? 'Presets:' : 'Wzorce:'}</span>
+                    <button
+                      type="button"
+                      data-testid="preset-box60"
+                      onClick={() => {
+                        setPotShape('rectangular');
+                        setPotLength(60);
+                        setPotWidth(20);
+                        setPotHeight(18);
+                        setPotVolume(21);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-emerald-50 dark:bg-stone-800 dark:hover:bg-emerald-950/50 text-stone-900 dark:text-stone-100 font-bold border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 flex items-center justify-center"
+                    >
+                      Skrzynka 60 cm
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="preset-pot30"
+                      onClick={() => {
+                        setPotShape('round');
+                        setPotDiameter(30);
+                        setPotHeight(25);
+                        setPotVolume(17);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-emerald-50 dark:bg-stone-800 dark:hover:bg-emerald-950/50 text-stone-900 dark:text-stone-100 font-bold border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 flex items-center justify-center"
+                    >
+                      Donica Ø30 cm
+                    </button>
+                    <button
+                      type="button"
+                      data-testid="preset-large40"
+                      onClick={() => {
+                        setPotShape('rectangular');
+                        setPotLength(40);
+                        setPotWidth(40);
+                        setPotHeight(35);
+                        setPotVolume(56);
+                      }}
+                      className="min-h-[44px] px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-emerald-50 dark:bg-stone-800 dark:hover:bg-emerald-950/50 text-stone-900 dark:text-stone-100 font-bold border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 flex items-center justify-center"
+                    >
+                      Duża 40×40 cm
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* Czas na podlewanie */}
-              <div className="space-y-2.5 pt-2 border-t border-stone-200/80 dark:border-stone-800">
-                <label className="text-xs font-bold uppercase tracking-wider text-stone-600 dark:text-stone-400 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <div className="space-y-2.5 pt-3 border-t border-stone-200 dark:border-stone-800">
+                <label className="text-xs font-bold uppercase tracking-wider text-stone-800 dark:text-stone-200 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
                   <span>{isEn ? 'How much time do you have for watering?' : 'Ile masz czasu na podlewanie?'}</span>
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                   {[
                     { id: 'daily', label: isEn ? 'Daily' : 'Codziennie', sub: isEn ? 'Morning and evening' : 'Mogę rano i wieczorem' },
                     { id: 'few_days', label: isEn ? 'Every 2–3 days' : 'Co 2–3 dni', sub: isEn ? 'Balanced routine' : 'Zrównoważona opieka' },
                     { id: 'weekends', label: isEn ? 'Mainly weekends' : 'Głównie weekendy', sub: isEn ? 'Drought-tolerant plants' : 'Rośliny odporne na suszę' },
                   ].map((item) => {
+                    const careDisabledReason = getDisabledOptionReason('care', item.id, {
+                      ...spec,
+                      floor: selectedFloor ?? spec.floor,
+                    }, language);
+                    const isCareDisabled = careDisabledReason !== null;
                     const isSelected = spec.care_time === item.id;
                     return (
                       <button
@@ -2188,29 +2683,48 @@ export const BalconySetupModal: React.FC<Props> = ({
                         data-testid={`care-option-${item.id}`}
                         data-care={item.id}
                         aria-label={item.label}
-                        onClick={() => setSpec({ ...spec, care_time: item.id as CareTime })}
-                        className={`group p-3 rounded-xl border text-left text-xs transition cursor-pointer flex flex-col justify-between ${
-                          isSelected
-                            ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/50 text-blue-950 dark:text-blue-100 font-bold shadow-xs'
-                            : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300'
+                        disabled={isCareDisabled}
+                        aria-disabled={isCareDisabled ? 'true' : 'false'}
+                        onClick={() => {
+                          if (!isCareDisabled) setSpec({ ...spec, care_time: item.id as CareTime });
+                        }}
+                        className={`group min-h-[56px] p-3 rounded-xl border text-left text-xs transition flex flex-col justify-between focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                          isCareDisabled
+                            ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-2 border-dashed border-stone-400 dark:border-stone-700'
+                            : isSelected
+                            ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-xs cursor-pointer'
+                            : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100 cursor-pointer'
                         }`}
                       >
                         <div>
                           <div className="flex items-center justify-between gap-1">
-                            <span className="font-bold text-stone-900 dark:text-stone-100 group-hover:text-blue-950 dark:group-hover:text-blue-100">{item.label}</span>
+                            <span className="font-bold text-sm text-stone-900 dark:text-stone-100">{item.label}</span>
                             {isSelected ? (
-                              <Check className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 stroke-[3]" />
+                              <Check className="w-4 h-4 text-blue-700 dark:text-blue-400 stroke-[3]" />
                             ) : (
                               <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform" />
                             )}
                           </div>
-                          <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug">{item.sub}</div>
+                          <div className="text-xs text-stone-700 dark:text-stone-300 mt-1 leading-snug font-medium">{item.sub}</div>
                         </div>
-                        <div className="mt-2 pt-1.5 border-t border-stone-200/50 dark:border-stone-700/50 flex items-center justify-between text-[10px]">
-                          <span className={isSelected ? 'text-blue-700 dark:text-blue-300 font-semibold' : 'text-stone-600 dark:text-stone-300 group-hover:text-blue-800'}>
-                            {isSelected ? (isEn ? 'Active' : 'Wybrano') : (isEn ? 'Choose' : 'Wybierz')}
+
+                        {careDisabledReason && (
+                          <div
+                            id={`care-disabled-reason-${item.id}`}
+                            data-testid={`disabled-reason-care-${item.id}`}
+                            role="tooltip"
+                            className="mt-2 p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 text-xs text-amber-950 dark:text-amber-100 flex items-start gap-1 font-semibold"
+                          >
+                            <AlertCircle className="w-3.5 h-3.5 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                            <span>{careDisabledReason}</span>
+                          </div>
+                        )}
+
+                        <div className="mt-2 pt-1.5 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between text-xs">
+                          <span className={isSelected ? 'text-blue-800 dark:text-blue-300 font-bold' : 'text-stone-700 dark:text-stone-300 group-hover:text-blue-800'}>
+                            {isCareDisabled ? (isEn ? 'Unavailable' : 'Niedostępne') : isSelected ? (isEn ? 'Active' : 'Wybrano') : (isEn ? 'Choose' : 'Wybierz')}
                           </span>
-                          <ChevronRight className={`w-3 h-3 ${isSelected ? 'text-blue-600' : 'text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform'}`} />
+                          <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform'}`} />
                         </div>
                       </button>
                     );
@@ -2224,16 +2738,16 @@ export const BalconySetupModal: React.FC<Props> = ({
         {/* ================= STICKY ACTION FOOTER WITH "DALEJ" / "ZAPISZ I PRZEJDŹ" ================= */}
         <div
           data-testid="onboarding-footer"
-          className="sticky bottom-0 z-20 shrink-0 border-t border-stone-200/90 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur p-3.5 sm:p-5 shadow-lg flex flex-col gap-2.5"
+          className="sticky bottom-0 z-20 shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur p-3.5 sm:p-5 shadow-xl flex flex-col gap-2.5"
         >
           {/* Visible helper message when CTA is disabled */}
           {((step < 3 && isNextDisabled) || (step === 3 && isSaveDisabled)) && (
             <div
               data-testid="onboarding-cta-helper"
               role="status"
-              className="text-xs text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800/80 px-3 py-1.5 rounded-lg flex items-center gap-1.5 animate-fade-in"
+              className="text-xs text-amber-950 dark:text-amber-100 bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 px-3.5 py-2 rounded-xl flex items-center gap-2 animate-fade-in font-semibold"
             >
-              <Info className="w-3.5 h-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+              <Info className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-400" />
               <span>
                 {step === 1
                   ? getStep1InactivityReason()
@@ -2252,7 +2766,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   id="wizard-prev-step-btn"
                   data-testid="onboarding-prev"
                   onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
-                  className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 transition flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   <span>{isEn ? 'Back' : 'Wstecz'}</span>
@@ -2263,18 +2777,18 @@ export const BalconySetupModal: React.FC<Props> = ({
                   id="cancel-setup-btn"
                   data-testid="onboarding-cancel"
                   onClick={onClose}
-                  className="px-4 py-2.5 text-xs sm:text-sm font-semibold text-stone-500 dark:text-stone-400 hover:text-stone-900 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer"
+                  className="min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
                 >
                   {isEn ? 'Cancel' : 'Anuluj'}
                 </button>
               ) : null}
 
-              <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400 font-medium">
+              <div className="flex items-center gap-2 text-xs text-stone-700 dark:text-stone-300 font-bold">
                 <span>{isEn ? `Step ${step} of 3` : `Krok ${step} z 3`}</span>
                 {completedStepsCount > 0 && (
                   <>
-                    <span className="text-stone-300 dark:text-stone-700">•</span>
-                    <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                    <span className="text-stone-400 dark:text-stone-600">•</span>
+                    <span className="inline-flex items-center gap-1 text-emerald-800 dark:text-emerald-300 font-bold">
                       <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                       <span>{isEn ? `Completed ${completedStepsCount}/3` : `Ukończono ${completedStepsCount}/3`}</span>
                     </span>
@@ -2296,9 +2810,9 @@ export const BalconySetupModal: React.FC<Props> = ({
                     if (isNextDisabled) return;
                     setStep((s) => (s + 1) as 1 | 2 | 3);
                   }}
-                  className={`w-full sm:w-auto px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                  className={`w-full sm:w-auto min-h-[44px] min-w-[44px] px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                     isNextDisabled
-                      ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-stone-700 cursor-not-allowed opacity-60'
+                      ? 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 cursor-not-allowed opacity-75'
                       : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white shadow-md hover:shadow-lg ring-1 ring-emerald-600 cursor-pointer'
                   }`}
                 >
@@ -2307,7 +2821,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                 </button>
               ) : (
                 <div className="flex flex-col items-center sm:items-end w-full sm:w-auto gap-2">
-                  <div className="flex items-center gap-1.5 w-full sm:w-auto">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
                     <button
                       type="button"
                       id="save-balcony-spec-btn"
@@ -2315,9 +2829,9 @@ export const BalconySetupModal: React.FC<Props> = ({
                       disabled={isSaveDisabled}
                       aria-disabled={isSaveDisabled}
                       onClick={() => handleSave()}
-                      className={`w-full sm:w-auto px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 ${
+                      className={`w-full sm:w-auto min-h-[44px] min-w-[44px] px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                         isSaveDisabled
-                          ? 'bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-stone-700 cursor-not-allowed opacity-60'
+                          ? 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 cursor-not-allowed opacity-75'
                           : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white shadow-md hover:shadow-lg ring-1 ring-emerald-600 cursor-pointer'
                       }`}
                       aria-describedby="save-balcony-benefit-text"
@@ -2331,7 +2845,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                       id="save-balcony-info-btn"
                       data-testid="onboarding-save-info"
                       onClick={() => setActiveTooltip(activeTooltip === 'save-btn' ? null : 'save-btn')}
-                      className="p-3 text-stone-500 hover:text-emerald-700 dark:text-stone-400 dark:hover:text-emerald-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-200 dark:border-stone-700 shrink-0"
+                      className="min-h-[44px] min-w-[44px] w-11 h-11 flex items-center justify-center p-3 text-stone-700 hover:text-emerald-800 dark:text-stone-300 dark:hover:text-emerald-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-300 dark:border-stone-700 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
                       aria-label={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
                       title={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
                     >

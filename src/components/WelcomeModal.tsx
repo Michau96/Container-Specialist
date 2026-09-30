@@ -153,7 +153,7 @@ export const WelcomeModal: React.FC<Props> = ({
                 <Sprout className="w-6 h-6 text-emerald-100" />
               </div>
               <div>
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-white/20 text-emerald-50 border border-white/20 mb-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-white/20 text-emerald-50 border border-white/20 mb-1">
                   <Sparkles className="w-3 h-3 text-amber-300" />
                   <span>{isEn ? 'Your Urban Growing Assistant' : 'Twój Miejski Asystent Uprawy'}</span>
                 </div>
@@ -167,7 +167,7 @@ export const WelcomeModal: React.FC<Props> = ({
               type="button"
               id="skip-welcome-btn"
               onClick={onContinueAsGuest}
-              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-800"
               title={isEn ? 'Go to app' : 'Przejdź do aplikacji'}
               aria-label={isEn ? 'Close and go to app' : 'Zamknij i przejdź do aplikacji'}
             >
@@ -279,7 +279,7 @@ export const WelcomeModal: React.FC<Props> = ({
                     id="welcome-google-auth-btn"
                     onClick={handleGoogleAuth}
                     disabled={googleLoading || authLoading}
-                    className="w-full py-3 px-4 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 font-bold text-xs sm:text-sm border border-stone-300 dark:border-stone-650 shadow-xs hover:shadow-sm transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 group"
+                    className="w-full min-h-[44px] py-3 px-4 rounded-xl bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100 font-bold text-xs sm:text-sm border border-stone-300 dark:border-stone-650 shadow-xs hover:shadow-sm transition flex items-center justify-center gap-3 cursor-pointer disabled:opacity-50 group focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
                   >
                     {googleLoading ? (
                       <div className="w-4 h-4 border-2 border-stone-400 border-t-emerald-600 rounded-full animate-spin" />
@@ -296,7 +296,7 @@ export const WelcomeModal: React.FC<Props> = ({
 
                   <div className="relative flex items-center justify-center">
                     <div className="border-t border-emerald-200/60 dark:border-emerald-800/40 w-full" />
-                    <span className="bg-[#FAF8F5] dark:bg-stone-900 px-2.5 text-[11px] text-stone-500 dark:text-stone-400 font-medium shrink-0">
+                    <span className="bg-[#FAF8F5] dark:bg-stone-900 px-2.5 text-xs text-stone-600 dark:text-stone-300 font-medium shrink-0">
                       {isEn ? 'or traditional account' : 'lub tradycyjne konto'}
                     </span>
                   </div>
@@ -309,7 +309,7 @@ export const WelcomeModal: React.FC<Props> = ({
                         setAuthError(null);
                         setViewMode('register');
                       }}
-                      className="w-full py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full min-h-[44px] py-2.5 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-xs sm:text-sm font-bold rounded-xl shadow-md transition flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>{isEn ? 'Create free account' : 'Załóż darmowe konto'}</span>
@@ -322,7 +322,7 @@ export const WelcomeModal: React.FC<Props> = ({
                         setAuthError(null);
                         setViewMode('login');
                       }}
-                      className="w-full py-2.5 px-4 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-800 dark:text-stone-100 border border-stone-300 dark:border-stone-600 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full min-h-[44px] py-2.5 px-4 bg-white dark:bg-stone-800 hover:bg-stone-50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100 border border-stone-300 dark:border-stone-600 text-xs sm:text-sm font-semibold rounded-xl shadow-2xs transition flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
                     >
                       <LogIn className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                       <span>{isEn ? 'Already have an account (Sign in)' : 'Mam już konto (Zaloguj)'}</span>
@@ -332,14 +332,14 @@ export const WelcomeModal: React.FC<Props> = ({
 
                 {/* Guest option */}
                 <div className="pt-2 text-center border-t border-emerald-200/60 dark:border-emerald-800/40 flex flex-col sm:flex-row items-center justify-between gap-2">
-                  <span className="text-[11px] text-stone-500 dark:text-stone-400">
+                  <span className="text-xs text-stone-600 dark:text-stone-300">
                     {isEn ? 'Want to explore the app first?' : 'Chcesz najpierw rozejrzeć się po aplikacji?'}
                   </span>
                   <button
                     type="button"
                     id="welcome-continue-guest-btn"
                     onClick={onContinueAsGuest}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 dark:hover:text-emerald-100 underline decoration-emerald-400/50 hover:decoration-emerald-600 cursor-pointer py-1"
+                    className="min-h-[44px] inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-300 hover:text-emerald-950 dark:hover:text-emerald-100 underline decoration-emerald-400/50 hover:decoration-emerald-600 cursor-pointer py-1 px-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
                   >
                     <span>{isEn ? 'Try as guest (no sign-in)' : 'Wypróbuj jako gość (bez logowania)'}</span>
                     <ArrowRight className="w-3.5 h-3.5" />

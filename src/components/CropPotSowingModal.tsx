@@ -114,11 +114,6 @@ export const CropPotSowingModal: React.FC<Props> = ({
   const { language } = useLanguage();
   const isEn = language === 'en';
 
-  if (!plant || !crop) return null;
-
-  const POT_TYPES = getPotTypes(isEn);
-  const POT_MATERIALS = getPotMaterials(isEn);
-
   const availableVarieties = getPlantVarieties(plant);
   const initialVarietyStr =
     typeof crop.selectedVariety === 'string'
@@ -153,6 +148,9 @@ export const CropPotSowingModal: React.FC<Props> = ({
   const [sowingLocation, setSowingLocation] = useState<'parapet_wewnetrzny' | 'balkon_bezposrednio' | 'szklarenka'>(
     crop.sowing?.sowingLocation || 'balkon_bezposrednio'
   );
+
+  const POT_TYPES = getPotTypes(isEn);
+  const POT_MATERIALS = getPotMaterials(isEn);
 
   // Quick date helper
   const setRelativeDate = (daysAgo: number) => {

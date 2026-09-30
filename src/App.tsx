@@ -791,10 +791,10 @@ export default function App() {
                   aria-expanded={showAdvancedFilters}
                   aria-controls="advanced-filters-panel"
                   onClick={() => setShowAdvancedFilters((prev) => !prev)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between sm:justify-start gap-2 cursor-pointer border ${
+                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between sm:justify-start gap-2 cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                     showAdvancedFilters || activeAdvancedFiltersCount > 0
                       ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 shadow-2xs'
-                      : 'bg-stone-50 dark:bg-stone-800 border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-750'
+                      : 'bg-stone-50 dark:bg-stone-800 border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-750'
                   }`}
                 >
                   <div className="flex items-center gap-1.5">
@@ -812,7 +812,7 @@ export default function App() {
                   {activeAdvancedFiltersCount > 0 && (
                     <span
                       data-testid="active-filters-count-badge"
-                      className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-700 text-white"
+                      className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-700 text-white"
                     >
                       {activeAdvancedFiltersCount}
                     </span>
@@ -826,7 +826,7 @@ export default function App() {
               </div>
 
               <div className="relative">
-                <Search className="w-5 h-5 text-stone-400 dark:text-stone-500 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <Search className="w-5 h-5 text-stone-500 dark:text-stone-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   id="search-vegetables-input"
                   data-testid="catalog-search-input"
@@ -845,7 +845,7 @@ export default function App() {
                       ? 'Search plant or variety (e.g. tomato, Vilma, radish, basil)...'
                       : 'Szukaj rośliny lub odmiany (np. pomidor, Vilma, rzodkiewka, bazylia)...'
                   }
-                  className="w-full pl-11 pr-24 py-3 sm:py-3.5 text-sm sm:text-base rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/80 text-stone-900 dark:text-stone-100 placeholder-stone-400 dark:placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition shadow-inner"
+                  className="w-full pl-11 pr-28 py-3 sm:py-3.5 text-sm sm:text-base rounded-2xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/80 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-700 dark:focus:ring-emerald-400 transition shadow-inner"
                 />
 
                 {searchQuery && (
@@ -857,7 +857,7 @@ export default function App() {
                       setSearchQuery('');
                       document.getElementById('search-vegetables-input')?.focus();
                     }}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 px-3 py-1.5 text-xs font-semibold text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white bg-stone-200/80 dark:bg-stone-700/80 hover:bg-stone-300 dark:hover:bg-stone-600 rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] px-3 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white bg-stone-200/90 dark:bg-stone-700/90 hover:bg-stone-300 dark:hover:bg-stone-600 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
                     aria-label={isEn ? 'Clear search' : 'Wyczyść wyszukiwanie'}
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1495,15 +1495,15 @@ export default function App() {
                 {/* Right controls: View mode selector & Sort dropdown */}
                 <div className="flex items-center gap-2.5 flex-wrap self-end sm:self-auto">
                   {/* View Mode Toggle: Compact vs Detailed */}
-                  <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl border border-stone-200/80 dark:border-stone-700">
+                  <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800 p-1 rounded-xl border border-stone-300 dark:border-stone-700">
                     <button
                       id="view-mode-compact-btn"
                       type="button"
                       onClick={() => setCardViewMode('compact')}
-                      className={`px-2.5 py-1 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer ${
+                      className={`min-h-[44px] px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                         cardViewMode === 'compact'
-                          ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs font-bold'
-                          : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+                          ? 'bg-white dark:bg-stone-700 text-emerald-950 dark:text-emerald-100 shadow-2xs font-bold border border-emerald-400/50'
+                          : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
                       }`}
                       title={isEn ? 'Concise card view with expandable sections' : 'Przyjazny zwięzły widok kafelków z możliwością rozwijania każdego z osobna'}
                     >
@@ -1514,10 +1514,10 @@ export default function App() {
                       id="view-mode-detailed-btn"
                       type="button"
                       onClick={() => setCardViewMode('detailed')}
-                      className={`px-2.5 py-1 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer ${
+                      className={`min-h-[44px] px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                         cardViewMode === 'detailed'
-                          ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs font-bold'
-                          : 'text-stone-600 dark:text-stone-400 hover:text-stone-900 dark:hover:text-stone-200'
+                          ? 'bg-white dark:bg-stone-700 text-emerald-950 dark:text-emerald-100 shadow-2xs font-bold border border-emerald-400/50'
+                          : 'text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white'
                       }`}
                       title={isEn ? 'Detailed analytical view with all parameters visible' : 'Szczegółowy widok analityczny ze wszystkimi tabelami i wytycznymi na wierzchu'}
                     >
@@ -1528,12 +1528,15 @@ export default function App() {
 
                   {/* Sort selector */}
                   <div className="flex items-center gap-1.5 text-xs">
-                    <span className="text-stone-500 dark:text-stone-400 font-medium hidden sm:inline">{isEn ? 'Sort:' : 'Sortuj:'}</span>
+                    <label htmlFor="sort-plants-select" className="text-stone-700 dark:text-stone-300 font-bold hidden sm:inline">
+                      {isEn ? 'Sort:' : 'Sortuj:'}
+                    </label>
                     <select
                       id="sort-plants-select"
+                      aria-label={isEn ? 'Sort crops' : 'Sortuj uprawy'}
                       value={sortOrder}
                       onChange={(e) => setSortOrder(e.target.value as any)}
-                      className="text-xs p-2 rounded-xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 focus:outline-none focus:ring-2 focus:ring-stone-500"
+                      className="min-h-[44px] text-xs p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-700 dark:focus:ring-emerald-400"
                     >
                       <option value="timing_first">{isEn ? '🌱 Best timing now' : '🌱 Najlepszy termin teraz'}</option>
                       <option value="score">{isEn ? 'Balcony match (%)' : 'Dopasowanie (%)'}</option>
@@ -1546,7 +1549,7 @@ export default function App() {
 
               {/* Seasonality Quick Filters */}
               <div className="flex items-center gap-1.5 mt-3 overflow-x-auto pb-1 text-xs">
-                <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+                <span className="text-xs font-bold text-stone-700 dark:text-stone-300 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{isEn ? 'Timing (today):' : 'Termin (dziś):'}</span>
                 </span>
@@ -1554,10 +1557,10 @@ export default function App() {
                 <button
                   id="timing-filter-all"
                   onClick={() => setTimingFilter('all')}
-                  className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer ${
+                  className={`min-h-[44px] px-3.5 py-1.5 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                     timingFilter === 'all'
-                      ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-semibold'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold shadow-xs'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                 >
                   {isEn ? 'All timing' : 'Wszystkie terminy'}
@@ -1566,10 +1569,10 @@ export default function App() {
                 <button
                   id="timing-filter-good_now"
                   onClick={() => setTimingFilter('good_now')}
-                  className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1 ${
+                  className={`min-h-[44px] px-3.5 py-1.5 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                     timingFilter === 'good_now'
-                      ? 'bg-emerald-600 text-white font-semibold shadow-xs ring-1 ring-emerald-500'
-                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/80 hover:bg-emerald-100'
+                      ? 'bg-emerald-700 text-white font-bold shadow-xs ring-1 ring-emerald-600'
+                      : 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-800/80 hover:bg-emerald-100'
                   }`}
                 >
                   <span>🌱</span>
@@ -1579,10 +1582,10 @@ export default function App() {
                 <button
                   id="timing-filter-sow_now"
                   onClick={() => setTimingFilter('sow_now')}
-                  className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1 ${
+                  className={`min-h-[44px] px-3.5 py-1.5 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                     timingFilter === 'sow_now'
-                      ? 'bg-emerald-600 text-white font-semibold shadow-xs ring-1 ring-emerald-500'
-                      : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                      ? 'bg-emerald-700 text-white font-bold shadow-xs ring-1 ring-emerald-600'
+                      : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                 >
                   <span>🌾</span>
@@ -1593,10 +1596,10 @@ export default function App() {
                   <button
                     id="timing-filter-transplant_now"
                     onClick={() => setTimingFilter('transplant_now')}
-                    className={`px-3 py-1 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1 ${
+                    className={`min-h-[44px] px-3.5 py-1.5 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                       timingFilter === 'transplant_now'
-                        ? 'bg-amber-600 text-white font-semibold shadow-xs'
-                        : 'bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-stone-700'
+                        ? 'bg-amber-700 text-white font-bold shadow-xs'
+                        : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                     }`}
                   >
                     <span>🪴</span>
@@ -1827,21 +1830,21 @@ export default function App() {
       </main>
 
       {/* Detail Modal for Selected Plant */}
-      <PlantDetailModal
-        plant={activeSelectedPlant}
-        onClose={() => setSelectedPlant(null)}
-        onOpenPotCalc={handleOpenPotCalcForPlant}
-        isMyCrop={activeSelectedPlant ? myCropIds.includes(activeSelectedPlant.id) : false}
-        cropCount={
-          activeSelectedPlant
-            ? myCrops.filter((c) => c.plantId === activeSelectedPlant.id).reduce((acc, c) => acc + (c.potCount || 1), 0)
-            : 0
-        }
-        onRequestAddVariety={(p, varName, _varBadge) => {
-          setVarietyPickerPlant({ plant: p, initialVariety: varName });
-        }}
-        onToggleMyCrop={handleToggleMyCrop}
-      />
+      {activeSelectedPlant && (
+        <PlantDetailModal
+          plant={activeSelectedPlant}
+          onClose={() => setSelectedPlant(null)}
+          onOpenPotCalc={handleOpenPotCalcForPlant}
+          isMyCrop={myCropIds.includes(activeSelectedPlant.id)}
+          cropCount={
+            myCrops.filter((c) => c.plantId === activeSelectedPlant.id).reduce((acc, c) => acc + (c.potCount || 1), 0)
+          }
+          onRequestAddVariety={(p, varName, _varBadge) => {
+            setVarietyPickerPlant({ plant: p, initialVariety: varName });
+          }}
+          onToggleMyCrop={handleToggleMyCrop}
+        />
+      )}
 
       {/* Forced Variety & Multiple Pot Selection Modal */}
       {varietyPickerPlant && (

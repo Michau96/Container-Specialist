@@ -18,6 +18,7 @@ import {
 import firebaseConfig from '../../firebase-applet-config.json';
 import { UserAccount, UserBalconySpec, MyCropItem } from '../types';
 import { DEFAULT_BALCONY_SPEC } from './api';
+import { validateOnboardingProfile } from './onboardingDomain';
 
 // Initialize Firebase App
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
@@ -244,6 +245,11 @@ export async function saveBalconyToFirestore(
   spec: UserBalconySpec,
   myCrops?: MyCropItem[]
 ): Promise<boolean> {
+  const validation = validateOnboardingProfile(spec);
+  if (!validation.isValid) {
+    throw new Error(validation.summaryMessage || 'Nieprawidłowe dane specyfikacji balkonu.');
+  }
+
   if (!auth.currentUser || auth.currentUser.uid !== userId) {
     return false;
   }

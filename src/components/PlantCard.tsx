@@ -81,7 +81,7 @@ export const PlantCard: React.FC<Props> = ({
       data-testid={`plant-card-${plant.id}`}
       data-plant-id={plant.id}
       onClick={() => onSelect(plant)}
-      className="group relative flex flex-col rounded-2xl bg-white dark:bg-stone-900 border border-stone-200/80 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all duration-300 overflow-hidden cursor-pointer min-h-[440px] sm:min-h-[460px]"
+      className="group relative flex flex-col rounded-2xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-emerald-600 dark:hover:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-700 dark:focus-within:ring-emerald-400 focus-within:ring-offset-2 transition-all duration-300 overflow-hidden cursor-pointer min-h-[440px] sm:min-h-[460px]"
     >
       {/* 1. FIRST VIEWPORT ELEMENT: PLANT IMAGE */}
       <div className="relative h-52 sm:h-56 w-full overflow-hidden bg-stone-100 dark:bg-stone-800/80 shrink-0">
@@ -162,7 +162,7 @@ export const PlantCard: React.FC<Props> = ({
             <span
               data-testid={`plant-category-${plant.id}`}
               data-plant-id={plant.id}
-              className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400"
+              className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400"
             >
               {plant.category}
             </span>
@@ -173,7 +173,7 @@ export const PlantCard: React.FC<Props> = ({
             data-testid={`plant-title-${plant.id}`}
             data-plant-id={plant.id}
             title={plant.name}
-            className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+            className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
           >
             {plant.name}
           </h3>
@@ -186,7 +186,7 @@ export const PlantCard: React.FC<Props> = ({
             {/* Key attribute 1: Pot requirement */}
             <div
               data-testid={`plant-attr-pot-${plant.id}`}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 text-xs font-semibold border border-stone-200/80 dark:border-stone-700/60"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
             >
               <span aria-hidden="true">🪴</span>
               <span>
@@ -199,7 +199,7 @@ export const PlantCard: React.FC<Props> = ({
             {/* Key attribute 2: Sun / Light requirement or Best Sowing */}
             <div
               data-testid={`plant-attr-sun-${plant.id}`}
-              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 text-xs font-semibold border border-amber-200/80 dark:border-amber-800/60"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 text-xs font-semibold border border-amber-300 dark:border-amber-700"
             >
               <span aria-hidden="true">☀️</span>
               <span>
@@ -215,7 +215,7 @@ export const PlantCard: React.FC<Props> = ({
               data-testid={`plant-description-${plant.id}`}
               data-plant-id={plant.id}
               title={plant.summary}
-              className="text-xs text-stone-500 dark:text-stone-400 line-clamp-1 leading-relaxed"
+              className="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
             >
               {plant.summary}
             </p>
@@ -232,7 +232,7 @@ export const PlantCard: React.FC<Props> = ({
         {/* 4. FIRST VIEWPORT ELEMENT: ONE PRIMARY ACTION + EQUAL HEIGHT ACTION AREA */}
         <div
           data-testid={`plant-action-area-${plant.id}`}
-          className="mt-auto pt-3 border-t border-stone-150 dark:border-stone-800 flex flex-col gap-2"
+          className="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
         >
           {/* Primary CTA button with equal height min-h-[44px] */}
           {onAddCrop ? (
@@ -248,11 +248,11 @@ export const PlantCard: React.FC<Props> = ({
                 if (isAdding) return;
                 onAddCrop(plant);
               }}
-              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] ${
+              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                 isAdding
                   ? 'bg-emerald-600/70 text-white cursor-wait opacity-80'
                   : isMyCrop
-                  ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                   : 'bg-emerald-700 hover:bg-emerald-800 text-white hover:shadow-md'
               }`}
             >
@@ -263,7 +263,7 @@ export const PlantCard: React.FC<Props> = ({
                 </>
               ) : isMyCrop ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
                   <span>
                     {language === 'en'
                       ? `In crops (${cropCount > 1 ? `${cropCount}x` : 'added'}) • Add another +`
@@ -287,15 +287,15 @@ export const PlantCard: React.FC<Props> = ({
                 e.stopPropagation();
                 onRequestAddVariety(plant);
               }}
-              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] ${
+              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                 isMyCrop
-                  ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                   : 'bg-emerald-700 hover:bg-emerald-800 text-white hover:shadow-md'
               }`}
             >
               {isMyCrop ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
                   <span>
                     {language === 'en'
                       ? `In crops (${cropCount > 1 ? `${cropCount}x` : 'added'}) • Add another +`
@@ -319,15 +319,15 @@ export const PlantCard: React.FC<Props> = ({
                 e.stopPropagation();
                 onToggleMyCrop(plant.id);
               }}
-              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] ${
+              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                 isMyCrop
-                  ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-900 dark:text-emerald-200 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                  ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                   : 'bg-emerald-700 hover:bg-emerald-800 text-white hover:shadow-md'
               }`}
             >
               {isMyCrop ? (
                 <>
-                  <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
                   <span>{language === 'en' ? 'In your crops' : 'W Twoich uprawach'}</span>
                 </>
               ) : (
@@ -350,7 +350,7 @@ export const PlantCard: React.FC<Props> = ({
               e.stopPropagation();
               setIsExpanded((prev) => !prev);
             }}
-            className="w-full py-1.5 px-2 rounded-xl text-xs font-semibold text-stone-600 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors flex items-center justify-between cursor-pointer"
+            className="w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
           >
             <span>
               {isExpanded
@@ -362,9 +362,9 @@ export const PlantCard: React.FC<Props> = ({
                 : 'Pokaż szczegóły uprawy'}
             </span>
             {isExpanded ? (
-              <ChevronUp className="w-4 h-4 text-stone-500" />
+              <ChevronUp className="w-4 h-4 text-stone-700 dark:text-stone-300" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-stone-500" />
+              <ChevronDown className="w-4 h-4 text-stone-700 dark:text-stone-300" />
             )}
           </button>
         </div>
@@ -420,20 +420,20 @@ export const PlantCard: React.FC<Props> = ({
             )}
 
             {/* Detailed Agronomic Metrics */}
-            <div className="grid grid-cols-2 gap-2 text-xs bg-stone-50 dark:bg-stone-800/40 p-2.5 rounded-xl border border-stone-200/60 dark:border-stone-700/60 text-stone-600 dark:text-stone-400">
+            <div className="grid grid-cols-2 gap-2 text-xs bg-stone-50 dark:bg-stone-800/40 p-2.5 rounded-xl border border-stone-200/60 dark:border-stone-700/60 text-stone-700 dark:text-stone-300">
               <div>
-                <span className="text-[10px] text-stone-500 uppercase font-semibold block">
+                <span className="text-xs text-stone-700 dark:text-stone-300 uppercase font-semibold block">
                   {language === 'en' ? 'Recommended pot:' : 'Rekomendowana donica:'}
                 </span>
-                <strong className="text-stone-800 dark:text-stone-200">
+                <strong className="text-stone-900 dark:text-stone-100 font-bold">
                   min. {plant.pot.min_volume_l}L ({plant.pot.min_depth_cm || 20} cm)
                 </strong>
               </div>
               <div>
-                <span className="text-[10px] text-stone-500 uppercase font-semibold block">
+                <span className="text-xs text-stone-700 dark:text-stone-300 uppercase font-semibold block">
                   {language === 'en' ? 'Optimal sowing:' : 'Optymalny siew:'}
                 </span>
-                <strong className="text-stone-800 dark:text-stone-200">
+                <strong className="text-stone-900 dark:text-stone-100 font-bold">
                   {timing.bestSowingLabel}
                 </strong>
               </div>
@@ -449,9 +449,9 @@ export const PlantCard: React.FC<Props> = ({
                   e.stopPropagation();
                   onSelect(plant);
                 }}
-                className="text-stone-500 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                className="min-h-[44px] px-2 text-stone-700 dark:text-stone-300 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
               >
-                <BookOpen className="w-3.5 h-3.5" />
+                <BookOpen className="w-4 h-4" />
                 <span>{language === 'en' ? 'Growing guide' : 'Przewodnik uprawy'}</span>
               </button>
 
@@ -464,7 +464,7 @@ export const PlantCard: React.FC<Props> = ({
                     e.stopPropagation();
                     onOpenPotCalc(plant);
                   }}
-                  className="text-stone-500 dark:text-stone-400 hover:text-emerald-700 dark:hover:text-emerald-400 font-medium inline-flex items-center gap-1 transition-colors cursor-pointer"
+                  className="min-h-[44px] px-2 text-stone-700 dark:text-stone-300 hover:text-emerald-800 dark:hover:text-emerald-300 font-bold inline-flex items-center gap-1.5 transition-colors cursor-pointer rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
                 >
                   <span>{language === 'en' ? '📐 Pot calculator' : '📐 Kalkulator donicy'}</span>
                 </button>

@@ -73,6 +73,15 @@ export function getFloorCategoryLabel(floor: number): string {
   return 'Wysokie piętro (7+)';
 }
 
+export interface PotDimensionsSpec {
+  shape: PotShape;
+  length_cm?: number;
+  width_cm?: number;
+  diameter_cm?: number;
+  height_cm: number;
+  volume_liters?: number;
+}
+
 export interface UserBalconySpec {
   region: PolandRegionKey;
   floor: number;
@@ -81,6 +90,8 @@ export interface UserBalconySpec {
   roofing: RoofingType;
   pots: ContainerType[];
   care_time: CareTime;
+  pot_count?: number;
+  pot_dimensions?: PotDimensionsSpec;
 }
 
 export type PlantGroup = 'wszystkie' | 'warzywa' | 'owoce' | 'ziola' | 'ozdobne' | 'kielki' | 'grzyby';

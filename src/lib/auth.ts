@@ -1,5 +1,6 @@
 import { UserAccount, UserBalconySpec, MyCropItem, Language } from '../types';
 import { saveBalconyToFirestore, logoutFirebaseUser } from './firebase';
+import { validateOnboardingProfile } from './onboardingDomain';
 
 const TOKEN_STORAGE_KEY = 'balkonowy_auth_token';
 const USER_STORAGE_KEY = 'balkonowy_current_user';
@@ -395,7 +396,14 @@ export async function fetchCurrentUser(): Promise<UserAccount | null> {
 export async function saveBalconyToAccount(
   spec: UserBalconySpec,
   myCrops?: MyCropItem[]
-): Promise<{ success: boolean; user?: UserAccount }> {
+): Promise<{ success: boolean; user?: UserAccount; error?: string }> {
+  const validation = validateOnboardingProfile(spec);
+  if (!validation.isValid) {
+    const errorMsg = validation.summaryMessage || 'Nieprawidłowa konfiguracja balkonu.';
+    console.error('[saveBalconyToAccount] Domain validation failed:', errorMsg);
+    return { success: false, error: errorMsg };
+  }
+
   const token = getStoredToken();
   const currentUser = getStoredUser();
 
