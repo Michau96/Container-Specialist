@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { Plant } from '../types';
 import { getPlantTimingInfo } from '../lib/cropTiming';
-import { getPlantVisual } from '../lib/plantImages';
 import { getPlantLifestylePills } from '../lib/plantLifestyle';
+import { resolvePlantRecord } from '../lib/plantSchema';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
@@ -43,6 +43,9 @@ export const PlantCard: React.FC<Props> = ({
   const [imageError, setImageError] = useState(false);
   const [isExpanded, setIsExpanded] = useState(forceDetailed);
 
+  // Canonical resolution: guarantees plantId, title, image, alt, and recommendations never drift
+  const resolved = resolvePlantRecord(plant);
+
   // Sync expanded state if forceDetailed changes
   React.useEffect(() => {
     if (forceDetailed) {
@@ -51,10 +54,10 @@ export const PlantCard: React.FC<Props> = ({
   }, [forceDetailed]);
 
   const suitability = plant.suitability;
-  const score = suitability?.score ?? 88;
-  const timing = getPlantTimingInfo(plant, new Date(), language === 'en');
-  const visual = getPlantVisual(plant.id, plant.plant_group);
-  const lifestylePills = getPlantLifestylePills(plant, language);
+  const score = suitability?.score ?? resolved.suitabilityScore;
+  const timing = getPlantTimingInfo(resolved.raw, new Date(), language === 'en');
+  const visual = resolved.visual;
+  const lifestylePills = getPlantLifestylePills(resolved.raw, language);
 
   // Trust badge styling based on score
   const getTrustBadgeClass = (val: number) => {
@@ -238,7 +241,9 @@ export const PlantCard: React.FC<Props> = ({
           {onAddCrop ? (
             <button
               id={`add-plant-cta-${plant.id}`}
+              name="add-plant-button"
               data-testid={`plant-add-btn-${plant.id}`}
+              data-action="add-plant-button"
               data-plant-id={plant.id}
               type="button"
               disabled={isAdding}
@@ -280,7 +285,9 @@ export const PlantCard: React.FC<Props> = ({
           ) : onRequestAddVariety ? (
             <button
               id={`add-plant-cta-${plant.id}`}
+              name="add-plant-button"
               data-testid={`plant-add-btn-${plant.id}`}
+              data-action="add-plant-button"
               data-plant-id={plant.id}
               type="button"
               onClick={(e) => {
@@ -312,7 +319,9 @@ export const PlantCard: React.FC<Props> = ({
           ) : onToggleMyCrop ? (
             <button
               id={`toggle-my-crop-btn-${plant.id}`}
+              name="add-plant-button"
               data-testid={`plant-add-btn-${plant.id}`}
+              data-action="add-plant-button"
               data-plant-id={plant.id}
               type="button"
               onClick={(e) => {

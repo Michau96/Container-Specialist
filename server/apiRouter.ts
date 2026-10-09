@@ -697,5 +697,210 @@ export function createApiRouter(): Router {
     res.json(calendarRes);
   });
 
+  // Server-side Crop Uniqueness & Idempotent Addition Store
+  const serverCropsStore = new Map<string, any[]>();
+
+  // POST /api/crops/add - Server-side uniqueness validation & idempotent addition
+  router.post('/crops/add', (req, res) => {
+    const body = req.body || {};
+    const plantId = (body.plantId || body.plant_id || '').trim();
+    if (!plantId) {
+      return res.status(400).json({ success: false, error: 'Brak identyfikatora rośliny (plantId).' });
+    }
+
+    const userId = (body.userId || body.user_id || 'guest').trim();
+    const containerId = (body.containerId || body.container_id || 'default').trim();
+    const uniquenessKey = `${userId}::${plantId.toLowerCase()}::${containerId.toLowerCase()}`;
+
+    const userCrops = serverCropsStore.get(userId) || [];
+
+    // Check for duplicate crop on server
+    const existing = userCrops.find((c) => {
+      if (c.uniquenessKey === uniquenessKey) return true;
+      const cCont = c.containerId || 'default';
+      return c.plantId === plantId && cCont === containerId;
+    });
+
+    if (existing) {
+      return res.status(200).json({
+        success: true,
+        created: false,
+        duplicate: true,
+        uniquenessKey,
+        message: 'Ta roślina znajduje się już w Twoich uprawach w tym pojemniku / lokalizacji.',
+        crop: existing,
+        recoveryAction: {
+          label: 'Przejdź do Moich upraw',
+          target: 'my_crops',
+        },
+      });
+    }
+
+    const plant = (plantsData as any[]).find((p) => p.id === plantId);
+    const plantName = plant ? plant.name : plantId;
+
+    const newCrop = {
+      id: `${plantId}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      uniquenessKey,
+      plantId,
+      containerId,
+      selectedVariety: body.varietyName || body.selectedVariety || (plant?.top_varieties?.[0]?.name || plantName),
+      varietyBadge: body.varietyBadge || 'Odmiana donicowa',
+      potCount: Math.max(1, body.potCount || 1),
+      addedAt: new Date().toISOString(),
+      stage: 'rosnie',
+      pot: {
+        potType: body.potType || 'okragla',
+        volumeL: body.potVolumeLiters || 15,
+        calculationVersion: '2.1.0',
+      },
+    };
+
+    userCrops.push(newCrop);
+    serverCropsStore.set(userId, userCrops);
+
+    return res.status(201).json({
+      success: true,
+      created: true,
+      duplicate: false,
+      uniquenessKey,
+      message: `Pomyślnie dodano: ${plantName} do Moich upraw!`,
+      crop: newCrop,
+      recoveryAction: {
+        label: 'Przejdź do Moich upraw',
+        target: 'my_crops',
+      },
+    });
+  });
+
+  // GET /api/crops/check - Query server for crop existence
+  router.get('/crops/check', (req, res) => {
+    const userId = ((req.query.userId as string) || (req.query.user_id as string) || 'guest').trim();
+    const plantId = ((req.query.plantId as string) || (req.query.plant_id as string) || '').trim();
+    const containerId = ((req.query.containerId as string) || (req.query.container_id as string) || 'default').trim();
+
+    if (!plantId) {
+      return res.status(400).json({ error: 'Brak plantId' });
+    }
+
+    const uniquenessKey = `${userId}::${plantId.toLowerCase()}::${containerId.toLowerCase()}`;
+    const userCrops = serverCropsStore.get(userId) || [];
+    const found = userCrops.find((c) => c.uniquenessKey === uniquenessKey || (c.plantId === plantId && (c.containerId || 'default') === containerId));
+
+    res.json({
+      exists: Boolean(found),
+      uniquenessKey,
+      crop: found || null,
+    });
+  });
+
+  // In-memory store for idempotency of pot calculations
+  const serverPotCalculationsStore = new Map<string, any>();
+
+  // POST /api/pot-calculations - Persist calculation result on server with idempotency & contract validation
+  router.post('/pot-calculations', (req, res) => {
+    const body = req.body || {};
+
+    // Simulation triggers for testing error scenarios (HTTP 4xx, 5xx, timeout)
+    if (body.simulate500 || body.simulateError) {
+      return res.status(500).json({ success: false, error: 'Wewnętrzny błąd serwera (500).' });
+    }
+    if (body.simulate400) {
+      return res.status(400).json({ success: false, error: 'Nieprawidłowe żądanie kalkulacji (400).' });
+    }
+    if (body.simulate422) {
+      return res.status(422).json({ success: false, error: 'Niepoprawne dane wejściowe kalkulacji (422).' });
+    }
+    if (body.simulateTimeout) {
+      // Intentionally delay or abort for timeout testing if requested
+      return setTimeout(() => {
+        if (!res.headersSent) {
+          res.status(504).json({ success: false, error: 'Przekroczono limit czasu żądania (504).' });
+        }
+      }, 5000);
+    }
+
+    const {
+      idempotencyKey,
+      plantId,
+      shape,
+      material,
+      dimensions,
+      formulaVersion,
+      resultValues,
+      timestamp,
+    } = body;
+
+    // Strict validation of the calculation submit contract
+    if (!idempotencyKey || typeof idempotencyKey !== 'string') {
+      return res.status(400).json({
+        success: false,
+        error: 'Brak wymaganego klucza idempotencji (idempotencyKey).',
+      });
+    }
+
+    if (!plantId || !shape || !material || !formulaVersion || !dimensions || !resultValues) {
+      return res.status(400).json({
+        success: false,
+        error: 'Niekompletny kontrakt kalkulacji. Wymagane pola: plantId, shape, material, dimensions, formulaVersion, resultValues.',
+      });
+    }
+
+    if (typeof dimensions.heightCm !== 'number' || dimensions.heightCm <= 0) {
+      return res.status(422).json({
+        success: false,
+        error: 'Nieprawidłowa wysokość donicy w centymetrach.',
+      });
+    }
+
+    // Idempotency check: if already processed, return existing record without creating duplicates
+    if (serverPotCalculationsStore.has(idempotencyKey)) {
+      const existing = serverPotCalculationsStore.get(idempotencyKey);
+      return res.status(200).json({
+        success: true,
+        idempotencyKey,
+        savedAt: existing.timestamp || existing.savedAt,
+        deduplicated: true,
+        calculation: existing,
+      });
+    }
+
+    const recordToSave = {
+      idempotencyKey,
+      plantId,
+      plantName: body.plantName || plantId,
+      shape,
+      material,
+      dimensions,
+      potCount: body.potCount ?? 1,
+      sowingMethod: body.sowingMethod ?? 'nasiona',
+      formulaVersion,
+      resultValues,
+      fullResult: body.fullResult || body.result,
+      timestamp: timestamp || new Date().toISOString(),
+      savedAt: new Date().toISOString(),
+    };
+
+    serverPotCalculationsStore.set(idempotencyKey, recordToSave);
+
+    return res.status(200).json({
+      success: true,
+      idempotencyKey,
+      savedAt: recordToSave.savedAt,
+      deduplicated: false,
+      calculation: recordToSave,
+    });
+  });
+
+  // GET /api/pot-calculations/:idempotencyKey - Retrieve calculation by idempotency key
+  router.get('/pot-calculations/:idempotencyKey', (req, res) => {
+    const key = req.params.idempotencyKey;
+    const found = serverPotCalculationsStore.get(key);
+    if (!found) {
+      return res.status(404).json({ success: false, error: 'Nie znaleziono kalkulacji o podanym kluczu.' });
+    }
+    return res.json({ success: true, calculation: found });
+  });
+
   return router;
 }

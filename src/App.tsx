@@ -57,6 +57,7 @@ import { AuthModal } from './components/AuthModal';
 import { UserProfileModal } from './components/UserProfileModal';
 import { computeDailyRecommendation } from './lib/dailyRecommendations';
 import { getEffectivePlantRequirements } from './lib/varietyData';
+import { POT_CALCULATION_VERSION } from './lib/potCalculations';
 import { getPlantTimingInfo, getCalendarPeriodId, getPeriodHumanLabel } from './lib/cropTiming';
 import { getPlantLifestylePills } from './lib/plantLifestyle';
 import { useLanguage } from './lib/LanguageContext';
@@ -417,6 +418,7 @@ export default function App() {
         hasDrainage: true,
         material: 'plastik',
         quantity: Math.max(1, potCount),
+        calculationVersion: POT_CALCULATION_VERSION,
       },
       sowing: {
         method: 'nasiona',
@@ -826,13 +828,21 @@ export default function App() {
               </div>
 
               <div className="relative">
+                <label
+                  htmlFor="search-vegetables-input"
+                  id="plant-search-label"
+                  className="sr-only"
+                >
+                  {isEn ? 'Search plant or variety' : 'Szukaj rośliny lub odmiany'}
+                </label>
                 <Search className="w-5 h-5 text-stone-500 dark:text-stone-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   id="search-vegetables-input"
-                  data-testid="catalog-search-input"
+                  name="plant-search"
+                  data-testid="plant-search-input"
+                  data-alias-testid="catalog-search-input"
                   type="search"
                   role="searchbox"
-                  aria-label={isEn ? 'Search crops' : 'Szukaj w katalogu upraw'}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={(e) => {

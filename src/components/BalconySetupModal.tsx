@@ -717,12 +717,16 @@ export const BalconySetupModal: React.FC<Props> = ({
       node.setAttribute('aria-hidden', 'true');
     });
 
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
     return () => {
       nodesToInert.forEach((node) => {
         node.removeAttribute('inert');
         (node as any).inert = false;
         node.removeAttribute('aria-hidden');
       });
+      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
 
@@ -1197,7 +1201,7 @@ export const BalconySetupModal: React.FC<Props> = ({
         aria-modal="true"
         aria-labelledby="onboarding-modal-heading"
         data-modal-ready={isModalReady ? 'true' : 'false'}
-        className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-2xl max-w-[560px] w-full max-h-[90dvh] flex flex-col shadow-2xl border border-stone-300 dark:border-stone-800 overflow-hidden transition-all my-auto"
+        className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-2xl max-w-[560px] w-full max-h-[90vh] max-h-[90dvh] flex flex-col shadow-2xl border border-stone-300 dark:border-stone-800 overflow-hidden transition-all my-auto"
       >
         {/* Top Header focused on: one concise heading, one short benefit statement, one secondary dismiss action */}
         <div className="shrink-0 bg-white dark:bg-stone-950 p-4 sm:p-7 pb-3 sm:pb-4 border-b border-stone-200 dark:border-stone-800">
@@ -1322,12 +1326,19 @@ export const BalconySetupModal: React.FC<Props> = ({
                 </div>
 
                 <div className="relative">
+                  <label
+                    htmlFor="region-search-input"
+                    id="region-search-label"
+                    className="sr-only"
+                  >
+                    {isEn ? 'Search city or region' : 'Wyszukaj miasto lub województwo'}
+                  </label>
                   <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input
                     type="text"
                     id="region-search-input"
+                    name="region-search"
                     data-testid="location-search"
-                    aria-label={isEn ? 'Search city or region' : 'Wyszukaj miasto lub województwo'}
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
                     placeholder={isEn ? 'Search city or region, e.g. Warsaw, Krakow, Wroclaw, Gdansk...' : 'Wpisz np. Warszawa, Kraków, Wrocław, Gdańsk, Poznań...'}
@@ -1348,9 +1359,9 @@ export const BalconySetupModal: React.FC<Props> = ({
                         data-region={regKey}
                         aria-pressed={isSelected}
                         onClick={() => handleSelectRegion(regKey)}
-                        className={`group min-h-[44px] p-3 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                        className={`group min-h-[44px] min-w-[44px] p-3 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isSelected
-                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 font-bold shadow-xs'
+                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 font-bold shadow-xs ring-2 ring-emerald-600/30 dark:ring-emerald-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                             : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100'
                         }`}
                       >
@@ -1382,7 +1393,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   <span>{isEn ? 'Which floor is your balcony located on?' : 'Na którym piętrze znajduje się balkon?'}</span>
                 </label>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 gap-3">
                   {[
                     { floor: 0, semanticKey: 'ground', label: isEn ? 'Ground floor' : 'Parter', hint: isEn ? 'Sheltered, higher humidity' : 'Osłonięty, wilgotniej' },
                     { floor: 2, semanticKey: 'floor-1-3', label: isEn ? 'Floor 1 – 3' : 'Piętro 1-3', hint: isEn ? 'Balanced conditions' : 'Zrównoważone warunki' },
@@ -1403,27 +1414,28 @@ export const BalconySetupModal: React.FC<Props> = ({
                         data-testid={`floor-option-${item.semanticKey}`}
                         data-floor={item.floor}
                         aria-pressed={isSelected}
+                        aria-describedby={`floor-desc-${item.semanticKey}`}
                         onClick={() => handleSelectFloor(item.floor)}
-                        className={`group min-h-[56px] p-3 sm:p-3.5 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center justify-between gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                        className={`group min-h-[88px] min-w-[44px] p-4 rounded-2xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isSelected
-                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs font-bold'
+                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs font-bold ring-2 ring-emerald-600/30 dark:ring-emerald-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                             : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100'
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-sm font-bold leading-tight">{item.label}</span>
+                          <span className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-tight">{item.label}</span>
                           {isSelected ? (
-                            <div className="w-5 h-5 rounded-full bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-2xs">
-                              <Check className="w-3 h-3 stroke-[3]" />
+                            <div className="w-5 h-5 rounded-full bg-emerald-700 dark:bg-emerald-600 text-white flex items-center justify-center shadow-2xs shrink-0">
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
                             </div>
                           ) : (
-                            <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all" />
+                            <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-all shrink-0" />
                           )}
                         </div>
-                        <span className="text-xs text-stone-700 dark:text-stone-300 self-start text-left font-medium leading-tight">{item.hint}</span>
-                        <div className="w-full pt-1 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between text-xs font-semibold">
+                        <p id={`floor-desc-${item.semanticKey}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 font-medium leading-tight">{item.hint}</p>
+                        <div className="w-full pt-1.5 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between text-xs font-semibold">
                           <span className={isSelected ? 'text-emerald-900 dark:text-emerald-200 font-bold' : 'text-stone-700 dark:text-stone-300 group-hover:text-emerald-700'}>
-                            {isSelected ? (isEn ? 'Selected floor' : 'Wybrane piętro') : (isEn ? 'Select' : 'Wybierz')}
+                            {isSelected ? (isEn ? 'Selected floor' : 'Wybrano piętro') : (isEn ? 'Select' : 'Wybierz')}
                           </span>
                           <ChevronRight className={`w-3.5 h-3.5 ${isSelected ? 'text-emerald-700 dark:text-emerald-400' : 'text-stone-400 group-hover:text-emerald-700 group-hover:translate-x-0.5 transition-transform'}`} />
                         </div>
@@ -1532,105 +1544,103 @@ export const BalconySetupModal: React.FC<Props> = ({
                   return (
                     <div
                       key={item.key}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={isEn ? visual.titleEn : visual.title}
-                      aria-pressed={isSelected}
-                      data-tooltip-container
-                      id={`orient-card-${item.key}`}
-                      data-testid={`sunlight-option-${sunlightSemanticKey}`}
-                      data-orientation={item.key}
-                      data-selected={isSelected ? 'true' : 'false'}
-                      onClick={() => handleSelectOrientation(item.key)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleSelectOrientation(item.key);
-                        }
-                      }}
-                      className={`group relative p-3.5 sm:p-4 rounded-xl border transition-all duration-200 cursor-pointer min-h-[56px] flex flex-col justify-between select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
-                        isSelected
-                          ? 'border-2 border-emerald-600 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-md ring-2 ring-emerald-500/20'
-                          : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-emerald-500 dark:hover:border-emerald-600 hover:bg-emerald-50/40 dark:hover:bg-stone-850 text-stone-900 dark:text-stone-100 shadow-2xs'
-                      }`}
+                      className="relative flex flex-col"
                     >
-                      {/* Card Top: Icon + Title + Badges + Help trigger + Select pill */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex items-center gap-2.5">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-                              isSelected
-                                ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
-                                : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700'
-                            }`}
-                          >
-                            {visual.icon}
-                          </div>
-                          <div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <h4 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100 leading-tight">
-                                {isEn ? visual.titleEn : item.label}
-                              </h4>
-                              {isRecommended && (
-                                <span
-                                  data-testid="sunlight-recommended-badge"
-                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-700"
-                                >
-                                  <Sparkles className="w-3 h-3 text-amber-700 dark:text-amber-300" />
-                                  <span>{isEn ? 'Recommended' : 'Rekomendowane'}</span>
-                                </span>
-                              )}
+                      <button
+                        type="button"
+                        role="button"
+                        id={`orient-card-${item.key}`}
+                        data-testid={`sunlight-option-${sunlightSemanticKey}`}
+                        data-orientation={item.key}
+                        data-selected={isSelected ? 'true' : 'false'}
+                        aria-label={isEn ? visual.titleEn : visual.title}
+                        aria-pressed={isSelected}
+                        aria-describedby={`sunlight-desc-${sunlightSemanticKey}`}
+                        onClick={() => handleSelectOrientation(item.key)}
+                        className={`w-full group relative p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer min-h-[56px] min-h-[88px] min-w-[44px] flex flex-col justify-between select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                          isSelected
+                            ? 'border-2 border-emerald-600 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-md ring-2 ring-emerald-500/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
+                            : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-emerald-500 dark:hover:border-emerald-600 hover:bg-emerald-50/40 dark:hover:bg-stone-850 text-stone-900 dark:text-stone-100 shadow-2xs'
+                        }`}
+                      >
+                        {/* Card Top: Icon + Title + Badges + Select pill */}
+                        <div className="flex items-start justify-between gap-2 w-full">
+                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                            <div
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                                isSelected
+                                  ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
+                                  : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700'
+                              }`}
+                            >
+                              {visual.icon}
                             </div>
-                            <span className="inline-block text-xs font-semibold text-stone-700 dark:text-stone-300 mt-0.5">
-                              ☀️ {item.badge}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <h4 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-tight">
+                                  {isEn ? visual.titleEn : item.label}
+                                </h4>
+                                {isRecommended && (
+                                  <span
+                                    data-testid="sunlight-recommended-badge"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-700"
+                                  >
+                                    <Sparkles className="w-3 h-3 text-amber-700 dark:text-amber-300" />
+                                    <span>{isEn ? 'Recommended' : 'Rekomendowane'}</span>
+                                  </span>
+                                )}
+                              </div>
+                              <span className="inline-block text-xs font-semibold text-stone-700 dark:text-stone-300 mt-0.5">
+                                ☀️ {item.badge}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 shrink-0 pr-12">
+                            {isSelected ? (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs">
+                                <span>{isEn ? 'Selected' : 'Wybrano'}</span>
+                                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-900 text-xs font-semibold transition-all">
+                                <span>{isEn ? 'Select' : 'Wybierz'}</span>
+                                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                              </span>
+                            )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            type="button"
-                            id={`tooltip-trigger-${item.key}`}
-                            data-testid={`sunlight-info-${sunlightSemanticKey}`}
-                            aria-label={isEn ? `Show detailed sunlight description for ${visual.titleEn}` : `Pokaż szczegóły dla ${item.label}`}
-                            aria-expanded={isTooltipOpen}
-                            title={isEn ? 'Show details' : 'Pokaż szczegóły'}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveTooltip(isTooltipOpen ? null : item.key);
-                            }}
-                            className={`min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
-                              isTooltipOpen ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/70 border-emerald-400' : ''
-                            }`}
-                          >
-                            <Info className="w-4 h-4" />
-                          </button>
+                        {/* Short user-facing description */}
+                        <p id={`sunlight-desc-${sunlightSemanticKey}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-2 font-medium leading-relaxed">
+                          {isEn ? visual.subEn : visual.sub}
+                        </p>
+                      </button>
 
-                          {isSelected ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs">
-                              <span>{isEn ? 'Selected' : 'Wybrano'}</span>
-                              <Check className="w-3.5 h-3.5 stroke-[3]" />
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-900 text-xs font-semibold transition-all">
-                              <span>{isEn ? 'Select' : 'Wybierz'}</span>
-                              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Short user-facing description - no long technical explanations inside card */}
-                      <p className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-2 font-medium leading-relaxed">
-                        {isEn ? visual.subEn : visual.sub}
-                      </p>
+                      {/* Info Help Trigger Button Positioned Accurately Outside the Main Button */}
+                      <button
+                        type="button"
+                        id={`tooltip-trigger-${item.key}`}
+                        data-testid={`sunlight-info-${sunlightSemanticKey}`}
+                        aria-label={isEn ? `Show detailed sunlight description for ${visual.titleEn}` : `Pokaż szczegóły dla ${item.label}`}
+                        aria-expanded={isTooltipOpen}
+                        title={isEn ? 'Show details' : 'Pokaż szczegóły'}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTooltip(isTooltipOpen ? null : item.key);
+                        }}
+                        className={`absolute top-3.5 right-3.5 z-10 min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
+                          isTooltipOpen ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/70 border-emerald-400' : ''
+                        }`}
+                      >
+                        <Info className="w-4 h-4" />
+                      </button>
 
                       {/* Progressive disclosure: Expandable detailed description section triggered by visible help control */}
                       {isTooltipOpen && (
                         <div
                           data-testid={`sunlight-details-${sunlightSemanticKey}`}
-                          className="mt-3 p-3.5 rounded-xl bg-stone-900 text-white dark:bg-stone-950 dark:border dark:border-stone-700 text-xs shadow-xl animate-fade-in"
-                          onClick={(e) => e.stopPropagation()}
+                          className="mt-2 p-3.5 rounded-xl bg-stone-900 text-white dark:bg-stone-950 dark:border dark:border-stone-700 text-xs shadow-xl animate-fade-in"
                         >
                           <div className="flex items-start justify-between gap-2 mb-1.5">
                             <strong className="font-bold text-emerald-300 text-sm">{item.label}</strong>
@@ -1820,9 +1830,9 @@ export const BalconySetupModal: React.FC<Props> = ({
                                   handleSelectBalconyType(opt.key);
                                   setIsBarierkaDropdownOpen(false);
                                 }}
-                                className={`group w-full min-h-[48px] p-3 rounded-xl text-left transition-all flex items-start justify-between gap-3 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                                className={`group w-full min-h-[48px] min-w-[44px] p-3 rounded-xl text-left transition-all flex items-start justify-between gap-3 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                                   isSelected
-                                    ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-2xs'
+                                    ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-2xs ring-2 ring-blue-600/30 dark:ring-blue-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                                     : 'border border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100'
                                 }`}
                               >
@@ -1898,7 +1908,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {BALCONY_TYPE_OPTIONS.map((opt) => {
                       const isSelected = spec.balcony_type === opt.key;
                       return (
@@ -1908,10 +1918,12 @@ export const BalconySetupModal: React.FC<Props> = ({
                           id={`barierka-card-${opt.key}`}
                           data-testid={`railing-card-${opt.key}`}
                           data-railing={opt.key}
+                          aria-pressed={isSelected}
+                          aria-describedby={`railing-desc-${opt.key}`}
                           onClick={() => handleSelectBalconyType(opt.key)}
-                          className={`group min-h-[56px] p-3.5 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                          className={`group min-h-[88px] min-w-[44px] p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                             isSelected
-                              ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 shadow-xs font-bold'
+                              ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 shadow-xs font-bold ring-2 ring-blue-600/30 dark:ring-blue-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                               : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100'
                           }`}
                         >
@@ -1926,7 +1938,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
                               <div className="flex flex-wrap items-center gap-1.5">
-                                <span className="text-xs font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
+                                <span className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
                                 <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${opt.badgeColor}`}>{isEn ? opt.badgeEn : opt.badge}</span>
                               </div>
                               <div className="flex items-center gap-1 shrink-0">
@@ -1940,7 +1952,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 )}
                               </div>
                             </div>
-                            <p className="text-xs text-stone-700 dark:text-stone-300 mt-1 leading-snug break-words font-medium">{isEn ? opt.subEn : opt.sub}</p>
+                            <p id={`railing-desc-${opt.key}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-1 leading-snug break-words font-medium">{isEn ? opt.subEn : opt.sub}</p>
                             <div className="flex flex-wrap gap-1 mt-2">
                               {opt.traits.map((trait, idx) => (
                                 <span
@@ -2185,7 +2197,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     )}
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {ROOFING_OPTIONS.map((opt) => {
                       const isSelected = spec.roofing === opt.key;
                       const roofingDisabledReason = getDisabledOptionReason('roofing', opt.key, spec, language);
@@ -2199,14 +2211,16 @@ export const BalconySetupModal: React.FC<Props> = ({
                           data-roofing={opt.key}
                           disabled={isRoofingDisabled}
                           aria-disabled={isRoofingDisabled ? 'true' : 'false'}
+                          aria-pressed={isSelected}
+                          aria-describedby={`roofing-desc-${opt.key}`}
                           onClick={() => {
                             if (!isRoofingDisabled) setSpec({ ...spec, roofing: opt.key });
                           }}
-                          className={`group min-h-[56px] p-3.5 rounded-2xl border text-left transition-all flex flex-col gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                          className={`group min-h-[88px] min-w-[44px] p-4 rounded-2xl border text-left transition-all flex flex-col gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                             isRoofingDisabled
                               ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-2 border-dashed border-stone-400 dark:border-stone-700'
                               : isSelected
-                              ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 shadow-xs font-bold cursor-pointer'
+                              ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 shadow-xs font-bold cursor-pointer ring-2 ring-blue-600/30 dark:ring-blue-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                               : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100 cursor-pointer'
                           }`}
                         >
@@ -2222,7 +2236,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-1">
                                 <div className="flex flex-wrap items-center gap-1.5">
-                                  <span className="text-xs font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
+                                  <span className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-snug break-words">{isEn ? opt.titleEn : opt.title}</span>
                                   <span className={`text-xs font-semibold px-2 py-0.5 rounded border ${opt.badgeColor}`}>{isEn ? opt.badgeEn : opt.badge}</span>
                                 </div>
                                 <div className="flex items-center gap-1 shrink-0">
@@ -2236,7 +2250,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                                   )}
                                 </div>
                               </div>
-                              <p className="text-xs text-stone-700 dark:text-stone-300 mt-1 leading-snug break-words font-medium">{isEn ? opt.subEn : opt.sub}</p>
+                              <p id={`roofing-desc-${opt.key}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-1 leading-snug break-words font-medium">{isEn ? opt.subEn : opt.sub}</p>
                               <div className="flex flex-wrap gap-1 mt-2">
                                 {opt.traits.map((trait, idx) => (
                                   <span
@@ -2298,7 +2312,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   )}
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
                     {
                       id: 'boxes_balcony_15cm',
@@ -2332,17 +2346,19 @@ export const BalconySetupModal: React.FC<Props> = ({
                         data-testid={`pot-option-${item.id}`}
                         data-pot={item.id}
                         aria-label={item.label}
+                        aria-pressed={isSelected}
+                        aria-describedby={`pot-desc-${item.id}`}
                         disabled={isPotDisabled}
                         aria-disabled={isPotDisabled ? 'true' : 'false'}
                         onClick={() => {
                           if (!isPotDisabled) togglePot(item.id as ContainerType);
                         }}
-                        className={`group p-3.5 rounded-2xl border text-left transition-all duration-150 flex flex-col gap-2 ${
+                        className={`group min-h-[88px] min-w-[44px] p-4 rounded-2xl border text-left transition-all duration-150 flex flex-col gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isPotDisabled
                             ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-dashed border-stone-300 dark:border-stone-700'
                             : isSelected
-                            ? 'border-2 border-blue-500 bg-blue-50/90 dark:bg-blue-950/60 text-blue-950 dark:text-blue-100 ring-2 ring-blue-500/20 shadow-xs font-semibold cursor-pointer active:scale-[0.98]'
-                            : 'border-stone-200 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-stone-700 dark:text-stone-300 cursor-pointer active:scale-[0.98]'
+                            ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 ring-2 ring-blue-600/30 dark:ring-blue-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900 shadow-xs font-bold cursor-pointer active:scale-[0.98]'
+                            : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100 cursor-pointer active:scale-[0.98]'
                         }`}
                       >
                         <div className="flex items-start gap-3 w-full">
@@ -2359,7 +2375,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
-                              <span className={`text-xs font-bold leading-tight ${isSelected ? 'text-blue-950 dark:text-blue-100' : 'text-stone-900 dark:text-stone-100 group-hover:text-blue-950 dark:group-hover:text-blue-100'}`}>
+                              <span className={`text-base sm:text-lg font-bold leading-tight ${isSelected ? 'text-blue-950 dark:text-blue-100' : 'text-stone-900 dark:text-stone-100 group-hover:text-blue-950 dark:group-hover:text-blue-100'}`}>
                                 {item.label}
                               </span>
                               <div className="flex items-center gap-1 shrink-0">
@@ -2380,7 +2396,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                                 )}
                               </div>
                             </div>
-                            <div className="text-[11px] text-stone-500 dark:text-stone-400 mt-1 leading-snug font-normal">
+                            <div id={`pot-desc-${item.id}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-1 leading-snug font-normal">
                               {item.sub}
                             </div>
                           </div>
@@ -2468,10 +2484,11 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       data-testid="pot-shape-rectangular"
+                      aria-pressed={potShape === 'rectangular'}
                       onClick={() => setPotShape('rectangular')}
-                      className={`min-h-[44px] px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                      className={`min-h-[44px] min-w-[44px] px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                         potShape === 'rectangular'
-                          ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs'
+                          ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-600/30 dark:ring-emerald-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                           : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:border-emerald-600'
                       }`}
                     >
@@ -2481,10 +2498,11 @@ export const BalconySetupModal: React.FC<Props> = ({
                     <button
                       type="button"
                       data-testid="pot-shape-round"
+                      aria-pressed={potShape === 'round'}
                       onClick={() => setPotShape('round')}
-                      className={`min-h-[44px] px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                      className={`min-h-[44px] min-w-[44px] px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm font-bold transition cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                         potShape === 'round'
-                          ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs'
+                          ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-600/30 dark:ring-emerald-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                           : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-stone-800 dark:text-stone-200 hover:border-emerald-600'
                       }`}
                     >
@@ -2663,7 +2681,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   <span>{isEn ? 'How much time do you have for watering?' : 'Ile masz czasu na podlewanie?'}</span>
                 </label>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {[
                     { id: 'daily', label: isEn ? 'Daily' : 'Codziennie', sub: isEn ? 'Morning and evening' : 'Mogę rano i wieczorem' },
                     { id: 'few_days', label: isEn ? 'Every 2–3 days' : 'Co 2–3 dni', sub: isEn ? 'Balanced routine' : 'Zrównoważona opieka' },
@@ -2683,29 +2701,31 @@ export const BalconySetupModal: React.FC<Props> = ({
                         data-testid={`care-option-${item.id}`}
                         data-care={item.id}
                         aria-label={item.label}
+                        aria-pressed={isSelected}
+                        aria-describedby={`care-desc-${item.id}`}
                         disabled={isCareDisabled}
                         aria-disabled={isCareDisabled ? 'true' : 'false'}
                         onClick={() => {
                           if (!isCareDisabled) setSpec({ ...spec, care_time: item.id as CareTime });
                         }}
-                        className={`group min-h-[56px] p-3 rounded-xl border text-left text-xs transition flex flex-col justify-between focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                        className={`group min-h-[88px] min-w-[44px] p-4 rounded-2xl border text-left transition flex flex-col justify-between focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isCareDisabled
                             ? 'opacity-60 cursor-not-allowed bg-stone-100 dark:bg-stone-900 border-2 border-dashed border-stone-400 dark:border-stone-700'
                             : isSelected
-                            ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-xs cursor-pointer'
+                            ? 'border-2 border-blue-700 dark:border-blue-400 bg-blue-50 dark:bg-blue-950 text-blue-950 dark:text-blue-100 font-bold shadow-xs cursor-pointer ring-2 ring-blue-600/30 dark:ring-blue-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                             : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-stone-900 dark:text-stone-100 cursor-pointer'
                         }`}
                       >
                         <div>
                           <div className="flex items-center justify-between gap-1">
-                            <span className="font-bold text-sm text-stone-900 dark:text-stone-100">{item.label}</span>
+                            <span className="font-bold text-base sm:text-lg text-stone-900 dark:text-stone-100">{item.label}</span>
                             {isSelected ? (
                               <Check className="w-4 h-4 text-blue-700 dark:text-blue-400 stroke-[3]" />
                             ) : (
                               <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-blue-700 group-hover:translate-x-0.5 transition-transform" />
                             )}
                           </div>
-                          <div className="text-xs text-stone-700 dark:text-stone-300 mt-1 leading-snug font-medium">{item.sub}</div>
+                          <div id={`care-desc-${item.id}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-1 leading-snug font-medium">{item.sub}</div>
                         </div>
 
                         {careDisabledReason && (
@@ -2738,10 +2758,10 @@ export const BalconySetupModal: React.FC<Props> = ({
         {/* ================= STICKY ACTION FOOTER WITH "DALEJ" / "ZAPISZ I PRZEJDŹ" ================= */}
         <div
           data-testid="onboarding-footer"
-          className="sticky bottom-0 z-20 shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur p-3.5 sm:p-5 shadow-xl flex flex-col gap-2.5"
+          className="sticky bottom-0 z-20 shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur p-3.5 sm:p-5 pb-safe shadow-xl flex flex-col gap-2.5"
         >
-          {/* Visible helper message when CTA is disabled */}
-          {((step < 3 && isNextDisabled) || (step === 3 && isSaveDisabled)) && (
+          {/* Visible helper message when CTA is disabled or step error occurs */}
+          {((step < 3 && isNextDisabled) || (step === 3 && isSaveDisabled) || stepError) && (
             <div
               data-testid="onboarding-cta-helper"
               role="status"
@@ -2749,11 +2769,12 @@ export const BalconySetupModal: React.FC<Props> = ({
             >
               <Info className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-400" />
               <span>
-                {step === 1
-                  ? getStep1InactivityReason()
-                  : step === 2
-                  ? getStep2InactivityReason()
-                  : getStep3InactivityReason()}
+                {stepError ||
+                  (step === 1
+                    ? getStep1InactivityReason()
+                    : step === 2
+                    ? getStep2InactivityReason()
+                    : getStep3InactivityReason())}
               </span>
             </div>
           )}
@@ -2802,12 +2823,15 @@ export const BalconySetupModal: React.FC<Props> = ({
                 <button
                   type="button"
                   id="wizard-next-step-btn"
-                  data-testid="onboarding-next"
+                  data-testid="onboarding-next-button"
                   disabled={isNextDisabled}
                   aria-disabled={isNextDisabled}
                   onClick={(e) => {
                     e.stopPropagation();
-                    if (isNextDisabled) return;
+                    if (isNextDisabled) {
+                      setStepError(step === 1 ? getStep1InactivityReason() : getStep2InactivityReason());
+                      return;
+                    }
                     setStep((s) => (s + 1) as 1 | 2 | 3);
                   }}
                   className={`w-full sm:w-auto min-h-[44px] min-w-[44px] px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${

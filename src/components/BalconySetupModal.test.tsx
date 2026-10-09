@@ -113,7 +113,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     expect(screen.getByText('Wybierz swoje województwo lub najbliższe miasto')).toBeInTheDocument();
     expect(screen.getByText('Na którym piętrze znajduje się balkon?')).toBeInTheDocument();
 
-    const nextBtn = screen.getByTestId('onboarding-next');
+    const nextBtn = screen.getByTestId('onboarding-next-button');
     assertVisibleAndInViewport(nextBtn);
     expect(nextBtn.textContent).toContain('Dalej');
 
@@ -156,7 +156,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     assertVisibleAndInViewport(mainFilter);
 
     // Next button in Step 2 has valid bounding box
-    const nextBtnStep2 = screen.getByTestId('onboarding-next');
+    const nextBtnStep2 = screen.getByTestId('onboarding-next-button');
     assertVisibleAndInViewport(nextBtnStep2);
     expect(nextBtnStep2.textContent).toContain('Dalej');
 
@@ -340,7 +340,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     });
 
     const closeBtn = screen.getByTestId('onboarding-close');
-    const nextBtn = screen.getByTestId('onboarding-next');
+    const nextBtn = screen.getByTestId('onboarding-next-button');
 
     // Tab from heading or first element
     fireEvent.keyDown(modal, { key: 'Tab', code: 'Tab' });
@@ -434,7 +434,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     expect(footer.className).toContain('backdrop-blur');
 
     // 4. In Step 1 without selection, CTA is disabled and visible helper message is displayed
-    const nextBtn = screen.getByTestId('onboarding-next');
+    const nextBtn = screen.getByTestId('onboarding-next-button');
     expect(nextBtn).toBeDisabled();
     expect(nextBtn.textContent).toContain('Dalej');
 
@@ -456,7 +456,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     fireEvent.click(nextBtn);
 
     // In Step 2, next button has Polish label "Dalej"
-    const nextBtnStep2 = screen.getByTestId('onboarding-next');
+    const nextBtnStep2 = screen.getByTestId('onboarding-next-button');
     expect(nextBtnStep2.textContent).toContain('Dalej');
 
     // Proceed to Step 3
@@ -501,7 +501,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     fireEvent.click(parterOption);
 
     // Proceed to Step 2
-    const nextBtn = screen.getByTestId('onboarding-next');
+    const nextBtn = screen.getByTestId('onboarding-next-button');
     fireEvent.click(nextBtn);
 
     const step2 = screen.getByTestId('onboarding-step-2');
@@ -519,7 +519,7 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
 
     // 4. Recommendation must NOT auto-select option without user confirmation:
     // "Dalej" must be disabled initially on step 2
-    const nextBtnStep2 = screen.getByTestId('onboarding-next');
+    const nextBtnStep2 = screen.getByTestId('onboarding-next-button');
     expect(nextBtnStep2).toBeDisabled();
     const helperMsg = screen.getByTestId('onboarding-cta-helper');
     expect(helperMsg).toBeInTheDocument();

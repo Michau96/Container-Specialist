@@ -145,7 +145,7 @@ export interface SpacingGuideInfo {
   max_plants_per_round_pot_30cm: number;
 }
 
-export type PotShape = 'round' | 'rectangular';
+export type PotShape = 'round' | 'rectangular' | 'square' | 'conical' | 'bowl';
 export type LegacyPotMaterial = 'plastic' | 'terracotta' | 'wood' | 'fabric' | 'ceramic';
 export type PotMaterial = 'plastik' | 'ceramika_terakota' | 'tkanina' | 'drewno';
 export type SupportType = 'none' | 'stake' | 'trellis' | 'balcony_railing' | 'cage';
@@ -346,6 +346,8 @@ export interface PotConfig {
   hasDrainage?: boolean;
   locationNote?: string;
   quantity?: number; // Ilość identycznych donic (np. 2x 30cm)
+  calculationVersion?: string; // Wersja algorytmu obliczeń donicy (np. '2.1.0')
+  calculatedResult?: any;
 }
 
 export interface SowingConfig {
@@ -429,6 +431,9 @@ export interface CropPhotoEntry {
 
 export interface MyCropItem {
   id?: string; // Unikalne ID wpisu uprawy
+  uniquenessKey?: string; // Klucz unikalności userId::plantId::containerId
+  containerId?: string; // Identyfikator pojemnika / donicy
+  locationId?: string; // Identyfikator lokalizacji na balkonie
   plantId: string;
   addedAt: string;
   stage?: CropGrowthStage;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import {
   X,
@@ -31,7 +31,7 @@ import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 import { getPlantTimingInfo } from '../lib/cropTiming';
 import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 import { getPlantVarieties } from '../lib/varietyData';
-import { getPlantVisual } from '../lib/plantImages';
+import { resolvePlantRecord } from '../lib/plantSchema';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface Props {
@@ -57,14 +57,56 @@ export const PlantDetailModal: React.FC<Props> = ({
   const isEn = language === 'en';
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
-  if (!plant) return null;
+  // Canonical resolution ensures modal title, alt text, recommendations, and plantId match exactly
+  const resolved = plant ? resolvePlantRecord(plant) : null;
 
+  const handleClose = () => {
+    onClose();
+    // Restore focus to triggering plant card
+    if (plant) {
+      setTimeout(() => {
+        const trigger =
+          document.getElementById(`plant-card-${plant.id}`) ||
+          document.getElementById(`plant-card-${resolved?.plantId}`);
+        if (trigger) {
+          trigger.focus();
+        }
+      }, 50);
+    }
+  };
+
+  // Lock background scroll while dialog is open & restore on unmount
+  useEffect(() => {
+    if (!plant) return;
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = origOverflow;
+    };
+  }, [plant]);
+
+  // Support Escape key to dismiss dialog and restore focus
+  useEffect(() => {
+    if (!plant) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [plant?.id, resolved?.plantId]);
+
+  if (!plant || !resolved) return null;
+
+  const visual = resolved.visual;
   const suit = plant.suitability;
-  const score = suit?.score ?? 75;
-  const timing = getPlantTimingInfo(plant, new Date(), isEn);
-  const greenhouse = getPlantGreenhouseInfo(plant);
+  const score = suit?.score ?? resolved.suitabilityScore;
+  const timing = getPlantTimingInfo(resolved.raw, new Date(), isEn);
+  const greenhouse = getPlantGreenhouseInfo(resolved.raw);
 
-  const topVarieties = getPlantVarieties(plant);
+  const topVarieties = getPlantVarieties(resolved.raw);
 
   const cleanReasons = suit?.reasons.filter((r) => !r.includes('Idealna ekspozycja')) || [];
 
@@ -139,16 +181,20 @@ export const PlantDetailModal: React.FC<Props> = ({
     return 'bg-red-700 text-white ring-1 ring-red-500/50';
   };
 
-  const visual = getPlantVisual(plant.id, plant.plant_group);
-
   return (
     <div
       id="plant-detail-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
     >
       <div
         id="plant-detail-dialog"
-        className="bg-[#FAF8F5] dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={`plant-modal-title-${resolved.plantId}`}
+        className="bg-[#FAF8F5] dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-3xl max-w-4xl w-full max-h-[94vh] flex flex-col shadow-2xl border border-stone-200 dark:border-stone-800 overflow-hidden relative z-10"
       >
         {/* Header */}
         <div className={`${headerTheme.headerBg} text-white p-5 sm:p-6 flex items-start justify-between border-b transition-colors gap-4`}>
@@ -156,6 +202,8 @@ export const PlantDetailModal: React.FC<Props> = ({
             {/* Real Plant Photography Avatar */}
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden shrink-0 border border-white/20 shadow-md relative bg-black/25">
               <img
+                data-testid={`plant-modal-image-${resolved.plantId}`}
+                data-plant-id={resolved.plantId}
                 src={visual.imageUrl}
                 alt={visual.alt}
                 referrerPolicy="no-referrer"
@@ -173,7 +221,10 @@ export const PlantDetailModal: React.FC<Props> = ({
                 <span className={`text-xs font-bold ${headerTheme.badgeText} px-2.5 py-0.5 rounded-md flex items-center gap-1 border`}>
                   <span>{headerTheme.icon}</span> {headerTheme.label}
                 </span>
-                <span className="text-xs font-bold text-stone-200 uppercase tracking-wider bg-black/30 px-2.5 py-0.5 rounded-md border border-white/10">
+                <span
+                  data-testid={`plant-modal-category-${resolved.plantId}`}
+                  className="text-xs font-bold text-stone-200 uppercase tracking-wider bg-black/30 px-2.5 py-0.5 rounded-md border border-white/10"
+                >
                   {plant.category}
                 </span>
                 {suit && (
@@ -183,7 +234,12 @@ export const PlantDetailModal: React.FC<Props> = ({
                   </span>
                 )}
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+              <h2
+                id={`plant-modal-title-${resolved.plantId}`}
+                data-testid={`plant-modal-title-${resolved.plantId}`}
+                data-plant-id={resolved.plantId}
+                className="text-2xl sm:text-3xl font-bold tracking-tight text-white"
+              >
                 {plant.name}
               </h2>
               <p className="text-xs sm:text-sm text-stone-200 mt-1">
@@ -196,8 +252,10 @@ export const PlantDetailModal: React.FC<Props> = ({
             {onToggleMyCrop && (
               <button
                 id="modal-toggle-my-crop-btn"
+                data-testid="add-plant-button"
+                type="button"
                 onClick={() => onToggleMyCrop(plant.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
+                className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
                   isMyCrop
                     ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-red-600 hover:border-red-500'
                     : 'bg-white text-stone-900 border-white hover:bg-stone-100 shadow-xs'
@@ -219,8 +277,9 @@ export const PlantDetailModal: React.FC<Props> = ({
 
             {onOpenPotCalc && (
               <button
+                type="button"
                 onClick={() => {
-                  onClose();
+                  handleClose();
                   onOpenPotCalc(plant);
                 }}
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 ${headerTheme.btnBg} text-white text-xs font-semibold rounded-xl border transition cursor-pointer`}
@@ -230,10 +289,12 @@ export const PlantDetailModal: React.FC<Props> = ({
               </button>
             )}
             <button
+              type="button"
               id="close-plant-modal-btn"
-              onClick={onClose}
-              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
-              aria-label={isEn ? 'Close window' : 'Zamknij okno'}
+              data-testid="plant-details-close"
+              onClick={handleClose}
+              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+              aria-label={isEn ? 'Close' : 'Zamknij'}
             >
               <X className="w-5 h-5 stroke-[2.5]" />
             </button>
@@ -1096,30 +1157,34 @@ export const PlantDetailModal: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* Modal Footer */}
-        <div className="p-4 bg-stone-100 dark:bg-stone-800 border-t border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row items-center justify-between gap-3">
+        {/* Modal Footer - Sticky on Mobile */}
+        <div className="sticky bottom-0 left-0 right-0 p-3.5 sm:p-4 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row items-center justify-between gap-2.5 z-20 shadow-lg">
           <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap">
             {onRequestAddVariety ? (
               <>
                 <button
+                  type="button"
+                  id="plant-details-add-variety-btn"
+                  data-testid="add-plant-button"
                   onClick={() => {
-                    onClose();
+                    handleClose();
                     onRequestAddVariety(plant);
                   }}
-                  className="w-full sm:w-auto px-4 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-800 shadow-xs"
+                  className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-emerald-800 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-4 h-4" />
                   <span>
                     {isMyCrop
                       ? (isEn ? '+ Add another variety or pot' : '+ Dodaj kolejną odmianę lub inną donicę')
-                      : (isEn ? '+ Choose variety & add to crops' : '+ Wybierz odmianę i dodaj do upraw')}
+                      : (isEn ? '+ Choose variety & add to crops' : 'Dodaj do moich upraw')}
                   </span>
                 </button>
 
                 {isMyCrop && onToggleMyCrop && (
                   <button
+                    type="button"
                     onClick={() => onToggleMyCrop(plant.id)}
-                    className="w-full sm:w-auto px-3.5 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-red-100 hover:text-red-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
+                    className="w-full sm:w-auto min-h-[44px] px-4 py-2.5 bg-stone-200 dark:bg-stone-700 hover:bg-red-100 hover:text-red-700 text-stone-700 dark:text-stone-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer"
                     title={isEn ? 'Remove all pots of this plant from My Crops' : 'Usuń wszystkie donice tej rośliny z Moich upraw'}
                   >
                     <span>{isEn ? 'Remove from crops' : 'Usuń z upraw'}</span>
@@ -1129,22 +1194,25 @@ export const PlantDetailModal: React.FC<Props> = ({
             ) : (
               onToggleMyCrop && (
                 <button
+                  type="button"
+                  id="plant-details-toggle-my-crop-btn"
+                  data-testid="add-plant-button"
                   onClick={() => onToggleMyCrop(plant.id)}
-                  className={`w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border ${
+                  className={`w-full sm:w-auto min-h-[44px] px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
                     isMyCrop
-                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200 dark:border-emerald-800 hover:bg-red-50 hover:text-red-700 hover:border-red-300'
-                      : 'bg-emerald-800 hover:bg-emerald-900 text-white border-emerald-800 shadow-xs'
+                      ? 'bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/80 dark:text-emerald-200 dark:border-emerald-800 hover:bg-red-50 hover:text-red-700'
+                      : 'bg-emerald-800 hover:bg-emerald-900 text-white border-emerald-800 shadow-sm'
                   }`}
                 >
                   {isMyCrop ? (
                     <>
-                      <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
+                      <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                       <span>{isEn ? 'In My Crops (remove)' : 'W Moich uprawach (usuń)'}</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>{isEn ? '+ Add to My Crops' : '+ Dodaj do Moich upraw'}</span>
+                      <Plus className="w-4 h-4" />
+                      <span>{isEn ? '+ Add to My Crops' : 'Dodaj do moich upraw'}</span>
                     </>
                   )}
                 </button>
@@ -1153,24 +1221,28 @@ export const PlantDetailModal: React.FC<Props> = ({
 
             {onOpenPotCalc && (
               <button
+                type="button"
                 onClick={() => {
-                  onClose();
+                  handleClose();
                   onOpenPotCalc(plant);
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-stone-800 dark:bg-stone-700 hover:bg-stone-700 dark:hover:bg-stone-600 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer"
+                className="hidden sm:flex items-center gap-1.5 min-h-[44px] px-4 py-2.5 bg-stone-800 dark:bg-stone-700 hover:bg-stone-700 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
               >
                 <Ruler className="w-4 h-4" />
-                <span>{isEn ? 'Fit my pot & sketch spacing' : 'Dopasuj moją donicę i naszkicuj rozstawę'}</span>
+                <span>{isEn ? 'Fit my pot & sketch spacing' : 'Kalkulator Twojej donicy'}</span>
               </button>
             )}
           </div>
 
           <button
+            type="button"
             id="close-plant-detail-btn"
-            onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 bg-stone-900 dark:bg-stone-800 hover:bg-stone-800 dark:hover:bg-stone-700 text-white text-xs font-semibold rounded-xl transition cursor-pointer"
+            data-testid="plant-details-close"
+            onClick={handleClose}
+            className="w-full sm:w-auto min-h-[44px] px-5 py-2.5 bg-stone-900 dark:bg-stone-800 hover:bg-stone-800 dark:hover:bg-stone-700 text-white text-xs sm:text-sm font-semibold rounded-xl transition cursor-pointer shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+            aria-label={isEn ? 'Close' : 'Zamknij'}
           >
-            {isEn ? 'Close Guide' : 'Zamknij przewodnik'}
+            {isEn ? 'Close Guide' : 'Zamknij'}
           </button>
         </div>
       </div>

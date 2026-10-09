@@ -1,0 +1,562 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visual Regression Snapshots for Diverse Plant Types > matches DOM snapshot for Balcony Fruit (truskawka-wisząca) 1`] = `
+<div
+  class="group relative flex flex-col rounded-2xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-emerald-600 dark:hover:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-700 dark:focus-within:ring-emerald-400 focus-within:ring-offset-2 transition-all duration-300 overflow-hidden cursor-pointer min-h-[440px] sm:min-h-[460px]"
+  data-plant-id="truskawka-wisząca"
+  data-testid="plant-card-truskawka-wisząca"
+  id="plant-card-truskawka-wisząca"
+>
+  <div
+    class="relative h-52 sm:h-56 w-full overflow-hidden bg-stone-100 dark:bg-stone-800/80 shrink-0"
+  >
+    <div
+      class="absolute inset-0 bg-gradient-to-br from-rose-950/50 via-red-950/40 to-stone-900 flex items-center justify-center"
+    >
+      <span
+        class="text-6xl select-none opacity-40 group-hover:scale-110 transition-transform duration-500"
+      >
+        🍓
+      </span>
+    </div>
+    <img
+      alt="Wisząca truskawka pełna słodkich czerwonych owoców"
+      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
+      data-plant-id="truskawka-wisząca"
+      data-testid="plant-image-truskawka-wisząca"
+      loading="lazy"
+      referrerpolicy="no-referrer"
+      src="https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=800&q=80"
+    />
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none"
+    />
+    <div
+      class="absolute top-3.5 left-3.5 z-10"
+    >
+      <div
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+          />
+          <path
+            d="M20 2v4"
+          />
+          <path
+            d="M22 4h-4"
+          />
+          <circle
+            cx="4"
+            cy="20"
+            r="2"
+          />
+        </svg>
+        <span>
+          88% dopasowania do Twojego balkonu
+        </span>
+      </div>
+    </div>
+    <div
+      class="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5"
+    />
+  </div>
+  <div
+    class="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
+  >
+    <div
+      class="space-y-2"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <span
+          class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400"
+          data-plant-id="truskawka-wisząca"
+          data-testid="plant-category-truskawka-wisząca"
+        >
+          Owoce jagodowe
+        </span>
+      </div>
+      <h3
+        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+        data-plant-id="truskawka-wisząca"
+        data-testid="plant-title-truskawka-wisząca"
+        title="Truskawka wisząca powtarzająca owocowanie"
+      >
+        Truskawka wisząca powtarzająca owocowanie
+      </h3>
+      <div
+        class="flex items-center gap-2 flex-wrap pt-0.5"
+        data-testid="plant-key-attributes-truskawka-wisząca"
+      >
+        <div
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
+          data-testid="plant-attr-pot-truskawka-wisząca"
+        >
+          <span
+            aria-hidden="true"
+          >
+            🪴
+          </span>
+          <span>
+            Donica: min. 4L
+          </span>
+        </div>
+        <div
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 text-xs font-semibold border border-amber-300 dark:border-amber-700"
+          data-testid="plant-attr-sun-truskawka-wisząca"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ☀️
+          </span>
+          <span>
+            Pełne słońce lub lekki półcień (min. 5-6h)
+          </span>
+        </div>
+      </div>
+      <div
+        class="relative pt-0.5"
+      >
+        <p
+          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+          data-plant-id="truskawka-wisząca"
+          data-testid="plant-description-truskawka-wisząca"
+          title="Absolutny faworyt balkonowy! Odmiany powtarzające kwitną i owocują nieprzerwanie od czerwca aż do pierwszych przymrozków w październiku. Wspaniale prezentują się w wiszących donicach i skrzynkach."
+        >
+          Absolutny faworyt balkonowy! Odmiany powtarzające kwitną i owocują nieprzerwanie od czerwca aż do pierwszych przymrozków w październiku. Wspaniale prezentują się w wiszących donicach i skrzynkach.
+        </p>
+        <span
+          class="sr-only"
+          data-testid="plant-accessible-description-truskawka-wisząca"
+        >
+          Absolutny faworyt balkonowy! Odmiany powtarzające kwitną i owocują nieprzerwanie od czerwca aż do pierwszych przymrozków w październiku. Wspaniale prezentują się w wiszących donicach i skrzynkach.
+        </span>
+      </div>
+    </div>
+    <div
+      class="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+      data-testid="plant-action-area-truskawka-wisząca"
+    >
+      <button
+        aria-controls="plant-details-panel-truskawka-wisząca"
+        aria-expanded="false"
+        class="w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+        data-testid="plant-toggle-details-btn-truskawka-wisząca"
+        id="toggle-details-btn-truskawka-wisząca"
+        type="button"
+      >
+        <span>
+          Pokaż szczegóły uprawy
+        </span>
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down w-4 h-4 text-stone-700 dark:text-stone-300"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visual Regression Snapshots for Diverse Plant Types > matches DOM snapshot for Balcony Herbs (rozmaryn-lekarski) 1`] = `
+<div
+  class="group relative flex flex-col rounded-2xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-emerald-600 dark:hover:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-700 dark:focus-within:ring-emerald-400 focus-within:ring-offset-2 transition-all duration-300 overflow-hidden cursor-pointer min-h-[440px] sm:min-h-[460px]"
+  data-plant-id="szczypiorek-ziola"
+  data-testid="plant-card-szczypiorek-ziola"
+  id="plant-card-szczypiorek-ziola"
+>
+  <div
+    class="relative h-52 sm:h-56 w-full overflow-hidden bg-stone-100 dark:bg-stone-800/80 shrink-0"
+  >
+    <div
+      class="absolute inset-0 bg-gradient-to-br from-teal-950/50 via-emerald-950/40 to-stone-900 flex items-center justify-center"
+    >
+      <span
+        class="text-6xl select-none opacity-40 group-hover:scale-110 transition-transform duration-500"
+      >
+        🧅
+      </span>
+    </div>
+    <img
+      alt="Gęsty soczyście zielony szczypiorek w ceramicznej donicy"
+      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
+      data-plant-id="szczypiorek-ziola"
+      data-testid="plant-image-szczypiorek-ziola"
+      loading="lazy"
+      referrerpolicy="no-referrer"
+      src="https://images.unsplash.com/photo-1618164436241-4473940d1f5c?auto=format&fit=crop&w=800&q=80"
+    />
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none"
+    />
+    <div
+      class="absolute top-3.5 left-3.5 z-10"
+    >
+      <div
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+          />
+          <path
+            d="M20 2v4"
+          />
+          <path
+            d="M22 4h-4"
+          />
+          <circle
+            cx="4"
+            cy="20"
+            r="2"
+          />
+        </svg>
+        <span>
+          88% dopasowania do Twojego balkonu
+        </span>
+      </div>
+    </div>
+    <div
+      class="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5"
+    />
+  </div>
+  <div
+    class="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
+  >
+    <div
+      class="space-y-2"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <span
+          class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400"
+          data-plant-id="szczypiorek-ziola"
+          data-testid="plant-category-szczypiorek-ziola"
+        >
+          Czosnkowate
+        </span>
+      </div>
+      <h3
+        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+        data-plant-id="szczypiorek-ziola"
+        data-testid="plant-title-szczypiorek-ziola"
+        title="Szczypiorek ogrodowy"
+      >
+        Szczypiorek ogrodowy
+      </h3>
+      <div
+        class="flex items-center gap-2 flex-wrap pt-0.5"
+        data-testid="plant-key-attributes-szczypiorek-ziola"
+      >
+        <div
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
+          data-testid="plant-attr-pot-szczypiorek-ziola"
+        >
+          <span
+            aria-hidden="true"
+          >
+            🪴
+          </span>
+          <span>
+            Donica: min. 2L
+          </span>
+        </div>
+        <div
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 text-xs font-semibold border border-amber-300 dark:border-amber-700"
+          data-testid="plant-attr-sun-szczypiorek-ziola"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ☀️
+          </span>
+          <span>
+            Słońce lub półcień (3-6h)
+          </span>
+        </div>
+      </div>
+      <div
+        class="relative pt-0.5"
+      >
+        <p
+          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+          data-plant-id="szczypiorek-ziola"
+          data-testid="plant-description-szczypiorek-ziola"
+          title="Pancerna roślina balkonowa. Szczypiorek może rosnąć na balkonie w tej samej donicy przez wiele lat. Nie marznie zimą, a wczesną wiosną (już w marcu) jako pierwszy wypuszcza soczyście zielone rurki."
+        >
+          Pancerna roślina balkonowa. Szczypiorek może rosnąć na balkonie w tej samej donicy przez wiele lat. Nie marznie zimą, a wczesną wiosną (już w marcu) jako pierwszy wypuszcza soczyście zielone rurki.
+        </p>
+        <span
+          class="sr-only"
+          data-testid="plant-accessible-description-szczypiorek-ziola"
+        >
+          Pancerna roślina balkonowa. Szczypiorek może rosnąć na balkonie w tej samej donicy przez wiele lat. Nie marznie zimą, a wczesną wiosną (już w marcu) jako pierwszy wypuszcza soczyście zielone rurki.
+        </span>
+      </div>
+    </div>
+    <div
+      class="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+      data-testid="plant-action-area-szczypiorek-ziola"
+    >
+      <button
+        aria-controls="plant-details-panel-szczypiorek-ziola"
+        aria-expanded="false"
+        class="w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+        data-testid="plant-toggle-details-btn-szczypiorek-ziola"
+        id="toggle-details-btn-szczypiorek-ziola"
+        type="button"
+      >
+        <span>
+          Pokaż szczegóły uprawy
+        </span>
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down w-4 h-4 text-stone-700 dark:text-stone-300"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visual Regression Snapshots for Diverse Plant Types > matches DOM snapshot for Balcony Vegetable (pomidor-karlowy) 1`] = `
+<div
+  class="group relative flex flex-col rounded-2xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 shadow-xs hover:shadow-xl hover:border-emerald-600 dark:hover:border-emerald-400 focus-within:ring-2 focus-within:ring-emerald-700 dark:focus-within:ring-emerald-400 focus-within:ring-offset-2 transition-all duration-300 overflow-hidden cursor-pointer min-h-[440px] sm:min-h-[460px]"
+  data-plant-id="pomidor-karlowy"
+  data-testid="plant-card-pomidor-karlowy"
+  id="plant-card-pomidor-karlowy"
+>
+  <div
+    class="relative h-52 sm:h-56 w-full overflow-hidden bg-stone-100 dark:bg-stone-800/80 shrink-0"
+  >
+    <div
+      class="absolute inset-0 bg-gradient-to-br from-red-900/40 via-amber-900/30 to-stone-900 flex items-center justify-center"
+    >
+      <span
+        class="text-6xl select-none opacity-40 group-hover:scale-110 transition-transform duration-500"
+      >
+        🍅
+      </span>
+    </div>
+    <img
+      alt="Dojrzałe soczyste pomidorki koktajlowe w donicy na balkonie"
+      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
+      data-plant-id="pomidor-karlowy"
+      data-testid="plant-image-pomidor-karlowy"
+      loading="lazy"
+      referrerpolicy="no-referrer"
+      src="https://images.unsplash.com/photo-1592841200221-a6898f307baa?auto=format&fit=crop&w=800&q=80"
+    />
+    <div
+      class="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none"
+    />
+    <div
+      class="absolute top-3.5 left-3.5 z-10"
+    >
+      <div
+        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30"
+      >
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
+          />
+          <path
+            d="M20 2v4"
+          />
+          <path
+            d="M22 4h-4"
+          />
+          <circle
+            cx="4"
+            cy="20"
+            r="2"
+          />
+        </svg>
+        <span>
+          88% dopasowania do Twojego balkonu
+        </span>
+      </div>
+    </div>
+    <div
+      class="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5"
+    />
+  </div>
+  <div
+    class="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
+  >
+    <div
+      class="space-y-2"
+    >
+      <div
+        class="flex items-center justify-between"
+      >
+        <span
+          class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-400"
+          data-plant-id="pomidor-karlowy"
+          data-testid="plant-category-pomidor-karlowy"
+        >
+          Psiankowate
+        </span>
+      </div>
+      <h3
+        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+        data-plant-id="pomidor-karlowy"
+        data-testid="plant-title-pomidor-karlowy"
+        title="Pomidor karłowy koktajlowy"
+      >
+        Pomidor karłowy koktajlowy
+      </h3>
+      <div
+        class="flex items-center gap-2 flex-wrap pt-0.5"
+        data-testid="plant-key-attributes-pomidor-karlowy"
+      >
+        <div
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
+          data-testid="plant-attr-pot-pomidor-karlowy"
+        >
+          <span
+            aria-hidden="true"
+          >
+            🪴
+          </span>
+          <span>
+            Donica: min. 10L
+          </span>
+        </div>
+        <div
+          class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 text-xs font-semibold border border-amber-300 dark:border-amber-700"
+          data-testid="plant-attr-sun-pomidor-karlowy"
+        >
+          <span
+            aria-hidden="true"
+          >
+            ☀️
+          </span>
+          <span>
+            Słońce (min. 6-8 godzin dziennie)
+          </span>
+        </div>
+      </div>
+      <div
+        class="relative pt-0.5"
+      >
+        <p
+          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+          data-plant-id="pomidor-karlowy"
+          data-testid="plant-description-pomidor-karlowy"
+          title="Niekwestionowany król balkonu. Odmiany samokończące (karłowe) nie wymagają ogławiania ani skomplikowanego cięcia, a owocują obficie aż do jesieni."
+        >
+          Niekwestionowany król balkonu. Odmiany samokończące (karłowe) nie wymagają ogławiania ani skomplikowanego cięcia, a owocują obficie aż do jesieni.
+        </p>
+        <span
+          class="sr-only"
+          data-testid="plant-accessible-description-pomidor-karlowy"
+        >
+          Niekwestionowany król balkonu. Odmiany samokończące (karłowe) nie wymagają ogławiania ani skomplikowanego cięcia, a owocują obficie aż do jesieni.
+        </span>
+      </div>
+    </div>
+    <div
+      class="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+      data-testid="plant-action-area-pomidor-karlowy"
+    >
+      <button
+        aria-controls="plant-details-panel-pomidor-karlowy"
+        aria-expanded="false"
+        class="w-full min-h-[44px] py-2 px-3 rounded-xl text-xs font-semibold text-stone-700 dark:text-stone-300 hover:text-emerald-800 dark:hover:text-emerald-300 hover:bg-stone-100 dark:hover:bg-stone-800/80 transition-colors flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+        data-testid="plant-toggle-details-btn-pomidor-karlowy"
+        id="toggle-details-btn-pomidor-karlowy"
+        type="button"
+      >
+        <span>
+          Pokaż szczegóły uprawy
+        </span>
+        <svg
+          aria-hidden="true"
+          class="lucide lucide-chevron-down w-4 h-4 text-stone-700 dark:text-stone-300"
+          fill="none"
+          height="24"
+          stroke="currentColor"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="m6 9 6 6 6-6"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+`;

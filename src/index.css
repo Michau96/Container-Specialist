@@ -64,5 +64,86 @@
   .dark textarea::placeholder {
     color: #d6d3d1;
   }
+
+  /* Accessible range sliders with >= 44px touch area and high-contrast thumb */
+  input[type="range"] {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+    min-height: 44px;
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 8px;
+    border-radius: 9999px;
+    background-color: #d6d3d1;
+    border: 1px solid #a8a29e;
+  }
+
+  .dark input[type="range"]::-webkit-slider-runnable-track {
+    background-color: #44403c;
+    border: 1px solid #78716c;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    background-color: #047857;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    margin-top: -12px;
+    cursor: pointer;
+    transition: transform 0.15s ease, background-color 0.15s ease;
+  }
+
+  input[type="range"]:focus-visible::-webkit-slider-thumb {
+    outline: 3px solid #047857;
+    outline-offset: 3px;
+    transform: scale(1.1);
+  }
+
+  .dark input[type="range"]::-webkit-slider-thumb {
+    background-color: #10b981;
+    border: 3px solid #0c0a09;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  }
+
+  .dark input[type="range"]:focus-visible::-webkit-slider-thumb {
+    outline: 3px solid #34d399;
+    outline-offset: 3px;
+  }
+
+  input[type="range"]::-moz-range-track {
+    height: 8px;
+    border-radius: 9999px;
+    background-color: #d6d3d1;
+    border: 1px solid #a8a29e;
+  }
+
+  .dark input[type="range"]::-moz-range-track {
+    background-color: #44403c;
+    border: 1px solid #78716c;
+  }
+
+  input[type="range"]::-moz-range-thumb {
+    height: 32px;
+    width: 32px;
+    border-radius: 50%;
+    background-color: #047857;
+    border: 3px solid #ffffff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+  }
+
+  .dark input[type="range"]::-moz-range-thumb {
+    background-color: #10b981;
+    border: 3px solid #0c0a09;
+  }
 }
 

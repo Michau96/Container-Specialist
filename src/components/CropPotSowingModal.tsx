@@ -28,6 +28,7 @@ import {
 import { getCropTimelineInfo } from '../lib/cropGrowthPhases';
 import { getPlantVarieties, getEffectivePlantRequirements } from '../lib/varietyData';
 import { evaluatePotMaterial } from '../lib/potSupportEvaluations';
+import { POT_CALCULATION_VERSION } from '../lib/potCalculations';
 import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 import { CropCostEstimatorCard } from './CropCostEstimatorCard';
 import { SoilShoppingGuideCard } from './SoilShoppingGuideCard';
@@ -193,6 +194,7 @@ export const CropPotSowingModal: React.FC<Props> = ({
       depthCm: Number(depthCm),
       diameterOrWidthCm: Number(diameterOrWidthCm),
       quantity: potCount,
+      calculationVersion: POT_CALCULATION_VERSION,
     };
 
     const updatedSowing: SowingConfig = {

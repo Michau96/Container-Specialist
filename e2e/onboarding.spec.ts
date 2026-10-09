@@ -43,7 +43,7 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     await groundFloorOption.click();
 
     // Proceed to Step 2 via Next button
-    const nextBtn = page.getByTestId('onboarding-next');
+    const nextBtn = page.getByTestId('onboarding-next-button');
     await expect(nextBtn).toBeEnabled();
     await nextBtn.click();
 
@@ -94,7 +94,7 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     await expect(page.getByTestId('onboarding-step-3')).not.toBeAttached();
 
     // Go forward again to Step 3
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
     await expect(page.getByTestId('onboarding-step-3')).toBeVisible();
 
     // Final Save and Continue ('Zapisz i przejdź')
@@ -243,7 +243,7 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     await expect(footer).toBeVisible();
 
     // Primary action is visible within viewport bounds without requiring scroll
-    const nextBtn = page.getByTestId('onboarding-next');
+    const nextBtn = page.getByTestId('onboarding-next-button');
     await expect(nextBtn).toBeVisible();
 
     const nextBox = await nextBtn.boundingBox();
@@ -279,7 +279,7 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     // Complete Step 1: select location (Pomorskie) and floor (Parter)
     await page.getByTestId('location-option-pomorskie').click();
     await page.getByTestId('floor-option-ground').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // Verify on Step 2
     const step2 = page.getByTestId('onboarding-step-2');
@@ -291,7 +291,7 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     await expect(recommendationBadge).toHaveText(/Rekomendowane/i);
 
     // 2. Recommendation must NOT auto-select option without user confirmation
-    const nextBtn = page.getByTestId('onboarding-next');
+    const nextBtn = page.getByTestId('onboarding-next-button');
     await expect(nextBtn).toBeDisabled();
 
     // Helper message explains selection is required
@@ -349,11 +349,11 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     // Complete Step 1: select location and floor
     await page.getByTestId('location-option-pomorskie').click();
     await page.getByTestId('floor-option-ground').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // Complete Step 2: select sunlight orientation
     await page.getByTestId('sunlight-option-full-sun').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // We are on Step 3
     const step3 = page.getByTestId('onboarding-step-3');
@@ -406,11 +406,11 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     // Step 1
     await page.getByTestId('location-option-pomorskie').click();
     await page.getByTestId('floor-option-ground').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // Step 2
     await page.getByTestId('sunlight-option-full-sun').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // Step 3
     const step3 = page.getByTestId('onboarding-step-3');
@@ -447,11 +447,11 @@ test.describe('Onboarding Flow - Deterministic Selectors & Complete User Journey
     // Complete Step 1
     await page.getByTestId('location-option-pomorskie').click();
     await page.getByTestId('floor-option-ground').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // Complete Step 2
     await page.getByTestId('sunlight-option-full-sun').click();
-    await page.getByTestId('onboarding-next').click();
+    await page.getByTestId('onboarding-next-button').click();
 
     // Step 3: Choose preset box 60cm
     const presetBox60 = page.getByTestId('preset-box60');

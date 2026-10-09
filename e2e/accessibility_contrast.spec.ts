@@ -37,7 +37,7 @@ test.describe('Accessibility, Contrast, Keyboard Nav & Responsiveness Evaluation
     expect(await parterOption.textContent()).toContain('Parter');
     await parterOption.click();
 
-    const nextBtn = page.getByTestId('onboarding-next');
+    const nextBtn = page.getByTestId('onboarding-next-button');
     await expect(nextBtn).toBeEnabled();
     expect(await nextBtn.textContent()).toContain('Dalej');
     await nextBtn.click();

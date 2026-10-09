@@ -1,5 +1,14 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Ruler, Sparkles, CheckCircle2 } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import {
+  Ruler,
+  Sparkles,
+  CheckCircle2,
+  ArrowRight,
+  ArrowLeft,
+  RotateCcw,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { Plant, PotShape, LegacyPotMaterial, SupportType } from '../types';
 import { PotConfigStep } from './PotConfigStep';
 import { PotResultStep } from './PotResultStep';
@@ -7,25 +16,98 @@ import {
   evaluatePotMaterial,
   evaluatePlantSupport,
 } from '../lib/potSupportEvaluations';
+import {
+  calculatePotFullSpecs,
+  PotCalculationResult,
+  POT_CALCULATION_VERSION,
+} from '../lib/potCalculations';
+import {
+  PotCalculationSubmitPayload,
+  generatePotCalculationIdempotencyKey,
+} from '../types/potCalculationContract';
 import { useLanguage } from '../lib/LanguageContext';
 import defaultPlantsData from '../data/plants.json';
 
 const defaultPlants = defaultPlantsData as unknown as Plant[];
 
-interface Props {
+type Step = 1 | 2 | 3 | 4;
+
+const STORAGE_KEY = 'doniczkowy_calculator_state';
+
+interface StoredState {
+  selectedPlantId: string;
+  shape: PotShape;
+  lengthCm: number;
+  widthCm: number;
+  rectHeightCm: number;
+  diameterCm: number;
+  roundHeightCm: number;
+  material: LegacyPotMaterial;
+  supports: SupportType;
+  potCount: number;
+  sowingMethod: 'nasiona' | 'sadzonka';
+  step: Step;
+  isSuccess: boolean;
+  savedPayload?: PotCalculationSubmitPayload;
+  savedTimestamp?: string;
+  idempotencyKey?: string;
+}
+
+export interface PotCalculatorProps {
   plants: Plant[];
   initialPlant?: Plant | null;
   onSelectPlant?: (plant: Plant) => void;
   onClose?: () => void;
   isModal?: boolean;
+  onSaveCalculation?: (result: PotCalculationResult, config: any) => Promise<void> | void;
+  requestTimeoutMs?: number;
+  simulateScenario?: 'timeout' | '400' | '500';
 }
 
-export const PotCalculator: React.FC<Props> = ({
+const STEPS = [
+  {
+    num: 1,
+    id: 'configuration',
+    titlePl: 'Krok 1: Konfiguracja',
+    titleEn: 'Step 1: Configuration',
+    subtitlePl: 'Wybór rośliny i sposobu startu',
+    subtitleEn: 'Plant choice & start method',
+  },
+  {
+    num: 2,
+    id: 'dimensions',
+    titlePl: 'Krok 2: Wymiary',
+    titleEn: 'Step 2: Dimensions',
+    subtitlePl: 'Kształt i wymiary w cm',
+    subtitleEn: 'Shape & dimensions in cm',
+  },
+  {
+    num: 3,
+    id: 'material',
+    titlePl: 'Krok 3: Materiał',
+    titleEn: 'Step 3: Material',
+    subtitlePl: 'Tworzywo i ocena agronomiczna',
+    subtitleEn: 'Material & agronomic review',
+  },
+  {
+    num: 4,
+    id: 'summary',
+    titlePl: 'Krok 4: Podsumowanie',
+    titleEn: 'Step 4: Summary',
+    subtitlePl: 'Wynik, makieta i weryfikacja',
+    subtitleEn: 'Results, layout & verification',
+  },
+] as const;
+
+export const PotCalculator: React.FC<PotCalculatorProps> = ({
   plants,
   initialPlant,
   onSelectPlant,
   onClose,
   isModal = false,
+  onSaveCalculation,
+  requestTimeoutMs = 8000,
+  simulateScenario,
 }) => {
   const { language } = useLanguage();
   const isEn = language === 'en';
@@ -35,20 +117,33 @@ export const PotCalculator: React.FC<Props> = ({
     return plants && plants.length > 0 ? plants : defaultPlants;
   }, [plants]);
 
-  // Stan kroków kreatora: 1 = Konfiguracja, 2 = Wynik
-  const [step, setStep] = useState<1 | 2>(1);
+  // Wczytywanie zapisanego stanu dla obsługi re-entry (Wymaganie 7 i 9)
+  const savedState = useMemo(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw) as StoredState;
+      }
+    } catch {
+      // Ignore parse errors
+    }
+    return null;
+  }, []);
+
+  // Stan kroków kalkulatora: 1 = Konfiguracja, 2 = Wymiary, 3 = Materiał, 4 = Podsumowanie
+  const [step, setStep] = useState<Step>(savedState?.step ?? 1);
 
   // Wybrana roślina
   const [selectedPlantId, setSelectedPlantId] = useState<string>(
-    initialPlant ? initialPlant.id : (availablePlants[0]?.id ?? 'pomidor-karlowy')
+    savedState?.selectedPlantId || (initialPlant ? initialPlant.id : (availablePlants[0]?.id ?? 'pomidor-karlowy'))
   );
 
-  // Synchronizacja przy zmianie initialPlant
+  // Synchronizacja przy zmianie initialPlant (jeśli nie było zapisanego stanu)
   useEffect(() => {
-    if (initialPlant?.id) {
+    if (initialPlant?.id && !savedState?.selectedPlantId) {
       setSelectedPlantId(initialPlant.id);
     }
-  }, [initialPlant?.id]);
+  }, [initialPlant?.id, savedState?.selectedPlantId]);
 
   // Synchronizacja jeśli selectedPlantId nie istnieje w dostępnych roślinach
   useEffect(() => {
@@ -58,32 +153,72 @@ export const PotCalculator: React.FC<Props> = ({
   }, [availablePlants, selectedPlantId]);
 
   // Kształt donicy
-  const [shape, setShape] = useState<PotShape>('rectangular');
+  const [shape, setShape] = useState<PotShape>(savedState?.shape || 'rectangular');
 
   // Wymiary w cm
   // Prostokątna:
-  const [lengthCm, setLengthCm] = useState<number>(60);
-  const [widthCm, setWidthCm] = useState<number>(20);
-  const [rectHeightCm, setRectHeightCm] = useState<number>(20);
+  const [lengthCm, setLengthCm] = useState<number>(savedState?.lengthCm ?? 60);
+  const [widthCm, setWidthCm] = useState<number>(savedState?.widthCm ?? 20);
+  const [rectHeightCm, setRectHeightCm] = useState<number>(savedState?.rectHeightCm ?? 20);
 
   // Okrągła:
-  const [diameterCm, setDiameterCm] = useState<number>(30);
-  const [roundHeightCm, setRoundHeightCm] = useState<number>(25);
+  const [diameterCm, setDiameterCm] = useState<number>(savedState?.diameterCm ?? 30);
+  const [roundHeightCm, setRoundHeightCm] = useState<number>(savedState?.roundHeightCm ?? 25);
 
   // Materiał
-  const [material, setMaterial] = useState<LegacyPotMaterial>('plastic');
+  const [material, setMaterial] = useState<LegacyPotMaterial>(savedState?.material || 'plastic');
 
   // Podpora
-  const [supports, setSupports] = useState<SupportType>('stake');
+  const [supports, setSupports] = useState<SupportType>(savedState?.supports || 'stake');
 
   // Liczba donic
-  const [potCount, setPotCount] = useState<number>(1);
+  const [potCount, setPotCount] = useState<number>(savedState?.potCount ?? 1);
 
   // Metoda startu: nasiona vs gotowa sadzonka
-  const [sowingMethod, setSowingMethod] = useState<'nasiona' | 'sadzonka'>('nasiona');
+  const [sowingMethod, setSowingMethod] = useState<'nasiona' | 'sadzonka'>(savedState?.sowingMethod || 'nasiona');
 
-  // Wyświetlany widok schematu w kroku 2: 'top_layout' | 'soil_layers' | 'cost_estimates'
-  const [activeSchemaView, setActiveSchemaView] = useState<'top_layout' | 'soil_layers' | 'cost_estimates'>('top_layout');
+  // Statusy zapisu / kalkulacji: pending, success, error (Wymaganie 5, 6, 9)
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(savedState?.isSuccess ?? false);
+  const [serverError, setServerError] = useState<string | null>(null);
+  const [savedPayload, setSavedPayload] = useState<PotCalculationSubmitPayload | undefined>(savedState?.savedPayload);
+
+  // Wyświetlany widok schematu w kroku 4 dla kompatybilności wstecznej
+  const [activeSchemaView, setActiveSchemaView] = useState<'top_layout' | 'soil_layers' | 'cost_estimates' | 'technical_load'>('top_layout');
+
+  // Obsługa nawigacji wstecz przeglądarki (Wymaganie 7 i 8: browser back navigation)
+  useEffect(() => {
+    const handlePopState = () => {
+      try {
+        if (typeof window !== 'undefined') {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const restored = JSON.parse(raw) as StoredState;
+            if (restored) {
+              if (restored.selectedPlantId) setSelectedPlantId(restored.selectedPlantId);
+              if (restored.shape) setShape(restored.shape);
+              if (typeof restored.lengthCm === 'number') setLengthCm(restored.lengthCm);
+              if (typeof restored.widthCm === 'number') setWidthCm(restored.widthCm);
+              if (typeof restored.rectHeightCm === 'number') setRectHeightCm(restored.rectHeightCm);
+              if (typeof restored.diameterCm === 'number') setDiameterCm(restored.diameterCm);
+              if (typeof restored.roundHeightCm === 'number') setRoundHeightCm(restored.roundHeightCm);
+              if (restored.material) setMaterial(restored.material);
+              if (restored.supports) setSupports(restored.supports);
+              if (typeof restored.potCount === 'number') setPotCount(restored.potCount);
+              if (restored.sowingMethod) setSowingMethod(restored.sowingMethod);
+              if (restored.step) setStep(restored.step);
+              if (typeof restored.isSuccess === 'boolean') setIsSuccess(restored.isSuccess);
+            }
+          }
+        }
+      } catch {
+        // Ignore popstate parsing errors
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const currentPlant = useMemo(() => {
     return (
@@ -102,17 +237,82 @@ export const PotCalculator: React.FC<Props> = ({
     return evaluatePlantSupport(supports, currentPlant);
   }, [supports, currentPlant]);
 
-  // Obliczenia objętości donicy w litrach
+  // Obliczenia objętości donicy w litrach i pełnych parametrów agrotechnicznych
   const heightCm = shape === 'rectangular' ? rectHeightCm : roundHeightCm;
 
-  const volumeLiters = useMemo(() => {
+  const potCalcResult: PotCalculationResult = useMemo(() => {
+    return calculatePotFullSpecs({
+      shape,
+      material,
+      length: shape === 'rectangular' ? lengthCm : undefined,
+      width: shape === 'rectangular' ? widthCm : undefined,
+      height: heightCm,
+      diameter: shape === 'round' ? diameterCm : undefined,
+      potCount,
+    });
+  }, [shape, material, lengthCm, widthCm, heightCm, diameterCm, potCount]);
+
+  const volumeLiters = potCalcResult.volume.grossVolumeL;
+
+  // Walidacja czy istnieje poprawny wynik kalkulacji (Wymaganie 4)
+  const hasValidCalculationResult = useMemo(() => {
+    if (!potCalcResult) return false;
+    const vol = potCalcResult.volume?.grossVolumeL;
+    if (typeof vol !== 'number' || isNaN(vol) || vol <= 0) return false;
     if (shape === 'rectangular') {
-      return Number(((lengthCm * widthCm * rectHeightCm) / 1000).toFixed(1));
+      if (typeof lengthCm !== 'number' || isNaN(lengthCm) || lengthCm <= 0) return false;
+      if (typeof widthCm !== 'number' || isNaN(widthCm) || widthCm <= 0) return false;
+      if (typeof rectHeightCm !== 'number' || isNaN(rectHeightCm) || rectHeightCm <= 0) return false;
     } else {
-      const radius = diameterCm / 2;
-      return Number(((Math.PI * radius * radius * roundHeightCm) / 1000).toFixed(1));
+      if (typeof diameterCm !== 'number' || isNaN(diameterCm) || diameterCm <= 0) return false;
+      if (typeof roundHeightCm !== 'number' || isNaN(roundHeightCm) || roundHeightCm <= 0) return false;
     }
-  }, [shape, lengthCm, widthCm, rectHeightCm, diameterCm, roundHeightCm]);
+    return true;
+  }, [potCalcResult, shape, lengthCm, widthCm, rectHeightCm, diameterCm, roundHeightCm]);
+
+  // Zapis do localStorage w celu zachowania wartości przy re-entry (Wymaganie 6, 7, 9)
+  useEffect(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        const stateToSave: StoredState = {
+          selectedPlantId,
+          shape,
+          lengthCm,
+          widthCm,
+          rectHeightCm,
+          diameterCm,
+          roundHeightCm,
+          material,
+          supports,
+          potCount,
+          sowingMethod,
+          step,
+          isSuccess,
+          savedPayload,
+          idempotencyKey: savedPayload?.idempotencyKey,
+          savedTimestamp: savedPayload?.timestamp,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, [
+    selectedPlantId,
+    shape,
+    lengthCm,
+    widthCm,
+    rectHeightCm,
+    diameterCm,
+    roundHeightCm,
+    material,
+    supports,
+    potCount,
+    sowingMethod,
+    step,
+    isSuccess,
+    savedPayload,
+  ]);
 
   // Wymogi rośliny
   const minPlantVol = currentPlant?.pot.min_volume_l ?? 5;
@@ -237,6 +437,7 @@ export const PotCalculator: React.FC<Props> = ({
   // Ocena dopasowania donicy
   const isDepthOk = heightCm >= minDepth;
   const isVolOk = volumeLiters >= minPlantVol;
+  const isPotSuitable = isDepthOk && isVolOk;
 
   // Presety donic
   const applyPreset = (preset: 'box60' | 'pot30' | 'large40' | 'bucket15') => {
@@ -261,22 +462,203 @@ export const PotCalculator: React.FC<Props> = ({
     }
   };
 
-  const handleCalculate = () => {
-    setStep(2);
-    // Delikatne przewinięcie na górę kalkulatora
+  const handleGoToStep = (newStep: Step) => {
+    setStep(newStep);
     const element = document.getElementById('pot-calculator-container');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
-  const handleBackToConfig = () => {
-    setStep(1);
-    const element = document.getElementById('pot-calculator-container');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Główna funkcja wykonania kalkulacji i zapisu (Wymaganie 1, 2, 3, 4, 5, 6)
+  const handleCalculate = useCallback(async () => {
+    if (!hasValidCalculationResult || isLoading) return; // Zapobieganie zduplikowanym zgłoszeniom (Wymaganie 4, 5)
+
+    setIsLoading(true);
+    setServerError(null);
+
+    // Generowanie klucza idempotencji na podstawie konfiguracji parametrów (Wymaganie 3)
+    const idempotencyKey = generatePotCalculationIdempotencyKey({
+      plantId: selectedPlantId,
+      shape,
+      lengthCm: shape === 'rectangular' ? lengthCm : undefined,
+      widthCm: shape === 'rectangular' ? widthCm : undefined,
+      heightCm,
+      diameterCm: shape === 'round' ? diameterCm : undefined,
+      material,
+      potCount,
+      sowingMethod,
+      formulaVersion: POT_CALCULATION_VERSION,
+    });
+
+    const timestamp = new Date().toISOString();
+
+    // Pełny jawny kontrakt danych kalkulacji (Wymaganie 1 i 2)
+    const submitPayload: PotCalculationSubmitPayload = {
+      idempotencyKey,
+      plantId: selectedPlantId,
+      plantName: currentPlant.name,
+      shape,
+      material,
+      dimensions: {
+        lengthCm: shape === 'rectangular' ? lengthCm : undefined,
+        widthCm: shape === 'rectangular' ? widthCm : undefined,
+        heightCm,
+        diameterCm: shape === 'round' ? diameterCm : undefined,
+        unit: 'cm',
+      },
+      potCount,
+      sowingMethod,
+      formulaVersion: POT_CALCULATION_VERSION,
+      resultValues: {
+        grossVolumeL: potCalcResult.volume.grossVolumeL,
+        netUsableVolumeL: potCalcResult.volume.netUsableVolumeL,
+        soilVolumeL: potCalcResult.substrate.soilVolumeL,
+        drainageVolumeL: potCalcResult.substrate.drainageVolumeL,
+        bagCount50L: potCalcResult.bags.soilBags50L,
+        bagCount20L: potCalcResult.bags.soilBags20L,
+        totalWetMassKg: potCalcResult.mass.wetTotalMassKg,
+        balconyLoadKgPerM2: potCalcResult.balconyLoad.distributedLoadKgM2,
+        calculationVersion: potCalcResult.version,
+      },
+      fullResult: potCalcResult,
+      timestamp,
+    };
+
+    const controller = new AbortController();
+    const timeoutTimer = setTimeout(() => {
+      controller.abort();
+    }, requestTimeoutMs);
+
+    try {
+      if (onSaveCalculation) {
+        await onSaveCalculation(potCalcResult, submitPayload);
+      } else {
+        const bodyToSend: any = { ...submitPayload };
+        if (simulateScenario === '500') bodyToSend.simulate500 = true;
+        if (simulateScenario === '400') bodyToSend.simulate400 = true;
+        if (simulateScenario === 'timeout') bodyToSend.simulateTimeout = true;
+
+        const response = await fetch('/api/pot-calculations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
+          body: JSON.stringify(bodyToSend),
+        });
+
+        if (!response.ok) {
+          const errJson = await response.json().catch(() => ({}));
+          const defaultMsg =
+            response.status >= 500
+              ? (isEn ? `Server error (${response.status})` : `Błąd serwera (${response.status})`)
+              : (isEn ? `Client error (${response.status})` : `Błąd zapytania (${response.status})`);
+          throw new Error(errJson.error || defaultMsg);
+        }
+      }
+
+      setIsSuccess(true);
+      setSavedPayload(submitPayload);
+      setStep(4);
+
+      // Aktualizacja stanu zapisanego w pamięci (Wymaganie 2 i 8)
+      try {
+        if (typeof window !== 'undefined') {
+          const stateToSave: StoredState = {
+            selectedPlantId,
+            shape,
+            lengthCm,
+            widthCm,
+            rectHeightCm,
+            diameterCm,
+            roundHeightCm,
+            material,
+            supports,
+            potCount,
+            sowingMethod,
+            step: 4,
+            isSuccess: true,
+            savedPayload: submitPayload,
+            savedTimestamp: timestamp,
+            idempotencyKey,
+          };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+        }
+      } catch {
+        // Ignore localStorage error
+      }
+    } catch (err: any) {
+      // Zachowanie wprowadzonych wartości i wyświetlenie akcji ponowienia (Wymaganie 6)
+      setIsSuccess(false);
+      if (err?.name === 'AbortError') {
+        setServerError(
+          isEn
+            ? 'Request timed out. Please try again.'
+            : 'Przekroczono limit czasu połączenia (timeout). Spróbuj ponownie.'
+        );
+      } else {
+        setServerError(
+          err?.message ||
+            (isEn
+              ? 'Server error occurred during calculation'
+              : 'Wystąpił błąd serwera podczas zapisu obliczeń')
+        );
+      }
+    } finally {
+      clearTimeout(timeoutTimer);
+      setIsLoading(false);
     }
+  }, [
+    hasValidCalculationResult,
+    isLoading,
+    onSaveCalculation,
+    potCalcResult,
+    selectedPlantId,
+    shape,
+    material,
+    lengthCm,
+    widthCm,
+    rectHeightCm,
+    heightCm,
+    diameterCm,
+    roundHeightCm,
+    potCount,
+    sowingMethod,
+    currentPlant.name,
+    requestTimeoutMs,
+    simulateScenario,
+    isEn,
+    supports,
+  ]);
+
+  // Jawny reset formularza - wykonywany TYLKO na żądanie użytkownika (Wymaganie 7)
+  const handleReset = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(STORAGE_KEY);
+      }
+    } catch {
+      // Ignore
+    }
+    setSelectedPlantId(availablePlants[0]?.id ?? 'pomidor-karlowy');
+    setShape('rectangular');
+    setLengthCm(60);
+    setWidthCm(20);
+    setRectHeightCm(20);
+    setDiameterCm(30);
+    setRoundHeightCm(25);
+    setMaterial('plastic');
+    setSupports('stake');
+    setPotCount(1);
+    setSowingMethod('nasiona');
+    setStep(1);
+    setIsSuccess(false);
+    setSavedPayload(undefined);
+    setServerError(null);
+    setIsLoading(false);
   };
+
+  // Etykieta głównego przycisku CTA - stały polski string "Oblicz" (Wymaganie 1)
+  const ctaLabel = isEn ? 'Calculate' : 'Oblicz';
 
   return (
     <div
@@ -292,18 +674,30 @@ export const PotCalculator: React.FC<Props> = ({
         <div>
           <div className="flex items-center gap-2 text-xs font-semibold text-stone-600 dark:text-stone-400 uppercase tracking-wider mb-1">
             <Ruler className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            <span>{isEn ? 'Pot Calculator & Layout Planner (2 Steps)' : 'Kalkulator i szkicownik donicowy (Proces 2-krokowy)'}</span>
+            <span>{isEn ? 'Pot Calculator & Layout Planner (4 Steps)' : 'Kalkulator i szkicownik donicowy (Proces 4-krokowy)'}</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100 tracking-tight">
             {step === 1
               ? (isEn ? 'Step 1: Container & Plant Configuration' : 'Krok 1: Konfiguracja donicy i rośliny')
-              : (isEn ? 'Step 2: Results, Layout & Requirement Verification' : 'Krok 2: Wynik, makieta i weryfikacja wymogów')}
+              : step === 2
+              ? (isEn ? 'Step 2: Container Shape & Dimensions' : 'Krok 2: Kształt i wymiary donicy')
+              : step === 3
+              ? (isEn ? 'Step 3: Container Material & Review' : 'Krok 3: Materiał donicy i ocena agronomiczna')
+              : (isEn ? 'Step 4: Results, Layout & Requirement Verification' : 'Krok 4: Wynik, makieta i weryfikacja wymogów')}
           </h2>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
             {step === 1
               ? (isEn
-                  ? 'Enter pot dimensions, select plant and material, then click "Calculate".'
-                  : 'Wprowadź wymiary donicy, wybierz roślinę i materiał, a następnie kliknij przycisk „Oblicz”.')
+                  ? 'Select your crop, start method, and quantity of containers.'
+                  : 'Wybierz uprawianą roślinę, sposób startu oraz liczbę donic do uprawy.')
+              : step === 2
+              ? (isEn
+                  ? 'Set container shape and exact dimensions in centimeters.'
+                  : 'Wybierz kształt pojemnika i ustaw precyzyjne wymiary w centymetrach.')
+              : step === 3
+              ? (isEn
+                  ? 'Select container material and review agronomic evaluation for your plant.'
+                  : 'Wybierz materiał donicy i zapoznaj się z oceną agronomiczną dla wybranej rośliny.')
               : (isEn
                   ? 'Check if the container meets agronomic requirements and view the 2D spacing layout.'
                   : 'Sprawdź, czy donica spełnia minimalne wymagania i zobacz zieloną makietę rozmieszczenia rozstawy.')}
@@ -323,70 +717,101 @@ export const PotCalculator: React.FC<Props> = ({
         )}
       </div>
 
-      {/* PASEK KROKÓW (STEPPER) */}
-      <div className="mb-6 bg-stone-50 dark:bg-stone-800/80 rounded-2xl p-1.5 sm:p-2 border border-stone-200 dark:border-stone-700">
-        <div className="grid grid-cols-2 gap-2">
-          {/* Krok 1 */}
-          <button
-            type="button"
-            onClick={() => setStep(1)}
-            className={`p-3 rounded-xl flex items-center gap-3 transition text-left cursor-pointer ${
-              step === 1
-                ? 'bg-white dark:bg-stone-900 shadow-xs border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100'
-                : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700/60'
-            }`}
-          >
-            <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
-                step === 1
-                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900'
-                  : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
-              }`}
-            >
-              1
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-bold truncate">
-                {isEn ? 'Step 1: Configuration' : 'Krok 1: Konfiguracja'}
-              </div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate hidden sm:block">
-                {isEn ? 'Plant choice, dimensions & material' : 'Wybór rośliny, wymiary i materiał'}
-              </div>
-            </div>
-          </button>
+      {/* PASEK KROKÓW (STEPPER) Z DOSTĘPNYM ANONSOWANIEM */}
+      <nav aria-label={isEn ? 'Pot calculator steps' : 'Kroki kalkulatora donic'} className="mb-6">
+        {/* Anons dla czytników ekranowych o aktualnym kroku */}
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {isEn
+            ? `Step ${step} of 4: ${STEPS[step - 1].titleEn}. ${STEPS[step - 1].subtitleEn}`
+            : `Krok ${step} z 4: ${STEPS[step - 1].titlePl}. ${STEPS[step - 1].subtitlePl}`}
+        </div>
 
-          {/* Krok 2 */}
+        <ol role="list" className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-stone-50 dark:bg-stone-800/80 rounded-2xl p-1.5 sm:p-2 border border-stone-200 dark:border-stone-700">
+          {STEPS.map((s) => {
+            const isCurrent = step === s.num;
+            const isCompleted = step > s.num;
+            return (
+              <li key={s.id} className="min-w-0">
+                <button
+                  type="button"
+                  onClick={() => handleGoToStep(s.num as Step)}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  className={`w-full p-2.5 sm:p-3 rounded-xl flex items-center gap-2.5 sm:gap-3 transition text-left cursor-pointer ${
+                    isCurrent
+                      ? 'bg-white dark:bg-stone-900 shadow-xs border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100 font-bold'
+                      : isCompleted
+                      ? 'text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-700/60'
+                      : 'text-stone-400 dark:text-stone-500 hover:bg-stone-100/50 dark:hover:bg-stone-700/30'
+                  }`}
+                >
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
+                      isCurrent
+                        ? 'bg-emerald-700 text-white'
+                        : isCompleted
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+                        : 'bg-stone-200 dark:bg-stone-700 text-stone-600 dark:text-stone-400'
+                    }`}
+                  >
+                    {isCompleted ? <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" /> : s.num}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold truncate">
+                      {isEn ? s.titleEn : s.titlePl}
+                    </div>
+                    <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate hidden sm:block font-normal">
+                      {isEn ? s.subtitleEn : s.subtitlePl}
+                    </div>
+                  </div>
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+      </nav>
+
+      {/* KOMUNIKAT BŁĘDU SERWERA I PRZYCISK PONOWIENIA (WYMAGANIE 9) */}
+      {serverError && (
+        <div
+          role="alert"
+          className="mb-6 p-4 rounded-2xl bg-red-50 dark:bg-red-950/80 border border-red-300 dark:border-red-700 text-red-950 dark:text-red-100 flex items-center justify-between gap-3 text-xs sm:text-sm"
+        >
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-5 h-5 text-red-600 shrink-0" />
+            <span className="font-semibold">{serverError}</span>
+          </div>
           <button
             type="button"
-            onClick={() => setStep(2)}
-            className={`p-3 rounded-xl flex items-center gap-3 transition text-left cursor-pointer ${
-              step === 2
-                ? 'bg-white dark:bg-stone-900 shadow-xs border border-stone-200 dark:border-stone-700 text-stone-900 dark:text-stone-100'
-                : 'text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-700/60'
-            }`}
+            onClick={handleCalculate}
+            className="px-3.5 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-xl font-bold text-xs transition cursor-pointer shrink-0"
           >
-            <div
-              className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 transition-colors ${
-                step === 2
-                  ? 'bg-emerald-700 text-white'
-                  : 'bg-stone-200 dark:bg-stone-700 text-stone-700 dark:text-stone-300'
-              }`}
-            >
-              2
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs font-bold truncate">
-                {isEn ? 'Step 2: Results & Layout' : 'Krok 2: Wynik i makieta'}
-              </div>
-              <div className="text-[11px] text-stone-500 dark:text-stone-400 truncate hidden sm:block">
-                {isEn ? 'Verification, 2D sketch & spacing' : 'Weryfikacja, szkic 2D i rozstawa'}
-              </div>
-            </div>
+            {isEn ? 'Retry' : 'Ponów próbę'}
           </button>
         </div>
-      </div>
+      )}
 
-      {/* ZAWARTOSC KROKU 1: KONFIGURACJA */}
+      {/* BANER POTWIERDZENIA SUKCESU (WYMAGANIE 6 & 8: data-testid="pot-calculator-success") */}
+      {isSuccess && (
+        <div
+          role="status"
+          data-testid="pot-calculator-success"
+          className="mb-6 p-4 rounded-2xl bg-emerald-100/90 dark:bg-emerald-950/80 border border-emerald-300 dark:border-emerald-700 text-emerald-950 dark:text-emerald-100 flex items-center justify-between gap-3 shadow-xs"
+        >
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <span className="text-xs sm:text-sm font-bold">
+              {isEn
+                ? 'Calculation completed and saved successfully!'
+                : 'Obliczenia wykonane pomyślnie! Parametry zostały zachowane.'}
+            </span>
+          </div>
+          <span className="text-xs font-extrabold px-2.5 py-1 rounded-lg bg-emerald-200 dark:bg-emerald-900 border border-emerald-300 dark:border-emerald-800 shrink-0">
+            {volumeLiters} L
+          </span>
+        </div>
+      )}
+
+      {/* KROK 1: TYLKO KONFIGURACJA */}
       {step === 1 && (
         <PotConfigStep
           availablePlants={availablePlants}
@@ -421,11 +846,90 @@ export const PotCalculator: React.FC<Props> = ({
           setSowingMethod={setSowingMethod}
           onApplyPreset={applyPreset}
           onCalculate={handleCalculate}
+          activeStep="configuration"
         />
       )}
 
-      {/* ZAWARTOSC KROKU 2: WYNIK, OSTRZEZENIA I MAKIETA ROZSTAWY */}
+      {/* KROK 2: TYLKO WYMIARY */}
       {step === 2 && (
+        <PotConfigStep
+          availablePlants={availablePlants}
+          selectedPlantId={selectedPlantId}
+          onSelectPlantId={setSelectedPlantId}
+          currentPlant={currentPlant}
+          shape={shape}
+          setShape={setShape}
+          lengthCm={lengthCm}
+          setLengthCm={setLengthCm}
+          widthCm={widthCm}
+          setWidthCm={setWidthCm}
+          rectHeightCm={rectHeightCm}
+          setRectHeightCm={setRectHeightCm}
+          diameterCm={diameterCm}
+          setDiameterCm={setDiameterCm}
+          roundHeightCm={roundHeightCm}
+          setRoundHeightCm={setRoundHeightCm}
+          volumeLiters={volumeLiters}
+          minPlantVol={minPlantVol}
+          recPlantVol={recPlantVol}
+          minDepth={minDepth}
+          material={material}
+          setMaterial={setMaterial}
+          materialEvaluation={materialEvaluation}
+          supports={supports}
+          setSupports={setSupports}
+          supportEvaluation={supportEvaluation}
+          potCount={potCount}
+          setPotCount={setPotCount}
+          sowingMethod={sowingMethod}
+          setSowingMethod={setSowingMethod}
+          onApplyPreset={applyPreset}
+          onCalculate={handleCalculate}
+          activeStep="dimensions"
+        />
+      )}
+
+      {/* KROK 3: TYLKO MATERIAŁ */}
+      {step === 3 && (
+        <PotConfigStep
+          availablePlants={availablePlants}
+          selectedPlantId={selectedPlantId}
+          onSelectPlantId={setSelectedPlantId}
+          currentPlant={currentPlant}
+          shape={shape}
+          setShape={setShape}
+          lengthCm={lengthCm}
+          setLengthCm={setLengthCm}
+          widthCm={widthCm}
+          setWidthCm={setWidthCm}
+          rectHeightCm={rectHeightCm}
+          setRectHeightCm={setRectHeightCm}
+          diameterCm={diameterCm}
+          setDiameterCm={setDiameterCm}
+          roundHeightCm={roundHeightCm}
+          setRoundHeightCm={setRoundHeightCm}
+          volumeLiters={volumeLiters}
+          minPlantVol={minPlantVol}
+          recPlantVol={recPlantVol}
+          minDepth={minDepth}
+          material={material}
+          setMaterial={setMaterial}
+          materialEvaluation={materialEvaluation}
+          supports={supports}
+          setSupports={setSupports}
+          supportEvaluation={supportEvaluation}
+          potCount={potCount}
+          setPotCount={setPotCount}
+          sowingMethod={sowingMethod}
+          setSowingMethod={setSowingMethod}
+          onApplyPreset={applyPreset}
+          onCalculate={handleCalculate}
+          activeStep="material"
+        />
+      )}
+
+      {/* KROK 4: WYNIK, OSTRZEŻENIA, MAKIETA I AKORDEONY */}
+      {step === 4 && (
         <PotResultStep
           currentPlant={currentPlant}
           volumeLiters={volumeLiters}
@@ -453,11 +957,102 @@ export const PotCalculator: React.FC<Props> = ({
           isVolOk={isVolOk}
           activeSchemaView={activeSchemaView}
           setActiveSchemaView={setActiveSchemaView}
-          onBackToConfig={handleBackToConfig}
+          calculationResult={potCalcResult}
+          onBackToConfig={() => handleGoToStep(1)}
           onSelectPlant={onSelectPlant}
         />
       )}
+
+      {/* PRZYKLEJONA STOPKA (STICKY FOOTER NA MOBILE I DESKTOP - WYMAGANIE 2, 3, 4, 5, 8) */}
+      <div className="sticky bottom-0 z-30 -mx-5 sm:-mx-7 -mb-5 sm:-mb-7 mt-6 p-4 sm:p-5 bg-white/95 dark:bg-stone-900/95 backdrop-blur-md border-t border-stone-200 dark:border-stone-800 shadow-lg rounded-b-3xl">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-full">
+          {/* Podgląd stanu donicy */}
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs text-stone-700 dark:text-stone-300">
+            <span className="font-bold text-stone-900 dark:text-stone-100 flex items-center gap-1">
+              <span>🌱</span>
+              <span>{currentPlant.name}</span>
+            </span>
+            <span className="text-stone-400">•</span>
+            <span>
+              {shape === 'rectangular'
+                ? `${lengthCm}×${widthCm}×${rectHeightCm} cm`
+                : `⌀ ${diameterCm} cm, wys. ${roundHeightCm} cm`}
+            </span>
+            <span className="text-stone-400">•</span>
+            <span className="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+              {volumeLiters} L
+            </span>
+          </div>
+
+          {/* Przyciski nawigacyjne oraz GŁÓWNY PRZYCISK CTA (Wymaganie 1, 3, 4, 5, 8) */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            {/* Przycisk jawnego startu od nowa - nie resetuje formularza automatycznie (Wymaganie 7) */}
+            <button
+              type="button"
+              data-testid="pot-calculator-reset"
+              onClick={handleReset}
+              className="min-h-[44px] px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-600 text-xs font-bold text-stone-700 dark:text-stone-300 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>{isEn ? 'Start over' : 'Zacznij od nowa'}</span>
+            </button>
+
+            {/* Nawigacja wstecz */}
+            {step > 1 && (
+              <button
+                type="button"
+                onClick={() => handleGoToStep((step - 1) as Step)}
+                className="min-h-[44px] px-3.5 py-2 rounded-xl border border-stone-300 dark:border-stone-600 text-xs font-bold text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer flex items-center gap-1.5"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span>{isEn ? 'Back' : 'Wstecz'}</span>
+              </button>
+            )}
+
+            {/* Nawigacja do kolejnych kroków konfiguracji */}
+            {step === 1 && (
+              <button
+                type="button"
+                onClick={() => handleGoToStep(2)}
+                className="min-h-[44px] px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-600 text-xs font-bold text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer flex items-center gap-1.5"
+              >
+                <span>{isEn ? 'Next: Dimensions' : 'Dalej: Wymiary'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+
+            {step === 2 && (
+              <button
+                type="button"
+                onClick={() => handleGoToStep(3)}
+                className="min-h-[44px] px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-600 text-xs font-bold text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-800 transition cursor-pointer flex items-center gap-1.5"
+              >
+                <span>{isEn ? 'Next: Material' : 'Dalej: Materiał'}</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* GŁÓWNY PRZYCISK CTA "OBLICZ" (WYMAGANIE 1, 3, 4, 5, 8) */}
+            <button
+              type="button"
+              id="pot-calc-submit-btn"
+              data-testid="pot-calculator-submit"
+              disabled={!hasValidCalculationResult || isLoading}
+              aria-disabled={!hasValidCalculationResult || isLoading}
+              aria-busy={isLoading}
+              onClick={handleCalculate}
+              className="min-h-[48px] px-6 rounded-xl font-bold transition flex items-center justify-center gap-2 cursor-pointer shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-emerald-600 dark:focus-visible:ring-emerald-400 bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-stone-300 dark:disabled:bg-stone-700 disabled:text-stone-500 dark:disabled:text-stone-400 disabled:shadow-none disabled:active:scale-100"
+            >
+              {isLoading ? (
+                <Loader2 className="w-5 h-5 animate-spin" />
+              ) : (
+                <Sparkles className="w-5 h-5" />
+              )}
+              <span>{ctaLabel}</span>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
-

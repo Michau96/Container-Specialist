@@ -133,6 +133,7 @@ export const SelectVarietyModal: React.FC<Props> = ({
 
           <button
             id="close-variety-modal-btn"
+            data-testid="plant-details-close"
             onClick={onClose}
             className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm"
             title={isEn ? 'Close' : 'Zamknij'}
@@ -452,6 +453,9 @@ export const SelectVarietyModal: React.FC<Props> = ({
 
             <button
               type="button"
+              id="confirm-add-variety-btn"
+              name="add-plant-button"
+              data-testid="add-plant-button"
               onClick={() => handleSave(false)}
               className="w-full sm:w-auto px-5 py-2.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs sm:text-sm font-bold transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
             >
