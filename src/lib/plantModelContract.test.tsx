@@ -4,6 +4,8 @@ import { render, screen } from '@testing-library/react';
 import { PlantCard } from '../components/PlantCard';
 import { PlantDetailModal } from '../components/PlantDetailModal';
 import { parseAndValidatePlant, resolvePlantRecord, PlantSchema } from './plantSchema';
+import { getPlantName } from './plantTranslations';
+import { translations } from './translations';
 import { LanguageProvider } from './LanguageContext';
 import defaultPlantsData from '../data/plants.json';
 import { Plant } from '../types';
@@ -149,5 +151,24 @@ describe('Plant Model Contract, Zod Runtime Validation & Consistency Suite', () 
 
     const radish = defaultPlants.find((p) => p.id === 'rzodkiewka')!;
     expect(radish.name).toBe('Rzodkiewka balkonowa');
+  });
+
+  // 6. Navigation and plant name translation consistency
+  it('renders clean Polish and English calendar tab labels without mode suffixes', () => {
+    expect(translations.pl.tabCalendar).toBe('Kalendarz');
+    expect(translations.en.tabCalendar).toBe('Calendar');
+  });
+
+  it('resolves technical plant IDs to natural botanical Polish names in calendar and global mode', () => {
+    expect(getPlantName('pomidor-karlowy', 'pl')).toBe('Pomidor karłowy koktajlowy');
+    expect(getPlantName('papryka-chili', 'pl')).toBe('Papryka ostra / chili w doniczce');
+    expect(getPlantName('rzodkiewka', 'pl')).toBe('Rzodkiewka balkonowa');
+    expect(getPlantName('salata-listkowa', 'pl')).toBe('Sałata liściowa');
+    expect(getPlantName('szpinak-balkonowy', 'pl')).toBe('Szpinak zwyczajny i zimowy');
+
+    // Also ensures English translations for technical IDs
+    expect(getPlantName('pomidor-karlowy', 'en')).toBe('Dwarf Cherry Tomato');
+    expect(getPlantName('papryka-chili', 'en')).toBe('Potted Chili & Hot Peppers');
+    expect(getPlantName('rzodkiewka', 'en')).toBe('Balcony Radish');
   });
 });

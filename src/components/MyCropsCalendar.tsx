@@ -27,30 +27,30 @@ import { useLanguage } from '../lib/LanguageContext';
 import { getPlantName, getTranslatedPlantTip } from '../lib/plantTranslations';
 
 const CALENDAR_PERIODS_ORDER: { id: string; name: string; nameEn: string; short: string; shortEn: string; month: number; half: number }[] = [
-  { id: '01_1', name: 'I połowa Stycznia', nameEn: '1st half of Jan', short: 'Sty I', shortEn: 'Jan I', month: 1, half: 1 },
-  { id: '01_2', name: 'II połowa Stycznia', nameEn: '2nd half of Jan', short: 'Sty II', shortEn: 'Jan II', month: 1, half: 2 },
-  { id: '02_1', name: 'I połowa Lutego', nameEn: '1st half of Feb', short: 'Lut I', shortEn: 'Feb I', month: 2, half: 1 },
-  { id: '02_2', name: 'II połowa Lutego', nameEn: '2nd half of Feb', short: 'Lut II', shortEn: 'Feb II', month: 2, half: 2 },
-  { id: '03_1', name: 'I połowa Marca', nameEn: '1st half of Mar', short: 'Mar I', shortEn: 'Mar I', month: 3, half: 1 },
-  { id: '03_2', name: 'II połowa Marca', nameEn: '2nd half of Mar', short: 'Mar II', shortEn: 'Mar II', month: 3, half: 2 },
-  { id: '04_1', name: 'I połowa Kwietnia', nameEn: '1st half of Apr', short: 'Kwi I', shortEn: 'Apr I', month: 4, half: 1 },
-  { id: '04_2', name: 'II połowa Kwietnia', nameEn: '2nd half of Apr', short: 'Kwi II', shortEn: 'Apr II', month: 4, half: 2 },
-  { id: '05_1', name: 'I połowa Maja', nameEn: '1st half of May', short: 'Maj I', shortEn: 'May I', month: 5, half: 1 },
-  { id: '05_2', name: 'II połowa Maja', nameEn: '2nd half of May', short: 'Maj II', shortEn: 'May II', month: 5, half: 2 },
-  { id: '06_1', name: 'I połowa Czerwca', nameEn: '1st half of Jun', short: 'Cze I', shortEn: 'Jun I', month: 6, half: 1 },
-  { id: '06_2', name: 'II połowa Czerwca', nameEn: '2nd half of Jun', short: 'Cze II', shortEn: 'Jun II', month: 6, half: 2 },
-  { id: '07_1', name: 'I połowa Lipca', nameEn: '1st half of Jul', short: 'Lip I', shortEn: 'Jul I', month: 7, half: 1 },
-  { id: '07_2', name: 'II połowa Lipca', nameEn: '2nd half of Jul', short: 'Lip II', shortEn: 'Jul II', month: 7, half: 2 },
-  { id: '08_1', name: 'I połowa Sierpnia', nameEn: '1st half of Aug', short: 'Sie I', shortEn: 'Aug I', month: 8, half: 1 },
-  { id: '08_2', name: 'II połowa Sierpnia', nameEn: '2nd half of Aug', short: 'Sie II', shortEn: 'Aug II', month: 8, half: 2 },
-  { id: '09_1', name: 'I połowa Września', nameEn: '1st half of Sep', short: 'Wrz I', shortEn: 'Sep I', month: 9, half: 1 },
-  { id: '09_2', name: 'II połowa Września', nameEn: '2nd half of Sep', short: 'Wrz II', shortEn: 'Sep II', month: 9, half: 2 },
-  { id: '10_1', name: 'I połowa Października', nameEn: '1st half of Oct', short: 'Paź I', shortEn: 'Oct I', month: 10, half: 1 },
-  { id: '10_2', name: 'II połowa Października', nameEn: '2nd half of Oct', short: 'Paź II', shortEn: 'Oct II', month: 10, half: 2 },
-  { id: '11_1', name: 'I połowa Listopada', nameEn: '1st half of Nov', short: 'Lis I', shortEn: 'Nov I', month: 11, half: 1 },
-  { id: '11_2', name: 'II połowa Listopada', nameEn: '2nd half of Nov', short: 'Lis II', shortEn: 'Nov II', month: 11, half: 2 },
-  { id: '12_1', name: 'I połowa Grudnia', nameEn: '1st half of Dec', short: 'Gru I', shortEn: 'Dec I', month: 12, half: 1 },
-  { id: '12_2', name: 'II połowa Grudnia', nameEn: '2nd half of Dec', short: 'Gru II', shortEn: 'Dec II', month: 12, half: 2 },
+  { id: '01_1', name: 'I połowa stycznia', nameEn: '1st half of Jan', short: 'Sty I', shortEn: 'Jan I', month: 1, half: 1 },
+  { id: '01_2', name: 'II połowa stycznia', nameEn: '2nd half of Jan', short: 'Sty II', shortEn: 'Jan II', month: 1, half: 2 },
+  { id: '02_1', name: 'I połowa lutego', nameEn: '1st half of Feb', short: 'Lut I', shortEn: 'Feb I', month: 2, half: 1 },
+  { id: '02_2', name: 'II połowa lutego', nameEn: '2nd half of Feb', short: 'Lut II', shortEn: 'Feb II', month: 2, half: 2 },
+  { id: '03_1', name: 'I połowa marca', nameEn: '1st half of Mar', short: 'Mar I', shortEn: 'Mar I', month: 3, half: 1 },
+  { id: '03_2', name: 'II połowa marca', nameEn: '2nd half of Mar', short: 'Mar II', shortEn: 'Mar II', month: 3, half: 2 },
+  { id: '04_1', name: 'I połowa kwietnia', nameEn: '1st half of Apr', short: 'Kwi I', shortEn: 'Apr I', month: 4, half: 1 },
+  { id: '04_2', name: 'II połowa kwietnia', nameEn: '2nd half of Apr', short: 'Kwi II', shortEn: 'Apr II', month: 4, half: 2 },
+  { id: '05_1', name: 'I połowa maja', nameEn: '1st half of May', short: 'Maj I', shortEn: 'May I', month: 5, half: 1 },
+  { id: '05_2', name: 'II połowa maja', nameEn: '2nd half of May', short: 'Maj II', shortEn: 'May II', month: 5, half: 2 },
+  { id: '06_1', name: 'I połowa czerwca', nameEn: '1st half of Jun', short: 'Cze I', shortEn: 'Jun I', month: 6, half: 1 },
+  { id: '06_2', name: 'II połowa czerwca', nameEn: '2nd half of Jun', short: 'Cze II', shortEn: 'Jun II', month: 6, half: 2 },
+  { id: '07_1', name: 'I połowa lipca', nameEn: '1st half of Jul', short: 'Lip I', shortEn: 'Jul I', month: 7, half: 1 },
+  { id: '07_2', name: 'II połowa lipca', nameEn: '2nd half of Jul', short: 'Lip II', shortEn: 'Jul II', month: 7, half: 2 },
+  { id: '08_1', name: 'I połowa sierpnia', nameEn: '1st half of Aug', short: 'Sie I', shortEn: 'Aug I', month: 8, half: 1 },
+  { id: '08_2', name: 'II połowa sierpnia', nameEn: '2nd half of Aug', short: 'Sie II', shortEn: 'Aug II', month: 8, half: 2 },
+  { id: '09_1', name: 'I połowa września', nameEn: '1st half of Sep', short: 'Wrz I', shortEn: 'Sep I', month: 9, half: 1 },
+  { id: '09_2', name: 'II połowa września', nameEn: '2nd half of Sep', short: 'Wrz II', shortEn: 'Sep II', month: 9, half: 2 },
+  { id: '10_1', name: 'I połowa października', nameEn: '1st half of Oct', short: 'Paź I', shortEn: 'Oct I', month: 10, half: 1 },
+  { id: '10_2', name: 'II połowa października', nameEn: '2nd half of Oct', short: 'Paź II', shortEn: 'Oct II', month: 10, half: 2 },
+  { id: '11_1', name: 'I połowa listopada', nameEn: '1st half of Nov', short: 'Lis I', shortEn: 'Nov I', month: 11, half: 1 },
+  { id: '11_2', name: 'II połowa listopada', nameEn: '2nd half of Nov', short: 'Lis II', shortEn: 'Nov II', month: 11, half: 2 },
+  { id: '12_1', name: 'I połowa grudnia', nameEn: '1st half of Dec', short: 'Gru I', shortEn: 'Dec I', month: 12, half: 1 },
+  { id: '12_2', name: 'II połowa grudnia', nameEn: '2nd half of Dec', short: 'Gru II', shortEn: 'Dec II', month: 12, half: 2 },
 ];
 
 interface Props {
@@ -336,7 +336,7 @@ export const MyCropsCalendar: React.FC<Props> = ({
                                               : 'text-stone-900 dark:text-stone-100'
                                           }`}
                                         >
-                                          {getPlantName(item.plant_id || item.plant_name, language)} {safeVariety ? `– ${safeVariety}` : ''}
+                                          {getPlantName({ id: item.plant_id, name: item.plant_name } as Plant, language)} {safeVariety ? `– ${safeVariety}` : ''}
                                         </h5>
                                         {safeVariety && (
                                           <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300">

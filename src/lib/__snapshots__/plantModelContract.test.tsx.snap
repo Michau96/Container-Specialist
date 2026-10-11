@@ -213,7 +213,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       data-testid="plant-image-szczypiorek-ziola"
       loading="lazy"
       referrerpolicy="no-referrer"
-      src="https://images.unsplash.com/photo-1618164436241-4473940d1f5c?auto=format&fit=crop&w=800&q=80"
+      src="https://commons.wikimedia.org/wiki/Special:FilePath/Allium_schoenoprasum_J1.JPG?width=800"
     />
     <div
       class="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none"

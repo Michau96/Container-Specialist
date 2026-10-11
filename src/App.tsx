@@ -1827,7 +1827,7 @@ export default function App() {
           />
         )}
 
-        {/* Tab 4: Kalendarz siewu, rozsady i zbiorów (z 2 trybami) */}
+        {/* Tab 4: Kalendarz siewu, rozsady i zbiorów */}
         {activeTab === 'calendar' && (
           <CalendarView
             userSpec={userSpec}

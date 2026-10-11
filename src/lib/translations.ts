@@ -209,7 +209,7 @@ export const translations: Record<Language, Translations> = {
     // Navigation tabs
     tabMyCrops: 'Moje uprawy',
     tabDiscover: 'Szukaj nowych upraw',
-    tabCalendar: 'Kalendarz (2 tryby)',
+    tabCalendar: 'Kalendarz',
     tabCalculator: 'Kalkulator donic i rozstawy',
 
     // Auth & Registration
@@ -398,7 +398,7 @@ export const translations: Record<Language, Translations> = {
     // Navigation tabs
     tabMyCrops: 'My Crops',
     tabDiscover: 'Discover Crops',
-    tabCalendar: 'Calendar (2 modes)',
+    tabCalendar: 'Calendar',
     tabCalculator: 'Pot & Spacing Calculator',
 
     // Auth & Registration

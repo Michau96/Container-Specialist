@@ -97,6 +97,36 @@ export function getPeriodHumanLabel(periodId: string, isEn: boolean = false): st
 }
 
 /**
+ * Normalizes a period label in Polish so that month names and genitive forms
+ * are consistently lowercase according to Polish orthography.
+ */
+export function formatPeriodNamePl(name: string): string {
+  if (!name) return '';
+  const monthMap: Record<string, string> = {
+    stycznia: 'stycznia',
+    lutego: 'lutego',
+    marca: 'marca',
+    kwietnia: 'kwietnia',
+    maja: 'maja',
+    czerwca: 'czerwca',
+    lipca: 'lipca',
+    sierpnia: 'sierpnia',
+    września: 'września',
+    października: 'października',
+    listopada: 'listopada',
+    grudnia: 'grudnia',
+  };
+
+  return name
+    .replace(
+      /(stycznia|lutego|marca|kwietnia|maja|czerwca|lipca|sierpnia|września|października|listopada|grudnia)/gi,
+      (m) => monthMap[m.toLowerCase()] || m
+    )
+    .replace(/\(Przed Zimną Zośką\)/gi, '(przed Zimną Zośką)')
+    .replace(/\(Po Zimnej Zośce\)/gi, '(po Zimnej Zośce)');
+}
+
+/**
  * Helper to turn a sorted list of period IDs into human-friendly ranges
  */
 export function formatPeriodsToRanges(periodIds: string[], isEn: boolean = false): string {
@@ -152,7 +182,7 @@ export function formatPeriodsToRanges(periodIds: string[], isEn: boolean = false
     }
 
     if (first === 5 && last === 5 && sorted.includes('05_2')) {
-      return 'Druga połowa Maja (po 15 maja)';
+      return 'Druga połowa maja (po 15 maja)';
     }
 
     return `${MONTH_NAMES_PL[first]} – ${MONTH_NAMES_PL[last]}`;

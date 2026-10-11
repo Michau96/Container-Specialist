@@ -1,4 +1,13 @@
 import { Plant, Language } from '../types';
+import defaultPlantsData from '../data/plants.json';
+
+const defaultPlantsList = defaultPlantsData as unknown as Array<{ id: string; name: string }>;
+export const PLANT_NAMES_PL: Record<string, string> = {};
+defaultPlantsList.forEach((p) => {
+  if (p && p.id && p.name) {
+    PLANT_NAMES_PL[p.id] = p.name;
+  }
+});
 
 export interface PlantTranslation {
   name: string;
@@ -956,13 +965,16 @@ export function getTranslatedPlantTip(
 export function getPlantName(plantOrId: Plant | string | null | undefined, lang: Language): string {
   if (!plantOrId) return '';
   if (typeof plantOrId === 'string') {
+    const trimmed = plantOrId.trim();
+    if (!trimmed) return '';
+
     if (lang === 'en') {
-      if (PLANT_TRANSLATIONS_EN[plantOrId]?.name) {
-        return PLANT_TRANSLATIONS_EN[plantOrId].name;
+      if (PLANT_TRANSLATIONS_EN[trimmed]?.name) {
+        return PLANT_TRANSLATIONS_EN[trimmed].name;
       }
       // Check if it matches a plant ID key by searching or partial match
       const entry = Object.entries(PLANT_TRANSLATIONS_EN).find(
-        ([id, t]) => id === plantOrId || t.name.toLowerCase() === plantOrId.toLowerCase()
+        ([id, t]) => id === trimmed || t.name.toLowerCase() === trimmed.toLowerCase()
       );
       if (entry) return entry[1].name;
       // Also map known Polish plant names directly
@@ -970,33 +982,87 @@ export function getPlantName(plantOrId: Plant | string | null | undefined, lang:
         'Rzodkiewka balkonowa': 'Balcony Radish',
         'Rzodkiewka': 'Balcony Radish',
         'Pomidor karłowy': 'Dwarf Cherry Tomato',
+        'Pomidor karłowy koktajlowy': 'Dwarf Cherry Tomato',
+        'Papryka ostra / chili w doniczce': 'Potted Chili & Hot Peppers',
         'Papryka chili': 'Potted Chili & Hot Peppers',
         'Sałata liściowa': 'Cut-and-Come-Again Leaf Lettuce',
+        'Szpinak zwyczajny i zimowy': 'Balcony Spinach',
         'Szpinak balkonowy': 'Balcony Spinach',
+        'Bazylia właściwa i cytrynowa': 'Sweet Genovese Basil',
         'Bazylia właściwa': 'Sweet Genovese Basil',
+        'Mięta pieprzowa (w donicy)': 'Peppermint & Spearmint',
         'Mięta pieprzowa': 'Peppermint & Spearmint',
         'Rozmaryn lekarski': 'Perennial Rosemary',
         'Tymianek właściwy': 'Culinary Thyme',
+        'Szczypiorek ogrodowy': 'Common Balcony Chives',
         'Szczypiorek': 'Common Balcony Chives',
         'Pietruszka naciowa': 'Flat-Leaf Parsley',
+        'Cukinia miniaturowa / patison': 'Patio Baby Zucchini',
         'Cukinia miniaturowa': 'Patio Baby Zucchini',
+        'Ogórek krzaczasty / pnący na kratce': 'Balcony Bush Cucumber',
         'Ogórek balkonowy': 'Balcony Bush Cucumber',
+        'Truskawka wisząca powtarzająca owocowanie': 'Trailing Everbearing Strawberry',
         'Truskawka zwisająca': 'Trailing Everbearing Strawberry',
+        'Poziomka bezrozłogowa całoroczna': 'Alpine Bush Strawberry',
         'Poziomka bezrozłogowa': 'Alpine Bush Strawberry',
         'Boczniak ostrygowaty': 'Oyster Mushroom Home Block',
+        'Pieczarka dwuzarodnikowa': 'White Button Mushroom',
         'Pieczarka biała': 'White Button Mushroom',
+        'Kiełki i siewki rzodkiewki': 'Zesty Radish Sprouts',
         'Kiełki rzodkiewki': 'Zesty Radish Sprouts',
+        'Młode siewki słonecznika': 'Sunflower Microgreens',
+        'Rukola (rokietta siewna)': 'Arugula (Rocket)',
         'Rukola': 'Arugula (Rocket)',
+        'Roszponka warzywna': 'Corn Salad (Mâche)',
         'Roszponka': 'Corn Salad (Mâche)',
       };
-      if (polMap[plantOrId]) return polMap[plantOrId];
+      if (polMap[trimmed]) return polMap[trimmed];
+
+      // Check if it matches an ID in PLANT_NAMES_PL
+      if (PLANT_NAMES_PL[trimmed]) {
+        const id = trimmed;
+        if (PLANT_TRANSLATIONS_EN[id]?.name) {
+          return PLANT_TRANSLATIONS_EN[id].name;
+        }
+      }
+      // Check if it matches a name in PLANT_NAMES_PL
+      const matchPair = Object.entries(PLANT_NAMES_PL).find(
+        ([, name]) => name.toLowerCase() === trimmed.toLowerCase()
+      );
+      if (matchPair && PLANT_TRANSLATIONS_EN[matchPair[0]]?.name) {
+        return PLANT_TRANSLATIONS_EN[matchPair[0]].name;
+      }
+
+      return trimmed;
     }
-    return plantOrId;
+
+    // Polish (lang !== 'en')
+    // 1. If it's a known ID like 'pomidor-karlowy', return the Polish botanical name
+    if (PLANT_NAMES_PL[trimmed]) {
+      return PLANT_NAMES_PL[trimmed];
+    }
+    // 2. If it's already a Polish name in PLANT_NAMES_PL, return it
+    const existingName = Object.values(PLANT_NAMES_PL).find(
+      (n) => n.toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existingName) {
+      return existingName;
+    }
+    // 3. Fallback for any unknown hyphenated slug: replace '-' with space and capitalize
+    if (trimmed.includes('-') && !trimmed.includes(' ')) {
+      return trimmed
+        .split('-')
+        .map((w, idx) => (idx === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
+        .join(' ');
+    }
+    return trimmed;
   }
+
+  // Object case: Plant
   if (lang === 'en' && PLANT_TRANSLATIONS_EN[plantOrId.id]?.name) {
     return PLANT_TRANSLATIONS_EN[plantOrId.id].name;
   }
-  return plantOrId.name;
+  return plantOrId.name || PLANT_NAMES_PL[plantOrId.id] || plantOrId.id;
 }
 
 export function getPlantGroupLabel(group: string, lang: Language): string {

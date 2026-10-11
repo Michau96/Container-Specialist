@@ -537,7 +537,7 @@ export async function fetchCalendar(
     console.warn('[API] fetchCalendar error:', err);
     const currId = getCurrentPeriodId();
     return {
-      period: { id: periodId || currId, month: 5, half: 2, name: 'II połowa Maja (Po Zimnej Zośce)', short: 'Maj II' },
+      period: { id: periodId || currId, month: 5, half: 2, name: 'II połowa maja (po Zimnej Zośce)', short: 'Maj II' },
       is_current_period: true,
       current_period_id: currId,
       actions_by_type: {},

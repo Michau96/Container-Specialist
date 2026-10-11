@@ -11,10 +11,10 @@ import {
   Sparkles,
   Info,
 } from 'lucide-react';
-import { CalendarResponse, CalendarActionItem, UserBalconySpec } from '../types';
+import { CalendarResponse, CalendarActionItem, UserBalconySpec, Plant } from '../types';
 import { fetchCalendar, getCurrentPeriodId } from '../lib/api';
 import { useLanguage } from '../lib/LanguageContext';
-import { getPeriodHumanLabel } from '../lib/cropTiming';
+import { getPeriodHumanLabel, formatPeriodNamePl } from '../lib/cropTiming';
 import {
   getPlantName,
   getTranslatedVarietyBadge,
@@ -421,7 +421,7 @@ export const CalendarView: React.FC<Props> = ({
               )}
             </div>
             <h3 className="text-2xl font-bold text-white tracking-tight">
-              {isEn ? getPeriodHumanLabel(calendarData.period.id, true) : calendarData.period.name}
+              {isEn ? getPeriodHumanLabel(calendarData.period.id, true) : formatPeriodNamePl(calendarData.period.name || getPeriodHumanLabel(calendarData.period.id, false))}
             </h3>
             <p className="text-xs sm:text-sm text-stone-300 mt-1 max-w-xl">
               {isEn
@@ -533,7 +533,7 @@ export const CalendarView: React.FC<Props> = ({
                                   <span>{groupLabel}</span>
                                 </span>
                                 <h5 className="font-bold text-stone-900 dark:text-stone-100 text-sm tracking-tight">
-                                  {getPlantName(item.plant_id || item.plant_name, language)}
+                                  {getPlantName({ id: item.plant_id, name: item.plant_name } as Plant, language)}
                                 </h5>
                               </div>
                               <span
