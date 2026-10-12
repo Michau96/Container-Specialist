@@ -495,4 +495,53 @@ describe('Catalog & Dashboard Explicit States', () => {
     );
     expect(screen.getByTestId('my-crops-retry-btn')).toBeInTheDocument();
   });
+
+  // 9. Selected crop card image renders cleanly without overlapping plant type mark
+  it('renders selected crop image cleanly without overlapping plant type sprout mark in Moje uprawy', () => {
+    const radishPlant = validPlants.find((p) => p.id === 'rzodkiewka') || validPlants[0];
+    const cropItem = {
+      id: 'rzodkiewka_crop_1',
+      plantId: radishPlant.id,
+      potCount: 1,
+      selectedVariety: 'Krakowska',
+      addedAt: new Date().toISOString(),
+    };
+
+    render(
+      <LanguageProvider>
+        <MyCropsView
+          myCrops={[cropItem]}
+          allPlants={validPlants}
+          weather={null}
+          userSpec={DEFAULT_BALCONY_SPEC}
+          dailyRecommendation={mockDailyRec}
+          isLoading={false}
+          onRemoveCrop={vi.fn()}
+          onUpdateCrop={vi.fn()}
+          onAddCropWithVariety={vi.fn()}
+          onSelectPlant={vi.fn()}
+          onOpenPotCalc={vi.fn()}
+          onNavigateToSearch={vi.fn()}
+          onSwitchToFullCalendar={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    // Verify plant name is displayed
+    const names = screen.getAllByText(radishPlant.name);
+    expect(names.length).toBeGreaterThan(0);
+
+    // Verify plant images are rendered
+    const imgs = screen.getAllByRole('img');
+    expect(imgs.length).toBeGreaterThan(0);
+
+    // Verify none of the image containers contain an overlapping Sprout SVG icon
+    imgs.forEach((img) => {
+      const imgContainer = img.closest('div');
+      expect(imgContainer).toBeInTheDocument();
+      const svgIconsInsideImgContainer = imgContainer?.querySelectorAll('svg');
+      expect(svgIconsInsideImgContainer?.length).toBe(0);
+    });
+  });
 });
+

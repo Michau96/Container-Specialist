@@ -521,8 +521,9 @@ export const MyCropsView: React.FC<Props> = ({
                                 (e.target as HTMLElement).style.display = 'none';
                               }}
                             />
-                          ) : null}
-                          <Sprout className="w-4 h-4 text-emerald-600/50 pointer-events-none absolute" />
+                          ) : (
+                            <Sprout className="w-4 h-4 text-emerald-600/50 pointer-events-none" />
+                          )}
                         </div>
                         <div className="min-w-0 pr-1">
                           <div className="flex items-center gap-1.5">
@@ -607,7 +608,6 @@ export const MyCropsView: React.FC<Props> = ({
                             }}
                           />
                         ) : null}
-                        <Sprout className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600/50 pointer-events-none absolute" />
                       </div>
 
                       {/* Nazwa i prosty wskaźnik fazy/zdrowia */}

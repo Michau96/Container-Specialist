@@ -62,6 +62,7 @@ import {
   getDisabledOptionReason,
   validateOnboardingProfile,
   calculatePotVolumeLiters,
+  calculatePotVolume,
   PotDimensionsDomain,
 } from '../lib/onboardingDomain';
 
@@ -1123,6 +1124,13 @@ export const BalconySetupModal: React.FC<Props> = ({
     });
   }, [regionSearch]);
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && filteredRegions.length === 1) {
+      e.preventDefault();
+      handleSelectRegion(filteredRegions[0]);
+    }
+  };
+
   const visibleOrientations = useMemo(() => {
     if (exposureFilter === 'main') {
       return ORIENTATION_OPTIONS.filter((o) => o.group === 'glowne' || o.group === 'posrednie');
@@ -1341,6 +1349,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     data-testid="location-search"
                     value={regionSearch}
                     onChange={(e) => setRegionSearch(e.target.value)}
+                    onKeyDown={handleKeyDown}
                     placeholder={isEn ? 'Search city or region, e.g. Warsaw, Krakow, Wroclaw, Gdansk...' : 'Wpisz np. Warszawa, Kraków, Wrocław, Gdańsk, Poznań...'}
                     className="w-full min-h-[44px] pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-medium rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 shadow-xs"
                   />
@@ -1350,6 +1359,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   {filteredRegions.map((regKey) => {
                     const reg = POLAND_REGIONS[regKey];
                     const isSelected = selectedRegion === regKey;
+                    const isSingleRemaining = filteredRegions.length === 1;
                     return (
                       <button
                         type="button"
@@ -1362,6 +1372,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                         className={`group min-h-[44px] min-w-[44px] p-3 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isSelected
                             ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 font-bold shadow-xs ring-2 ring-emerald-600/30 dark:ring-emerald-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
+                            : isSingleRemaining
+                            ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/40 text-stone-900 dark:text-stone-100 ring-2 ring-emerald-500/50 dark:ring-emerald-400/50 ring-offset-1 ring-offset-white dark:ring-offset-stone-900 shadow-xs'
                             : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100'
                         }`}
                       >
@@ -2603,7 +2615,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                   <div className="pt-2 border-t border-stone-200 dark:border-stone-700 flex items-center justify-between flex-wrap gap-2 text-xs">
                     <div data-testid="calculated-pot-volume" className="text-emerald-800 dark:text-emerald-300 font-bold flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>{isEn ? `Calculated volume: ~${calculatedPotVolume} L` : `Obliczona pojemność: ~${calculatedPotVolume} l`}</span>
+                      <span>{isEn ? `Calculated volume: ${calculatedPotVolume} L` : `Obliczona pojemność: ${calculatedPotVolume} l`}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5">

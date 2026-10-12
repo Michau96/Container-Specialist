@@ -5,6 +5,7 @@ import {
   MIN_FLOOR,
   MAX_FLOOR,
   calculatePotVolumeLiters,
+  calculatePotVolume,
   validateRegion,
   validateFloor,
   validateExposure,
@@ -166,8 +167,11 @@ describe('Onboarding Domain Model & Validation', () => {
     });
 
     describe('validatePotDimensions & calculatePotVolumeLiters', () => {
-      it('calculates rectangular volume accurately in liters', () => {
+      it('calculates rectangular volume accurately in liters via calculatePotVolume and calculatePotVolumeLiters', () => {
         // 60 cm * 20 cm * 18 cm = 21,600 cm3 = 21.6 L
+        const volHelper = calculatePotVolume(60, 20, 18);
+        expect(volHelper).toBe(21.6);
+
         const vol = calculatePotVolumeLiters({
           shape: 'rectangular',
           length_cm: 60,
@@ -175,6 +179,11 @@ describe('Onboarding Domain Model & Validation', () => {
           height_cm: 18,
         });
         expect(vol).toBe(21.6);
+
+        const formattedLabel = `Obliczona pojemność: ${volHelper} l`;
+        expect(formattedLabel).toBe('Obliczona pojemność: 21.6 l');
+        expect(formattedLabel).not.toMatch(/-21\.6/);
+        expect(formattedLabel).not.toMatch(/~21\.6/);
       });
 
       it('calculates round volume accurately in liters', () => {

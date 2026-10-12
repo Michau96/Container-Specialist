@@ -564,4 +564,80 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     expect(savedSpec.floor).toBe(0);
     expect(savedSpec.orientation).toBe('S');
   });
+
+  it('converts pot dimensions (60, 20, 18) to 21.6 L and strictly renders "Obliczona pojemność: 21.6 l" without hyphen or dash', async () => {
+    const handleSave = vi.fn();
+    const handleClose = vi.fn();
+
+    render(
+      <BalconySetupModal
+        isOpen={true}
+        onClose={handleClose}
+        onSave={handleSave}
+        initialSpec={{
+          ...defaultSpec,
+          pot_dimensions: {
+            shape: 'rectangular',
+            length_cm: 60,
+            width_cm: 20,
+            height_cm: 18,
+          },
+        }}
+        isFirstTime={false}
+      />
+    );
+
+    // Navigate to Step 2
+    const nextBtnStep1 = screen.getByTestId('onboarding-next-button');
+    fireEvent.click(nextBtnStep1);
+
+    // In Step 2, click Next to navigate to Step 3
+    const nextBtnStep2 = screen.getByTestId('onboarding-next-button');
+    fireEvent.click(nextBtnStep2);
+
+    // In Step 3, verify calculated pot volume
+    await waitFor(() => {
+      expect(screen.getByTestId('calculated-pot-volume')).toBeInTheDocument();
+    });
+
+    const volumeElem = screen.getByTestId('calculated-pot-volume');
+    expect(volumeElem).toHaveTextContent('Obliczona pojemność: 21.6 l');
+    expect(volumeElem.textContent).not.toMatch(/-21\.6/);
+    expect(volumeElem.textContent).not.toMatch(/~21\.6/);
+  });
+
+  it('selects single matched region on Enter in location search and displays focus indicator', () => {
+    const handleSave = vi.fn();
+    const handleClose = vi.fn();
+
+    render(
+      <BalconySetupModal
+        isOpen={true}
+        onClose={handleClose}
+        onSave={handleSave}
+        initialSpec={defaultSpec}
+        isFirstTime={false}
+      />
+    );
+
+    const searchInput = screen.getByTestId('location-search');
+    expect(searchInput).toHaveAttribute(
+      'placeholder',
+      'Wpisz np. Warszawa, Kraków, Wrocław, Gdańsk, Poznań...'
+    );
+
+    // Type a specific city that matches only Mazowieckie
+    fireEvent.change(searchInput, { target: { value: 'Warszawa' } });
+
+    // The single remaining card should have the subtle focus ring
+    const mazowieckieCard = screen.getByTestId('location-option-mazowieckie');
+    expect(mazowieckieCard).toBeInTheDocument();
+
+    // Press Enter to select
+    fireEvent.keyDown(searchInput, { key: 'Enter' });
+
+    // Card should now be selected (aria-pressed=true)
+    expect(mazowieckieCard).toHaveAttribute('aria-pressed', 'true');
+  });
 });
+

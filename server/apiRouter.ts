@@ -336,7 +336,7 @@ export function calculateSuitability(plant: any, userSpec: UserBalconySpec = {})
     reasons.push(`Cieplejszy region (${regionInfo.name}): Długi okres wegetacyjny sprzyja obfitym zbiorom.`);
   }
 
-  score = Math.max(10, Math.min(99, score));
+  score = Math.max(10, Math.min(100, score));
 
   return {
     score,

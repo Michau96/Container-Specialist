@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  Sparkles,
   Plus,
   Check,
   BookOpen,
@@ -59,16 +58,7 @@ export const PlantCard: React.FC<Props> = ({
   const visual = resolved.visual;
   const lifestylePills = getPlantLifestylePills(resolved.raw, language);
 
-  // Trust badge styling based on score
-  const getTrustBadgeClass = (val: number) => {
-    if (val >= 80) {
-      return 'bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30';
-    }
-    if (val >= 60) {
-      return 'bg-amber-600/95 text-white border-amber-400/40 ring-1 ring-amber-500/30';
-    }
-    return 'bg-stone-800/90 text-stone-100 border-stone-600/50';
-  };
+
 
   const varietiesList = plant.varieties && plant.varieties.length > 0
     ? plant.varieties
@@ -117,20 +107,23 @@ export const PlantCard: React.FC<Props> = ({
         {/* Soft Vignette Gradient for text contrast */}
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none" />
 
-        {/* Trust badge */}
+        {/* Trust / Recommendation match badge */}
         <div className="absolute top-3.5 left-3.5 z-10">
-          <div
-            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border ${getTrustBadgeClass(
-              score
-            )}`}
-          >
-            <Sparkles className="w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse" />
-            <span>
-              {language === 'en'
-                ? `${score}% match for your balcony`
-                : `${score}% dopasowania do Twojego balkonu`}
+          {score < 70 ? (
+            <span
+              data-testid={`plant-badge-attention-${plant.id}`}
+              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+            >
+              Wymaga uwagi
             </span>
-          </div>
+          ) : (
+            <span
+              data-testid={`plant-badge-match-${plant.id}`}
+              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+            >
+              {`${score}% dopasowania`}
+            </span>
+          )}
         </div>
 
         {/* Status Indicator (W uprawach or Active season) on Top-Right */}

@@ -34,41 +34,12 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     <div
       class="absolute top-3.5 left-3.5 z-10"
     >
-      <div
-        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30"
+      <span
+        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+        data-testid="plant-badge-match-truskawka-wisząca"
       >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
-          />
-          <path
-            d="M20 2v4"
-          />
-          <path
-            d="M22 4h-4"
-          />
-          <circle
-            cx="4"
-            cy="20"
-            r="2"
-          />
-        </svg>
-        <span>
-          88% dopasowania do Twojego balkonu
-        </span>
-      </div>
+        88% dopasowania
+      </span>
     </div>
     <div
       class="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5"
@@ -207,13 +178,13 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       </span>
     </div>
     <img
-      alt="Gęsty soczyście zielony szczypiorek w ceramicznej donicy"
+      alt="Gęsty, soczyście zielony szczypiorek (Allium schoenoprasum) w donicy z jadalnymi rurkowatymi liśćmi"
       class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
       data-plant-id="szczypiorek-ziola"
       data-testid="plant-image-szczypiorek-ziola"
       loading="lazy"
       referrerpolicy="no-referrer"
-      src="https://commons.wikimedia.org/wiki/Special:FilePath/Allium_schoenoprasum_J1.JPG?width=800"
+      src="https://commons.wikimedia.org/wiki/Special:FilePath/Starr_070906-8816_Allium_schoenoprasum.jpg?width=800"
     />
     <div
       class="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none"
@@ -221,41 +192,12 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     <div
       class="absolute top-3.5 left-3.5 z-10"
     >
-      <div
-        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30"
+      <span
+        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+        data-testid="plant-badge-match-szczypiorek-ziola"
       >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
-          />
-          <path
-            d="M20 2v4"
-          />
-          <path
-            d="M22 4h-4"
-          />
-          <circle
-            cx="4"
-            cy="20"
-            r="2"
-          />
-        </svg>
-        <span>
-          88% dopasowania do Twojego balkonu
-        </span>
-      </div>
+        88% dopasowania
+      </span>
     </div>
     <div
       class="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5"
@@ -408,41 +350,12 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     <div
       class="absolute top-3.5 left-3.5 z-10"
     >
-      <div
-        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold shadow-md backdrop-blur-md border bg-emerald-600/95 text-white border-emerald-400/40 ring-1 ring-emerald-500/30"
+      <span
+        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+        data-testid="plant-badge-match-pomidor-karlowy"
       >
-        <svg
-          aria-hidden="true"
-          class="lucide lucide-sparkles w-3.5 h-3.5 text-amber-300 fill-amber-300 animate-pulse"
-          fill="none"
-          height="24"
-          stroke="currentColor"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M11.017 2.814a1 1 0 0 1 1.966 0l1.051 5.558a2 2 0 0 0 1.594 1.594l5.558 1.051a1 1 0 0 1 0 1.966l-5.558 1.051a2 2 0 0 0-1.594 1.594l-1.051 5.558a1 1 0 0 1-1.966 0l-1.051-5.558a2 2 0 0 0-1.594-1.594l-5.558-1.051a1 1 0 0 1 0-1.966l5.558-1.051a2 2 0 0 0 1.594-1.594z"
-          />
-          <path
-            d="M20 2v4"
-          />
-          <path
-            d="M22 4h-4"
-          />
-          <circle
-            cx="4"
-            cy="20"
-            r="2"
-          />
-        </svg>
-        <span>
-          88% dopasowania do Twojego balkonu
-        </span>
-      </div>
+        88% dopasowania
+      </span>
     </div>
     <div
       class="absolute top-3.5 right-3.5 z-10 flex items-center gap-1.5"

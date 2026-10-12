@@ -126,6 +126,8 @@ export interface DomainValidationResult {
  * 3. THEORETICAL VOLUME AND CAPACITY UTILITIES
  */
 
+export { calculatePotVolume } from '../features/onboarding/utils/calculatePotVolume';
+
 /**
  * Calculates theoretical container volume in liters from dimensions (all in cm)
  */
@@ -139,14 +141,14 @@ export function calculatePotVolumeLiters(dimensions: PotDimensionsDomain): numbe
     const radius = d / 2;
     // Volume in cm3 = PI * r^2 * h; Liters = cm3 / 1000
     const cm3 = Math.PI * Math.pow(radius, 2) * height_cm;
-    return Math.round((cm3 / 1000) * 10) / 10;
+    return Number(((cm3 / 1000)).toFixed(1));
   } else {
     const l = length_cm || 0;
     const w = width_cm || 0;
     if (l <= 0 || w <= 0) return 0;
     // Volume in cm3 = l * w * h; Liters = cm3 / 1000
-    const cm3 = l * w * height_cm;
-    return Math.round((cm3 / 1000) * 10) / 10;
+    const volumeLiters = (l * w * height_cm) / 1000;
+    return Number(volumeLiters.toFixed(1));
   }
 }
 
