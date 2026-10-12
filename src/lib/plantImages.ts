@@ -196,8 +196,14 @@ export const PLANT_IMAGE_MAP: Record<string, PlantVisualData> = {
     emoji: '🌸',
   },
   'fuksja-zwisajaca': {
-    imageUrl: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=800&q=80',
-    alt: 'Egzotyczne dzwonkowate kwiaty fuksji',
+    imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Fuksja%2C_u%C5%82anka_06.jpg?width=800',
+    alt: 'Kwitnąca fuksja ułanka zwisająca (Fuchsia) w wiszącej donicy z charakterystycznymi dzwonkowatymi kwiatami',
+    placeholderBg: 'from-fuchsia-950/60 via-purple-950/40 to-stone-900',
+    emoji: '🌺',
+  },
+  'fuksja-ulanka': {
+    imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Fuksja%2C_u%C5%82anka_06.jpg?width=800',
+    alt: 'Kwitnąca fuksja ułanka zwisająca (Fuchsia) w wiszącej donicy z charakterystycznymi dzwonkowatymi kwiatami',
     placeholderBg: 'from-fuchsia-950/60 via-purple-950/40 to-stone-900',
     emoji: '🌺',
   },

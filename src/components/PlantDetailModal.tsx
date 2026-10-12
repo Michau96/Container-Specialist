@@ -207,12 +207,12 @@ export const PlantDetailModal: React.FC<Props> = ({
                 src={visual.imageUrl}
                 alt={visual.alt}
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover object-center"
+                className="w-full h-full object-cover object-center relative z-10"
                 onError={(e) => {
                   (e.target as HTMLElement).style.display = 'none';
                 }}
               />
-              <span className="absolute inset-0 flex items-center justify-center text-3xl pointer-events-none -z-0">
+              <span className="absolute inset-0 flex items-center justify-center text-3xl pointer-events-none z-0">
                 {visual.emoji}
               </span>
             </div>

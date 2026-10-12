@@ -7,13 +7,52 @@ import { createAuthRouter } from './server/auth';
 import { createApiRouter } from './server/apiRouter';
 
 const app = express();
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+
+function resolvePort(): number {
+  const portArgIndex = process.argv.findIndex((arg) => arg === '--port' || arg === '-p');
+  if (portArgIndex !== -1 && process.argv[portArgIndex + 1]) {
+    const val = parseInt(process.argv[portArgIndex + 1], 10);
+    if (!isNaN(val)) return val;
+  }
+  if (process.env.DEFAULT_APP_PORT) {
+    const val = parseInt(process.env.DEFAULT_APP_PORT, 10);
+    if (!isNaN(val)) return val;
+  }
+  // In the AI Studio container, Nginx listens on 8080 and proxies traffic to 3000.
+  // Never bind Node.js to 8080 if Nginx is present; always bind to 3000.
+  if (process.env.PORT && process.env.PORT !== '8080') {
+    const val = parseInt(process.env.PORT, 10);
+    if (!isNaN(val)) return val;
+  }
+  return 3000;
+}
+
+const PORT = resolvePort();
 const PYTHON_PORT = 5001;
 
 let pythonProcess: ChildProcess | null = null;
 let pythonFailed = false;
 
-function startPythonBackend() {
+function checkPortInUse(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const req = http.get(`http://127.0.0.1:${port}/api/health`, { timeout: 800 }, () => {
+      resolve(true);
+    });
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+
+async function startPythonBackend() {
+  const isAlreadyUp = await checkPortInUse(PYTHON_PORT);
+  if (isAlreadyUp) {
+    console.log(`[Node Server] Python backend is already active on port ${PYTHON_PORT}.`);
+    return;
+  }
+
   const scriptPath = path.join(process.cwd(), 'backend', 'app.py');
   console.log(`[Node Server] Launching Python backend: python3 ${scriptPath} ${PYTHON_PORT}`);
 
@@ -24,7 +63,7 @@ function startPythonBackend() {
     });
 
     pythonProcess.on('error', (err) => {
-      console.error('[Node Server] Python process error (python3 might not be in container):', err.message);
+      console.warn('[Node Server] Python process spawn error (node-native API will handle all requests):', err.message);
       pythonFailed = true;
       pythonProcess = null;
     });
@@ -40,21 +79,15 @@ function startPythonBackend() {
     pythonProcess.on('close', (code) => {
       console.log(`[Python] exited with code ${code}.`);
       pythonProcess = null;
-      if (!pythonFailed && code !== 0) {
-        // Attempt single restart after 5s if not failed via ENOENT
-        setTimeout(() => {
-          if (!pythonFailed) startPythonBackend();
-        }, 5000);
-      }
     });
   } catch (err) {
-    console.error('[Node Server] Failed to spawn python process:', err);
+    console.warn('[Node Server] Failed to spawn python process (node-native API active):', err);
     pythonFailed = true;
     pythonProcess = null;
   }
 }
 
-// Start Python daemon
+// Start Python daemon asynchronously
 startPythonBackend();
 
 // Graceful cleanup
@@ -137,9 +170,14 @@ app.all('/api/*', (req, res) => {
 });
 
 async function start() {
+  const httpServer = http.createServer(app);
+
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: {
+        middlewareMode: true,
+        hmr: process.env.DISABLE_HMR === 'true' ? false : { server: httpServer },
+      },
       appType: 'spa',
     });
     app.use(vite.middlewares);
@@ -151,7 +189,7 @@ async function start() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  httpServer.listen(PORT, '0.0.0.0', () => {
     console.log(`[Express] Balkonowy Ogród listening on http://0.0.0.0:${PORT}`);
   });
 }

@@ -97,31 +97,6 @@ const STAGES: { key: CropGrowthStage; label: string; icon: string }[] = [
   { key: 'zbior', label: 'Czas zbiorów', icon: '🧺' },
 ];
 
-function getPlantEmoji(plant?: Plant | null): string {
-  if (!plant) return '🌱';
-  const name = plant.name.toLowerCase();
-  if (name.includes('pomidor')) return '🍅';
-  if (name.includes('truskawk') || name.includes('poziomk')) return '🍓';
-  if (name.includes('papryk') || name.includes('chili')) return '🌶️';
-  if (name.includes('ogórek') || name.includes('ogorek')) return '🥒';
-  if (name.includes('marchew')) return '🥕';
-  if (name.includes('rzodkiew')) return '🌱';
-  if (name.includes('sałat') || name.includes('szpinak') || name.includes('rukola') || name.includes('roszponka')) return '🥬';
-  if (name.includes('bazylia') || name.includes('mięta') || name.includes('rozmaryn') || name.includes('oregano') || name.includes('tymianek') || name.includes('pietruszk') || name.includes('szczypiorek') || name.includes('kolendra')) return '🌿';
-  if (name.includes('borówk') || name.includes('jagod')) return '🫐';
-  if (name.includes('bakłażan') || name.includes('oberżyn')) return '🍆';
-  if (name.includes('cukinia') || name.includes('dynia')) return '🎃';
-  if (name.includes('fasol') || name.includes('groszek') || name.includes('bób')) return '🫛';
-  if (name.includes('czosnek') || name.includes('cebul')) return '🧅';
-  if (name.includes('lawenda') || name.includes('aksamitk') || name.includes('pelargoni') || name.includes('petuni') || name.includes('bratki') || name.includes('nasturcj')) return '🌸';
-  if (name.includes('boczniak') || name.includes('pieczark') || name.includes('grzyb')) return '🍄';
-  if (plant.plant_group === 'ziola') return '🌿';
-  if (plant.plant_group === 'owoce') return '🍓';
-  if (plant.plant_group === 'ozdobne') return '🌸';
-  if (plant.plant_group === 'grzyby') return '🍄';
-  return '🌱';
-}
-
 export const MyCropsView: React.FC<Props> = ({
   myCrops,
   allPlants,
@@ -536,20 +511,18 @@ export const MyCropsView: React.FC<Props> = ({
                               : 'bg-stone-100 dark:bg-stone-800'
                           }`}
                         >
-                          {plantVisual && (
+                          {plantVisual?.imageUrl ? (
                             <img
                               src={plantVisual.imageUrl}
                               alt={plantVisual.alt}
                               referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover object-center"
+                              className="w-full h-full object-cover object-center relative z-10"
                               onError={(e) => {
                                 (e.target as HTMLElement).style.display = 'none';
                               }}
                             />
-                          )}
-                          <span className="absolute inset-0 flex items-center justify-center text-sm pointer-events-none -z-0">
-                            {getPlantEmoji(plant)}
-                          </span>
+                          ) : null}
+                          <Sprout className="w-4 h-4 text-emerald-600/50 pointer-events-none absolute" />
                         </div>
                         <div className="min-w-0 pr-1">
                           <div className="flex items-center gap-1.5">
@@ -623,18 +596,18 @@ export const MyCropsView: React.FC<Props> = ({
                     <div className="flex items-start sm:items-center gap-4 sm:gap-5 min-w-0">
                       {/* Avatar / Zdjęcie rośliny */}
                       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-emerald-100/70 dark:from-emerald-950/50 dark:to-stone-800 border border-emerald-100/80 dark:border-emerald-900/60 relative overflow-hidden flex items-center justify-center shadow-xs shrink-0 select-none">
-                        <img
-                          src={selectedPlantVisual.imageUrl}
-                          alt={selectedPlantVisual.alt}
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-cover object-center"
-                          onError={(e) => {
-                            (e.target as HTMLElement).style.display = 'none';
-                          }}
-                        />
-                        <span className="absolute inset-0 flex items-center justify-center text-4xl sm:text-5xl pointer-events-none -z-0">
-                          {getPlantEmoji(selectedPlant)}
-                        </span>
+                        {selectedPlantVisual?.imageUrl ? (
+                          <img
+                            src={selectedPlantVisual.imageUrl}
+                            alt={selectedPlantVisual.alt}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-cover object-center relative z-10"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : null}
+                        <Sprout className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-600/50 pointer-events-none absolute" />
                       </div>
 
                       {/* Nazwa i prosty wskaźnik fazy/zdrowia */}

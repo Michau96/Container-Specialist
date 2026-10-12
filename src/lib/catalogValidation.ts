@@ -256,6 +256,17 @@ export function isImageMetadataConsistent(plant: Partial<Plant>, visual: PlantVi
     }
   }
 
+  if (plantId === 'fuksja-zwisajaca' || plantId === 'fuksja-ulanka' || plantId === 'fuksja') {
+    const isGenericStock = url.includes('photo-1508615039623-a25605d2b022');
+    if (isGenericStock) {
+      return { isConsistent: false, reason: `Fuksja ułanka cannot use generic unverified stock image` };
+    }
+    const isFuchsia = (url.includes('fuksja') || url.includes('fuchsia')) && (alt.includes('fuksj') || alt.includes('ułank') || alt.includes('fuchsia'));
+    if (!isFuchsia) {
+      return { isConsistent: false, reason: `Fuksja ułanka must have verified Fuchsia image` };
+    }
+  }
+
   return { isConsistent: true };
 }
 

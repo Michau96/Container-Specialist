@@ -175,6 +175,7 @@ describe('Catalog Data Validation Layer', () => {
       'kumkwat-cytrus',
       'figowiec',
       'bazylia-wlasciwa',
+      'fuksja-zwisajaca',
     ];
 
     checkedIds.forEach((id) => {
@@ -248,6 +249,36 @@ describe('Catalog Data Validation Layer', () => {
     const check = isImageMetadataConsistent(lemongrassPlant, genericLawnVisual);
     expect(check.isConsistent).toBe(false);
     expect(check.reason).toContain('generic lawn grass image');
+  });
+
+  it('rejects fuksja ułanka when assigned generic unverified stock image', () => {
+    const fuchsiaPlant: Partial<Plant> = {
+      id: 'fuksja-zwisajaca',
+      name: 'Fuksja ułanka zwisająca',
+      category: 'Wiesiołkowate',
+      plant_group: 'ozdobne',
+      summary: 'Wisząca baletnica cienia.',
+    };
+
+    const genericVisual = {
+      imageUrl: 'https://images.unsplash.com/photo-1508615039623-a25605d2b022?auto=format&fit=crop&w=800&q=80',
+      alt: 'Egzotyczne dzwonkowate kwiaty fuksji',
+      placeholderBg: 'from-fuchsia-950',
+      emoji: '🌺',
+    };
+
+    const check = isImageMetadataConsistent(fuchsiaPlant, genericVisual);
+    expect(check.isConsistent).toBe(false);
+    expect(check.reason).toContain('generic unverified stock');
+
+    const verifiedVisual = {
+      imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Fuksja%2C_u%C5%82anka_06.jpg?width=800',
+      alt: 'Kwitnąca fuksja ułanka zwisająca (Fuchsia) w wiszącej donicy',
+      placeholderBg: 'from-fuchsia-950',
+      emoji: '🌺',
+    };
+    const validCheck = isImageMetadataConsistent(fuchsiaPlant, verifiedVisual);
+    expect(validCheck.isConsistent).toBe(true);
   });
 
   it('formats calendar period month names in lowercase in Polish according to orthography', () => {
