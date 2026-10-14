@@ -1911,6 +1911,10 @@ export default function App() {
         isOpen={isBalconyDrawerOpen}
         onClose={() => setIsBalconyDrawerOpen(false)}
         userSpec={userSpec}
+        onSelectPlants={() => {
+          setIsBalconyDrawerOpen(false);
+          setActiveTab('search_crops');
+        }}
         onOpenFullSetup={() => {
           setIsBalconyDrawerOpen(false);
           setIsSetupModalOpen(true);

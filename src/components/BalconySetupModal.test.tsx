@@ -507,10 +507,10 @@ describe('BalconySetupModal - Onboarding Modal DOM Synchronization & Testability
     const step2 = screen.getByTestId('onboarding-step-2');
     expect(step2).toBeInTheDocument();
 
-    // 2. Responsive behavior: grid-cols-1 sm:grid-cols-2
+    // 2. Responsive behavior: grid-cols-2 sm:grid-cols-4
     const grid = step2.querySelector('.grid');
-    expect(grid?.className).toContain('grid-cols-1');
-    expect(grid?.className).toContain('sm:grid-cols-2');
+    expect(grid?.className).toContain('grid-cols-2');
+    expect(grid?.className).toContain('sm:grid-cols-4');
 
     // 3. Non-blocking recommendation badge is shown
     const recommendationBadge = screen.getByTestId('sunlight-recommended-badge');

@@ -50,6 +50,7 @@ import {
   PotDimensionsSpec,
 } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS, OrientationOption } from '../lib/api';
+import { LocationAutocomplete } from './LocationAutocomplete';
 import {
   validateRegion,
   validateFloor,
@@ -1209,10 +1210,10 @@ export const BalconySetupModal: React.FC<Props> = ({
         aria-modal="true"
         aria-labelledby="onboarding-modal-heading"
         data-modal-ready={isModalReady ? 'true' : 'false'}
-        className="bg-white dark:bg-stone-900 text-stone-900 dark:text-stone-100 rounded-2xl max-w-[560px] w-full max-h-[90vh] max-h-[90dvh] flex flex-col shadow-2xl border border-stone-300 dark:border-stone-800 overflow-hidden transition-all my-auto"
+        className="flex flex-col max-h-[90vh] md:max-h-[85vh] max-h-[90dvh] overflow-hidden rounded-2xl bg-background max-w-[560px] w-full text-stone-900 dark:text-stone-100 shadow-2xl border border-border transition-all my-auto"
       >
-        {/* Top Header focused on: one concise heading, one short benefit statement, one secondary dismiss action */}
-        <div className="shrink-0 bg-white dark:bg-stone-950 p-4 sm:p-7 pb-3 sm:pb-4 border-b border-stone-200 dark:border-stone-800">
+        {/* Top Header inside a fixed top bar */}
+        <div className="flex-shrink-0 p-6 border-b border-border/40 bg-background">
           <div className="flex items-center justify-between gap-3 mb-3 text-xs font-semibold text-stone-700 dark:text-stone-300">
             <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap" role="tablist" aria-label={isEn ? 'Balcony setup steps' : 'Kroki konfiguracji balkonu'}>
               {[
@@ -1304,7 +1305,7 @@ export const BalconySetupModal: React.FC<Props> = ({
           >
             {step === 1 && (isEn ? 'Where is your balcony garden?' : 'Gdzie rośnie Twój ogród?')}
             {step === 2 && (isEn ? 'Which direction does the sun face?' : 'W którą stronę pada słońce?')}
-            {step === 3 && (isEn ? 'Containers & care time' : 'Twoja przestrzeń i donice')}
+            {step === 3 && (isEn ? '3. Donice i opieka' : '3. Donice i opieka')}
           </h2>
           <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1.5 leading-relaxed font-medium">
             {step === 1 && (isEn ? 'We tailor plants to your local microclimate and building height.' : 'Dopasujemy rośliny do klimatu w Twojej okolicy i wysokości budynku.')}
@@ -1313,8 +1314,8 @@ export const BalconySetupModal: React.FC<Props> = ({
           </p>
         </div>
 
-        {/* Step Body */}
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-8 py-4 sm:py-5 pb-12 space-y-5 overscroll-contain">
+        {/* Main form content inside flex-1 overflow-y-auto p-6 space-y-6 overscroll-contain */}
+        <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-6 overscroll-contain pb-12">
           {/* ================= STEP 1: LOKALIZACJA I PIĘTRO ================= */}
           {step === 1 && (
             <div data-testid="onboarding-step-1" className="space-y-6 animate-fade-in">
@@ -1333,65 +1334,14 @@ export const BalconySetupModal: React.FC<Props> = ({
                   </span>
                 </div>
 
-                <div className="relative">
-                  <label
-                    htmlFor="region-search-input"
-                    id="region-search-label"
-                    className="sr-only"
-                  >
-                    {isEn ? 'Search city or region' : 'Wyszukaj miasto lub województwo'}
-                  </label>
-                  <Search className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  <input
-                    type="text"
-                    id="region-search-input"
-                    name="region-search"
-                    data-testid="location-search"
-                    value={regionSearch}
-                    onChange={(e) => setRegionSearch(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    placeholder={isEn ? 'Search city or region, e.g. Warsaw, Krakow, Wroclaw, Gdansk...' : 'Wpisz np. Warszawa, Kraków, Wrocław, Gdańsk, Poznań...'}
-                    className="w-full min-h-[44px] pl-10 pr-3.5 py-2.5 text-xs sm:text-sm font-medium rounded-xl border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-800/90 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 shadow-xs"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto p-0.5 scrollbar-none">
-                  {filteredRegions.map((regKey) => {
-                    const reg = POLAND_REGIONS[regKey];
-                    const isSelected = selectedRegion === regKey;
-                    const isSingleRemaining = filteredRegions.length === 1;
-                    return (
-                      <button
-                        type="button"
-                        key={regKey}
-                        id={`region-${regKey}`}
-                        data-testid={`location-option-${regKey}`}
-                        data-region={regKey}
-                        aria-pressed={isSelected}
-                        onClick={() => handleSelectRegion(regKey)}
-                        className={`group min-h-[44px] min-w-[44px] p-3 rounded-xl border text-left text-xs sm:text-sm font-semibold transition-all flex items-center justify-between cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
-                          isSelected
-                            ? 'border-2 border-emerald-700 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 font-bold shadow-xs ring-2 ring-emerald-600/30 dark:ring-emerald-400/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
-                            : isSingleRemaining
-                            ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/40 text-stone-900 dark:text-stone-100 ring-2 ring-emerald-500/50 dark:ring-emerald-400/50 ring-offset-1 ring-offset-white dark:ring-offset-stone-900 shadow-xs'
-                            : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-800 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-emerald-50/50 dark:hover:bg-stone-750 text-stone-900 dark:text-stone-100'
-                        }`}
-                      >
-                        <span className="truncate pr-2">{reg.name}</span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {isSelected ? (
-                            <span className="inline-flex items-center gap-1 text-xs text-emerald-950 dark:text-emerald-100 font-bold bg-emerald-100 dark:bg-emerald-900/90 px-2 py-0.5 rounded-md border border-emerald-400 dark:border-emerald-600">
-                              <Check className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 stroke-[3]" />
-                              <span>{isEn ? 'Selected' : 'Wybrano'}</span>
-                            </span>
-                          ) : (
-                            <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" />
-                          )}
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                <LocationAutocomplete
+                  regionSearch={regionSearch}
+                  onRegionSearchChange={setRegionSearch}
+                  filteredRegions={filteredRegions}
+                  selectedRegion={selectedRegion}
+                  onSelectRegion={handleSelectRegion}
+                  isEn={isEn}
+                />
               </div>
 
               {/* Piętro i siła wiatru */}
@@ -1537,8 +1487,8 @@ export const BalconySetupModal: React.FC<Props> = ({
                 </div>
               )}
 
-              {/* Responsive Compact Grid of Exposure Cards (1 col on mobile, 2 cols on md) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Responsive Flexible Grid of Exposure Cards (2 cols on mobile, 4 cols on sm+) */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full">
                 {visibleOrientations.map((item) => {
                   const isSelected = selectedOrientation === item.key;
                   const isRecommended = item.key === recommendedOrientation;
@@ -1569,17 +1519,17 @@ export const BalconySetupModal: React.FC<Props> = ({
                         aria-pressed={isSelected}
                         aria-describedby={`sunlight-desc-${sunlightSemanticKey}`}
                         onClick={() => handleSelectOrientation(item.key)}
-                        className={`w-full group relative p-4 rounded-2xl border text-left transition-all duration-200 cursor-pointer min-h-[56px] min-h-[88px] min-w-[44px] flex flex-col justify-between select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+                        className={`w-full group relative p-3 sm:p-3.5 rounded-2xl border text-left transition-all duration-200 cursor-pointer min-h-[56px] min-h-[110px] min-w-[44px] flex flex-col justify-between select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                           isSelected
                             ? 'border-2 border-emerald-600 dark:border-emerald-400 bg-emerald-50 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 shadow-md ring-2 ring-emerald-500/30 ring-offset-2 ring-offset-white dark:ring-offset-stone-900'
                             : 'border-stone-300 dark:border-stone-800 bg-white dark:bg-stone-900 hover:border-emerald-500 dark:hover:border-emerald-600 hover:bg-emerald-50/40 dark:hover:bg-stone-850 text-stone-900 dark:text-stone-100 shadow-2xs'
                         }`}
                       >
-                        {/* Card Top: Icon + Title + Badges + Select pill */}
-                        <div className="flex items-start justify-between gap-2 w-full">
-                          <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Card Top: Icon + Title + Badges underneath */}
+                        <div className="w-full">
+                          <div className="flex items-center justify-between w-full mb-2">
                             <div
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 border ${
                                 isSelected
                                   ? 'bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border-emerald-300 dark:border-emerald-700'
                                   : 'bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 border-stone-200 dark:border-stone-700'
@@ -1587,49 +1537,48 @@ export const BalconySetupModal: React.FC<Props> = ({
                             >
                               {visual.icon}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-1.5 flex-wrap">
-                                <h4 className="text-base sm:text-lg font-bold text-stone-900 dark:text-stone-100 leading-tight">
-                                  {isEn ? visual.titleEn : item.label}
-                                </h4>
-                                {isRecommended && (
-                                  <span
-                                    data-testid="sunlight-recommended-badge"
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-950 dark:bg-amber-950 dark:text-amber-100 border border-amber-300 dark:border-amber-700"
-                                  >
-                                    <Sparkles className="w-3 h-3 text-amber-700 dark:text-amber-300" />
-                                    <span>{isEn ? 'Recommended' : 'Rekomendowane'}</span>
-                                  </span>
-                                )}
-                              </div>
-                              <span className="inline-block text-xs font-semibold text-stone-700 dark:text-stone-300 mt-0.5">
-                                ☀️ {item.badge}
-                              </span>
-                            </div>
                           </div>
 
-                          <div className="flex items-center gap-1.5 shrink-0 pr-12">
-                            {isSelected ? (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs">
-                                <span>{isEn ? 'Selected' : 'Wybrano'}</span>
-                                <Check className="w-3.5 h-3.5 stroke-[3]" />
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-900 text-xs font-semibold transition-all">
-                                <span>{isEn ? 'Select' : 'Wybierz'}</span>
-                                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                          <h4 className="whitespace-normal break-words text-sm font-semibold leading-tight text-stone-900 dark:text-stone-100">
+                            {isEn ? visual.titleEn : item.label}
+                          </h4>
+
+                          <div className="text-xs text-muted-foreground flex flex-col gap-1 mt-1 text-stone-600 dark:text-stone-400">
+                            {isRecommended && (
+                              <span
+                                data-testid="sunlight-recommended-badge"
+                                className="inline-flex items-center gap-1 font-semibold text-amber-700 dark:text-amber-400"
+                              >
+                                <span>{isEn ? 'Recommended ☀️' : 'Rekomendowane ☀️'}</span>
                               </span>
                             )}
+                            <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                              {item.badge}
+                            </span>
                           </div>
                         </div>
 
-                        {/* Short user-facing description */}
-                        <p id={`sunlight-desc-${sunlightSemanticKey}`} className="text-xs sm:text-sm text-stone-700 dark:text-stone-300 mt-2 font-medium leading-relaxed">
+                        {/* Bottom action pill: Wybrano / Wybierz */}
+                        <div className="mt-3 pt-2 w-full flex items-center justify-between border-t border-stone-100 dark:border-stone-800/80">
+                          {isSelected ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-700 text-white text-xs font-bold shadow-xs whitespace-nowrap">
+                              <span>{isEn ? 'Selected ✓' : 'Wybrano ✓'}</span>
+                              <Check className="w-3 h-3 stroke-[3]" />
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 group-hover:bg-emerald-100 group-hover:text-emerald-900 text-xs font-semibold transition-all whitespace-nowrap">
+                              <span>{isEn ? 'Select' : 'Wybierz'}</span>
+                              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                            </span>
+                          )}
+                        </div>
+
+                        <span id={`sunlight-desc-${sunlightSemanticKey}`} className="sr-only">
                           {isEn ? visual.subEn : visual.sub}
-                        </p>
+                        </span>
                       </button>
 
-                      {/* Info Help Trigger Button Positioned Accurately Outside the Main Button */}
+                      {/* Info Help Trigger Button */}
                       <button
                         type="button"
                         id={`tooltip-trigger-${item.key}`}
@@ -1641,11 +1590,11 @@ export const BalconySetupModal: React.FC<Props> = ({
                           e.stopPropagation();
                           setActiveTooltip(isTooltipOpen ? null : item.key);
                         }}
-                        className={`absolute top-3.5 right-3.5 z-10 min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl flex items-center justify-center text-stone-600 hover:text-stone-900 dark:text-stone-300 dark:hover:text-white bg-stone-100 hover:bg-stone-200 dark:bg-stone-800 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
+                        className={`absolute top-2.5 right-2.5 z-10 w-7 h-7 min-w-[28px] min-h-[28px] rounded-lg flex items-center justify-center text-stone-500 hover:text-stone-900 dark:text-stone-400 dark:hover:text-white bg-stone-100/90 hover:bg-stone-200 dark:bg-stone-800/90 dark:hover:bg-stone-700 border border-stone-200 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                           isTooltipOpen ? 'text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/70 border-emerald-400' : ''
                         }`}
                       >
-                        <Info className="w-4 h-4" />
+                        <Info className="w-3.5 h-3.5" />
                       </button>
 
                       {/* Progressive disclosure: Expandable detailed description section triggered by visible help control */}
@@ -2770,127 +2719,115 @@ export const BalconySetupModal: React.FC<Props> = ({
         {/* ================= STICKY ACTION FOOTER WITH "DALEJ" / "ZAPISZ I PRZEJDŹ" ================= */}
         <div
           data-testid="onboarding-footer"
-          className="sticky bottom-0 z-20 shrink-0 border-t border-stone-200 dark:border-stone-800 bg-white/95 dark:bg-stone-950/95 backdrop-blur p-3.5 sm:p-5 pb-safe shadow-xl flex flex-col gap-2.5"
+          className="flex-shrink-0 p-4 bg-background/95 bg-white/95 dark:bg-stone-950/95 backdrop-blur-sm backdrop-blur border-t border-border flex items-center justify-between sticky bottom-0 z-10"
         >
-          {/* Visible helper message when CTA is disabled or step error occurs */}
-          {((step < 3 && isNextDisabled) || (step === 3 && isSaveDisabled) || stepError) && (
-            <div
-              data-testid="onboarding-cta-helper"
-              role="status"
-              className="text-xs text-amber-950 dark:text-amber-100 bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 px-3.5 py-2 rounded-xl flex items-center gap-2 animate-fade-in font-semibold"
-            >
-              <Info className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-400" />
-              <span>
-                {stepError ||
-                  (step === 1
-                    ? getStep1InactivityReason()
-                    : step === 2
-                    ? getStep2InactivityReason()
-                    : getStep3InactivityReason())}
-              </span>
-            </div>
-          )}
+          {/* Left item: prev button / helper */}
+          <div className="flex items-center gap-2.5">
+            {step > 1 ? (
+              <button
+                type="button"
+                id="wizard-prev-step-btn"
+                data-testid="onboarding-prev"
+                onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
+                className="min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 transition flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>{isEn ? 'Back' : 'Wstecz'}</span>
+              </button>
+            ) : onClose && !isFirstTime ? (
+              <button
+                type="button"
+                id="cancel-setup-btn"
+                data-testid="onboarding-cancel"
+                onClick={onClose}
+                className="min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+              >
+                {isEn ? 'Cancel' : 'Anuluj'}
+              </button>
+            ) : null}
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-start">
-              {step > 1 ? (
-                <button
-                  type="button"
-                  id="wizard-prev-step-btn"
-                  data-testid="onboarding-prev"
-                  onClick={() => setStep((s) => (s - 1) as 1 | 2 | 3)}
-                  className="min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 transition flex items-center gap-1.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  <span>{isEn ? 'Back' : 'Wstecz'}</span>
-                </button>
-              ) : onClose && !isFirstTime ? (
-                <button
-                  type="button"
-                  id="cancel-setup-btn"
-                  data-testid="onboarding-cancel"
-                  onClick={onClose}
-                  className="min-h-[44px] min-w-[44px] px-4 py-2.5 text-xs sm:text-sm font-bold text-stone-700 dark:text-stone-300 hover:text-stone-950 dark:hover:text-white rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-stone-300 dark:border-stone-700 transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
-                >
-                  {isEn ? 'Cancel' : 'Anuluj'}
-                </button>
-              ) : null}
-
-              <div className="flex items-center gap-2 text-xs text-stone-700 dark:text-stone-300 font-bold">
-                <span>{isEn ? `Step ${step} of 3` : `Krok ${step} z 3`}</span>
-                {completedStepsCount > 0 && (
-                  <>
-                    <span className="text-stone-400 dark:text-stone-600">•</span>
-                    <span className="inline-flex items-center gap-1 text-emerald-800 dark:text-emerald-300 font-bold">
-                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
-                      <span>{isEn ? `Completed ${completedStepsCount}/3` : `Ukończono ${completedStepsCount}/3`}</span>
-                    </span>
-                  </>
-                )}
+            {/* Visible helper message when CTA is disabled or step error occurs */}
+            {((step < 3 && isNextDisabled) || (step === 3 && isSaveDisabled) || stepError) && (
+              <div
+                data-testid="onboarding-cta-helper"
+                role="status"
+                className="text-xs text-amber-950 dark:text-amber-100 bg-amber-100 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-700 px-3 py-1.5 rounded-xl flex items-center gap-2 animate-fade-in font-semibold"
+              >
+                <Info className="w-4 h-4 shrink-0 text-amber-700 dark:text-amber-400" />
+                <span className="hidden sm:inline">
+                  {stepError ||
+                    (step === 1
+                      ? getStep1InactivityReason()
+                      : step === 2
+                      ? getStep2InactivityReason()
+                      : getStep3InactivityReason())}
+                </span>
+                <span className="sm:hidden">
+                  {step === 1 ? 'Wybierz region' : step === 2 ? 'Wybierz stronę' : 'Sprawdź donice'}
+                </span>
               </div>
-            </div>
+            )}
+          </div>
 
-            <div className="w-full sm:w-auto flex justify-end">
-              {step < 3 ? (
+          {/* Right item: CTA button */}
+          <div className="flex items-center gap-2">
+            {step < 3 ? (
+              <button
+                type="button"
+                id="wizard-next-step-btn"
+                data-testid="onboarding-next-button"
+                disabled={isNextDisabled}
+                aria-disabled={isNextDisabled}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (isNextDisabled) {
+                    setStepError(step === 1 ? getStep1InactivityReason() : getStep2InactivityReason());
+                    return;
+                  }
+                  setStep((s) => (s + 1) as 1 | 2 | 3);
+                }}
+                className={`min-h-[48px] px-6 text-sm sm:text-base font-medium rounded-xl shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 ${
+                  isNextDisabled
+                    ? 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 cursor-not-allowed opacity-75'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
+                }`}
+              >
+                <span>{isEn ? 'Next' : 'Dalej'}</span>
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  id="wizard-next-step-btn"
-                  data-testid="onboarding-next-button"
-                  disabled={isNextDisabled}
-                  aria-disabled={isNextDisabled}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isNextDisabled) {
-                      setStepError(step === 1 ? getStep1InactivityReason() : getStep2InactivityReason());
-                      return;
-                    }
-                    setStep((s) => (s + 1) as 1 | 2 | 3);
-                  }}
-                  className={`w-full sm:w-auto min-h-[44px] min-w-[44px] px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
-                    isNextDisabled
-                      ? 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 cursor-not-allowed opacity-75'
-                      : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white shadow-md hover:shadow-lg ring-1 ring-emerald-600 cursor-pointer'
+                  id="save-balcony-spec-btn"
+                  data-testid="onboarding-save-and-continue"
+                  disabled={isSaveDisabled}
+                  aria-disabled={isSaveDisabled}
+                  onClick={() => handleSave()}
+                  className={`min-h-[48px] px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 ${
+                    isSaveDisabled
+                      ? 'opacity-75 cursor-not-allowed bg-stone-300 dark:bg-stone-700 text-stone-500'
+                      : 'cursor-pointer'
                   }`}
+                  aria-describedby="save-balcony-benefit-text"
                 >
-                  <span>{isEn ? 'Next' : 'Dalej'}</span>
-                  <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <Sparkles className="w-4 h-4 text-emerald-200" />
+                  <span>{isEn ? 'Save & Continue' : 'Zapisz i przejdź'}</span>
                 </button>
-              ) : (
-                <div className="flex flex-col items-center sm:items-end w-full sm:w-auto gap-2">
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <button
-                      type="button"
-                      id="save-balcony-spec-btn"
-                      data-testid="onboarding-save-and-continue"
-                      disabled={isSaveDisabled}
-                      aria-disabled={isSaveDisabled}
-                      onClick={() => handleSave()}
-                      className={`w-full sm:w-auto min-h-[44px] min-w-[44px] px-7 py-3 text-sm sm:text-base font-bold rounded-xl shadow-md transition-all duration-200 flex items-center justify-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
-                        isSaveDisabled
-                          ? 'bg-stone-200 dark:bg-stone-800 text-stone-500 dark:text-stone-400 border border-stone-300 dark:border-stone-700 cursor-not-allowed opacity-75'
-                          : 'bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white shadow-md hover:shadow-lg ring-1 ring-emerald-600 cursor-pointer'
-                      }`}
-                      aria-describedby="save-balcony-benefit-text"
-                    >
-                      <Sparkles className="w-4 h-4 text-emerald-200" />
-                      <span>{isEn ? 'Save & Continue' : 'Zapisz i przejdź'}</span>
-                    </button>
 
-                    <button
-                      type="button"
-                      id="save-balcony-info-btn"
-                      data-testid="onboarding-save-info"
-                      onClick={() => setActiveTooltip(activeTooltip === 'save-btn' ? null : 'save-btn')}
-                      className="min-h-[44px] min-w-[44px] w-11 h-11 flex items-center justify-center p-3 text-stone-700 hover:text-emerald-800 dark:text-stone-300 dark:hover:text-emerald-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-300 dark:border-stone-700 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
-                      aria-label={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
-                      title={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
-                    >
-                      <HelpCircle className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+                <button
+                  type="button"
+                  id="save-balcony-info-btn"
+                  data-testid="onboarding-save-info"
+                  onClick={() => setActiveTooltip(activeTooltip === 'save-btn' ? null : 'save-btn')}
+                  className="min-h-[44px] min-w-[44px] w-11 h-11 flex items-center justify-center p-3 text-stone-700 hover:text-emerald-800 dark:text-stone-300 dark:hover:text-emerald-400 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-xl transition cursor-pointer border border-stone-300 dark:border-stone-700 shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2"
+                  aria-label={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
+                  title={isEn ? 'Why save and continue?' : 'Dlaczego warto zapisać i przejść?'}
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
