@@ -33,6 +33,14 @@
     font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     overflow-x: hidden;
     max-width: 100vw;
+    scroll-behavior: smooth;
+  }
+
+  #root, #app-root {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    position: relative;
   }
 
   /* Consistent high-contrast keyboard focus indicators */

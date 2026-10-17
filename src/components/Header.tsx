@@ -10,16 +10,26 @@ import {
   User,
   HelpCircle,
   Globe,
+  Check,
 } from 'lucide-react';
 import { UserBalconySpec, UserAccount } from '../types';
 import { useLanguage } from '../lib/LanguageContext';
+import { ORIENTATION_OPTIONS, POLAND_REGIONS } from '../lib/api';
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider,
+} from './ui/tooltip';
 
 export type ActiveNavTab = 'my_crops' | 'search_crops' | 'calendar' | 'calculator';
 
-interface Props {
+export interface Props {
   activeTab: ActiveNavTab;
   onTabChange: (tab: ActiveNavTab) => void;
   userSpec: UserBalconySpec;
+  isConfigured?: boolean;
+  tooltipOpen?: boolean;
   onOpenSetup?: () => void;
   onOpenBalconyDrawer?: () => void;
   darkMode: boolean;
@@ -35,6 +45,8 @@ export const Header: React.FC<Props> = ({
   activeTab,
   onTabChange,
   userSpec,
+  isConfigured: isConfiguredProp,
+  tooltipOpen,
   onOpenSetup,
   onOpenBalconyDrawer,
   darkMode,
@@ -47,6 +59,45 @@ export const Header: React.FC<Props> = ({
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const handleOpenDrawer = onOpenBalconyDrawer || onOpenSetup || (() => {});
+
+  // Determine whether the balcony profile is configured
+  const isSpecComplete = Boolean(
+    userSpec &&
+      userSpec.region &&
+      userSpec.orientation &&
+      typeof userSpec.floor === 'number' &&
+      !isNaN(userSpec.floor)
+  );
+  const isConfigured = typeof isConfiguredProp === 'boolean' ? isConfiguredProp : isSpecComplete;
+
+  // Formatting for configured tooltip content
+  const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec?.orientation);
+  const orientationLabel = orientItem
+    ? orientItem.label
+    : userSpec?.orientation
+    ? `Kierunek ${userSpec.orientation}`
+    : 'Południe (S)';
+
+  const getFloorText = (floor: number | undefined | null) => {
+    if (floor === 0) return 'Parter';
+    if (typeof floor === 'number' && !isNaN(floor)) {
+      if (floor <= 3) return 'Piętro 1-3';
+      if (floor <= 6) return 'Piętro 4-6';
+      return 'Piętro 7+';
+    }
+    return 'Piętro 1-3';
+  };
+  const floorText = getFloorText(userSpec?.floor);
+
+  const regionItem = userSpec?.region ? POLAND_REGIONS[userSpec.region] : undefined;
+  const regionName = regionItem
+    ? regionItem.name.split('(')[0].trim()
+    : userSpec?.region
+    ? userSpec.region.charAt(0).toUpperCase() + userSpec.region.slice(1)
+    : 'Mazowieckie';
+
+  const configuredTooltipText = `Profil balkonu: ${orientationLabel}, ${floorText}, ${regionName}`;
+  const incompleteTooltipText = 'Uzupełnij parametry balkonu, aby zoptymalizować dobór roślin';
 
   return (
     <header className="sticky top-0 z-30 bg-[#FAF8F5]/90 dark:bg-stone-900/90 backdrop-blur-md border-b border-stone-200/80 dark:border-stone-800 transition-colors">
@@ -117,17 +168,54 @@ export const Header: React.FC<Props> = ({
               </button>
             </div>
 
-            <button
-              id="open-balcony-drawer-btn"
-              type="button"
-              onClick={handleOpenDrawer}
-              className="px-3.5 py-1.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-800 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-2xs group"
-              title={language === 'pl' ? 'Parametry Twojego balkonu (wystawa, piętro, region) — otwórz boczny panel' : 'Your balcony parameters (exposure, floor, region) — open side panel'}
-            >
-              <Settings className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:rotate-45 transition-transform duration-300" />
-              <span>{t('myBalcony')}</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            </button>
+            {/* "Mój balkon" Button with Radix Tooltip */}
+            <TooltipProvider delayDuration={150}>
+              <Tooltip open={tooltipOpen}>
+                <TooltipTrigger asChild>
+                  <button
+                    id="open-balcony-drawer-btn"
+                    data-testid="open-balcony-drawer-btn"
+                    type="button"
+                    onClick={handleOpenDrawer}
+                    aria-label={
+                      isConfigured
+                        ? 'Mój balkon - profil skonfigurowany'
+                        : 'Mój balkon - profil nieskonfigurowany'
+                    }
+                    className="px-3.5 py-1.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-800 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    title={isConfigured ? configuredTooltipText : incompleteTooltipText}
+                  >
+                    <Settings className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:rotate-45 transition-transform duration-300" />
+                    <span>{t('myBalcony')}</span>
+                    <span
+                      className={`relative inline-flex h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+                        isConfigured ? 'bg-emerald-500' : 'bg-amber-400'
+                      }`}
+                      aria-hidden="true"
+                      data-testid="balcony-status-indicator"
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  id="balcony-tooltip-content"
+                  data-testid="balcony-tooltip-content"
+                  side="bottom"
+                  align="center"
+                  className="max-w-xs text-center sm:text-left font-sans"
+                >
+                  {isConfigured ? (
+                    <div className="flex items-center gap-1.5 font-medium text-stone-900 dark:text-stone-100">
+                      <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                      <span>{configuredTooltipText}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 font-medium text-stone-600 dark:text-stone-300">
+                      <span>{incompleteTooltipText}</span>
+                    </div>
+                  )}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             {onOpenWelcome && (
               <button
@@ -269,3 +357,7 @@ export const Header: React.FC<Props> = ({
     </header>
   );
 };
+
+export const Navbar = Header;
+export const HeaderNavigation = Header;
+export default Header;

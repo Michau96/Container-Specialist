@@ -84,6 +84,10 @@ export default function App() {
     }
     return !hasUserOnboarded(user?.id);
   });
+  const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
+    const user = getStoredUser();
+    return hasUserOnboarded(user?.id);
+  });
   const [isBalconyDrawerOpen, setIsBalconyDrawerOpen] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<ActiveNavTab>('my_crops');
 
@@ -290,6 +294,7 @@ export default function App() {
   const handleSaveSpec = (newSpec: UserBalconySpec) => {
     setUserSpec(newSpec);
     saveUserSpec(newSpec, currentUser?.id);
+    setIsOnboarded(true);
     setIsSetupModalOpen(false);
 
     if (currentUser) {
@@ -715,13 +720,44 @@ export default function App() {
       });
   }, [plantSearchIndex, groupFilteredPlants, searchQuery, selectedCategory, selectedGroup, timingFilter, sortOrder, todayDate, language]);
 
+  // Lock body scroll when any modal or the "Mój balkon" drawer is open
+  const isAnyModalOrDrawerOpen = Boolean(
+    isBalconyDrawerOpen ||
+    isSetupModalOpen ||
+    isWelcomeModalOpen ||
+    isAuthModalOpen ||
+    isProfileModalOpen ||
+    selectedPlant ||
+    varietyPickerPlant
+  );
+
+  useEffect(() => {
+    if (isAnyModalOrDrawerOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow;
+      };
+    }
+  }, [isAnyModalOrDrawerOpen]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50/50 to-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors relative overflow-x-hidden"><div className="absolute top-0 right-0 -mr-32 -mt-32 w-[32rem] h-[32rem] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" /><div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[40rem] h-[40rem] bg-teal-100/20 dark:bg-teal-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
+    <div
+      id="app-root"
+      className="w-full max-w-full relative min-h-screen bg-gradient-to-br from-emerald-50/50 to-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-100 flex flex-col font-sans transition-colors overflow-x-hidden"
+    >
+      {/* Background ambient orbs strictly contained to prevent horizontal scroll */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none select-none max-w-full" aria-hidden="true">
+        <div className="absolute top-0 right-0 -mr-32 -mt-32 w-[32rem] h-[32rem] bg-emerald-200/20 dark:bg-emerald-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 -ml-32 -mb-32 w-[40rem] h-[40rem] bg-teal-100/20 dark:bg-teal-900/10 rounded-full blur-3xl opacity-60 pointer-events-none" />
+      </div>
+
       {/* Top Header */}
       <Header
         activeTab={activeTab}
         onTabChange={setActiveTab}
         userSpec={userSpec}
+        isConfigured={isOnboarded}
         onOpenSetup={() => setIsSetupModalOpen(true)}
         onOpenBalconyDrawer={() => setIsBalconyDrawerOpen(true)}
         darkMode={darkMode}
@@ -737,7 +773,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="w-full max-w-full relative flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Weather & Soil Watering Status Bar */}
         <WeatherWidget
           weather={weather}
