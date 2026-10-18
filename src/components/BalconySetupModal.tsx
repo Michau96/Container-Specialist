@@ -51,6 +51,7 @@ import {
 } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS, OrientationOption } from '../lib/api';
 import { LocationAutocomplete } from './LocationAutocomplete';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   validateRegion,
   validateFloor,
@@ -719,18 +720,16 @@ export const BalconySetupModal: React.FC<Props> = ({
       node.setAttribute('aria-hidden', 'true');
     });
 
-    const originalOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
     return () => {
       nodesToInert.forEach((node) => {
         node.removeAttribute('inert');
         (node as any).inert = false;
         node.removeAttribute('aria-hidden');
       });
-      document.body.style.overflow = originalOverflow;
     };
   }, [isOpen]);
+
+  useScrollLock(isOpen);
 
   // Initial focus management: move focus to heading when modal opens
   useEffect(() => {
@@ -1200,7 +1199,12 @@ export const BalconySetupModal: React.FC<Props> = ({
   return createPortal(
     <div
       id="balcony-setup-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm overflow-hidden animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) {
+          handleDismiss();
+        }
+      }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in"
     >
       <div
         ref={dialogRef}

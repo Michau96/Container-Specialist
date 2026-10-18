@@ -5633,6 +5633,8 @@
       "what": "Brak – wyłącznie czysta woda"
     },
     "id": "rzodkiewka-kielki",
+    "slug": "radish-sprouts",
+    "imageUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Radish_sprouts_(3_etap).JPG?width=800",
     "name": "Kiełki i siewki rzodkiewki",
     "nutrition": {
       "key_benefits": "Związki siarkowe (glukozynolany) działają bakteriobójczo, oczyszczają drogi oddechowe i wspierają trawienie.",
@@ -6054,6 +6056,8 @@
       "what": "Grzyby to heterotrofy – nie fotosyntetyzują i nie pobierają nawozów rolniczych"
     },
     "id": "boczniak-ostrygowaty",
+    "slug": "oyster-mushroom",
+    "imageUrl": "https://commons.wikimedia.org/wiki/Special:FilePath/Pleurotus_ostreatus_G3.jpg?width=800",
     "name": "Boczniak ostrygowaty",
     "nutrition": {
       "key_benefits": "Naturalny lowastatyn – obniża cholesterol we krwi. Bogaty w beta-glukany (pleuran) stymulujące układ odpornościowy.",

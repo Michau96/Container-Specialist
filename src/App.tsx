@@ -62,6 +62,7 @@ import { getPlantTimingInfo, getCalendarPeriodId, getPeriodHumanLabel } from './
 import { getPlantLifestylePills } from './lib/plantLifestyle';
 import { useLanguage } from './lib/LanguageContext';
 import { getTranslatedPlant, getPlantGroupLabel } from './lib/plantTranslations';
+import { ScrollToTopButton } from './components/ScrollToTopButton';
 
 export default function App() {
   const { language, t } = useLanguage();
@@ -2028,6 +2029,7 @@ export default function App() {
           </div>
         </div>
       </footer>
+      <ScrollToTopButton />
     </div>
   );
 }

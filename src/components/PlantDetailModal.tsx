@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   X,
   Maximize2,
@@ -76,14 +77,7 @@ export const PlantDetailModal: React.FC<Props> = ({
   };
 
   // Lock background scroll while dialog is open & restore on unmount
-  useEffect(() => {
-    if (!plant) return;
-    const origOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = origOverflow;
-    };
-  }, [plant]);
+  useScrollLock(Boolean(plant));
 
   // Support Escape key to dismiss dialog and restore focus
   useEffect(() => {
@@ -187,7 +181,7 @@ export const PlantDetailModal: React.FC<Props> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) handleClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto animate-fade-in"
     >
       <div
         id="plant-detail-dialog"

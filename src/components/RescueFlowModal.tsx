@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   LifeBuoy,
   X,
@@ -109,8 +110,15 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
     (typeof plant.varieties?.[0] === 'string' ? plant.varieties?.[0] : (plant.varieties?.[0] as any)?.name) ||
     (isEn ? 'Standard' : 'Standardowa');
 
+  useScrollLock(true);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/70 dark:bg-black/80 backdrop-blur-sm animate-fade-in overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-fade-in overflow-y-auto"
+    >
       <div
         className="bg-white dark:bg-stone-900 rounded-3xl border border-stone-200 dark:border-stone-800 w-full max-w-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden my-auto"
         role="dialog"

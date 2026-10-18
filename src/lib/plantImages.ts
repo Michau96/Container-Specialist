@@ -221,7 +221,13 @@ export const PLANT_IMAGE_MAP: Record<string, PlantVisualData> = {
   },
   'rzodkiewka-kielki': {
     imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Radish_sprouts_(3_etap).JPG?width=800',
-    alt: 'Świeże pikantne kiełki i siewki rzodkiewki',
+    alt: 'Świeże zielono-purpurowe siewki i mikrolistki rzodkiewki w tacce uprawowej',
+    placeholderBg: 'from-pink-950/60 via-purple-950/40 to-stone-900',
+    emoji: '🌱',
+  },
+  'radish-sprouts': {
+    imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Radish_sprouts_(3_etap).JPG?width=800',
+    alt: 'Świeże zielono-purpurowe siewki i mikrolistki rzodkiewki w tacce uprawowej',
     placeholderBg: 'from-pink-950/60 via-purple-950/40 to-stone-900',
     emoji: '🌱',
   },
@@ -239,8 +245,14 @@ export const PLANT_IMAGE_MAP: Record<string, PlantVisualData> = {
   },
   'boczniak-ostrygowaty': {
     imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pleurotus_ostreatus_G3.jpg?width=800',
-    alt: 'Dorodna kępa świeżych boczniaków ostrygowatych z domowej uprawy',
-    placeholderBg: 'from-stone-950/70 via-amber-950/30 to-stone-900',
+    alt: 'Kępa szarych boczniaków ostrygowatych (Pleurotus ostreatus) rosnących na podłożu słomiastym',
+    placeholderBg: 'from-stone-950/70 via-slate-950/40 to-stone-900',
+    emoji: '🍄',
+  },
+  'oyster-mushroom': {
+    imageUrl: 'https://commons.wikimedia.org/wiki/Special:FilePath/Pleurotus_ostreatus_G3.jpg?width=800',
+    alt: 'Kępa szarych boczniaków ostrygowatych (Pleurotus ostreatus) rosnących na podłożu słomiastym',
+    placeholderBg: 'from-stone-950/70 via-slate-950/40 to-stone-900',
     emoji: '🍄',
   },
   'pieczarka-dwuzarodnikowa': {

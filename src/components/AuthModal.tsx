@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   User,
   Lock,
@@ -46,6 +47,7 @@ export const AuthModal: React.FC<Props> = ({
   initialTab = 'login',
 }) => {
   const { language, setLanguage, t } = useLanguage();
+  useScrollLock(isOpen);
   const [mode, setMode] = useState<'login' | 'register'>(initialTab);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -180,7 +182,7 @@ export const AuthModal: React.FC<Props> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div

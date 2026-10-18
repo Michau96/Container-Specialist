@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, Check, ChevronLeft, X, Layers, Clock, Shield } from 'lucide-react';
 import { UserBalconySpec, CareTime, BalconyType } from '../../../types';
 import { calculatePotVolume } from '../utils/calculatePotVolume';
+import { useScrollLock } from '../../../hooks/useScrollLock';
 
 export interface OnboardingModalProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const [balconyType, setBalconyType] = useState<BalconyType>(initialSpec?.balcony_type ?? 'open_rail');
   const [careTime, setCareTime] = useState<CareTime>(initialSpec?.care_time ?? 'daily');
 
+  useScrollLock(isOpen);
+
   if (!isOpen) return null;
 
   const currentVolume =
@@ -61,7 +64,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   return (
     <div
       id="onboarding-modal-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-stone-900/60 dark:bg-black/75 backdrop-blur-sm overflow-hidden animate-fade-in"
+      data-testid="onboarding-modal-backdrop"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && onClose) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4 overflow-hidden animate-fade-in"
     >
       {/* Dialog Wrapper */}
       <div

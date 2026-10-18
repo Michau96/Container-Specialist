@@ -21,7 +21,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     </div>
     <img
       alt="Wisząca truskawka pełna słodkich czerwonych owoców"
-      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
+      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out"
       data-plant-id="truskawka-wisząca"
       data-testid="plant-image-truskawka-wisząca"
       loading="lazy"
@@ -179,7 +179,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     </div>
     <img
       alt="Gęsty, soczyście zielony szczypiorek (Allium schoenoprasum) w donicy z jadalnymi rurkowatymi liśćmi"
-      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
+      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out"
       data-plant-id="szczypiorek-ziola"
       data-testid="plant-image-szczypiorek-ziola"
       loading="lazy"
@@ -337,7 +337,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     </div>
     <img
       alt="Dojrzałe soczyste pomidorki koktajlowe w donicy na balkonie"
-      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out opacity-0"
+      class="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out"
       data-plant-id="pomidor-karlowy"
       data-testid="plant-image-pomidor-karlowy"
       loading="lazy"

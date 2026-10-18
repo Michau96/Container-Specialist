@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   X,
   Ruler,
@@ -239,10 +240,12 @@ export const CropPotSowingModal: React.FC<Props> = ({
   const isOptimal = volumeL >= minReqVolume;
   const totalVolumeAllPots = volumeL * potCount;
 
+  useScrollLock(true);
+
   return (
     <div
       id="crop-pot-sowing-modal"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/60 backdrop-blur-xs overflow-y-auto"
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto"
       onClick={onClose}
     >
       <div

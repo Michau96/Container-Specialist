@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { useScrollLock } from '../hooks/useScrollLock';
 import {
   X,
   Compass,
@@ -158,16 +159,7 @@ export const BalconyProfileDrawer: React.FC<BalconyProfileDrawerProps> = ({
   }, [isOpen, onClose]);
 
   // Prevent background scroll when drawer is open
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [isOpen]);
+  useScrollLock(isOpen);
 
   const regionInfo = POLAND_REGIONS[userSpec.region];
   const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec.orientation);

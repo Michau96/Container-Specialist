@@ -11,6 +11,7 @@ import { getPlantTimingInfo } from '../lib/cropTiming';
 import { getPlantLifestylePills } from '../lib/plantLifestyle';
 import { resolvePlantRecord } from '../lib/plantSchema';
 import { useLanguage } from '../lib/LanguageContext';
+import { ImageWithFallback } from './ImageWithFallback';
 
 interface Props {
   plant: Plant;
@@ -87,22 +88,17 @@ export const PlantCard: React.FC<Props> = ({
           </span>
         </div>
 
-        {/* Real Plant Photography */}
-        {!imageError && (
-          <img
-            data-testid={`plant-image-${plant.id}`}
-            data-plant-id={plant.id}
-            src={visual.imageUrl}
-            alt={visual.alt}
-            referrerPolicy="no-referrer"
-            loading="lazy"
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageError(true)}
-            className={`w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-          />
-        )}
+        {/* Real Plant Photography with Fallback */}
+        <ImageWithFallback
+          data-testid={`plant-image-${plant.id}`}
+          data-plant-id={plant.id}
+          src={visual.imageUrl}
+          alt={visual.alt}
+          fallbackSrc="/assets/plants/default-cultivation.webp"
+          referrerPolicy="no-referrer"
+          loading="lazy"
+          className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-700 ease-out"
+        />
 
         {/* Soft Vignette Gradient for text contrast */}
         <div className="absolute inset-0 bg-gradient-to-t from-stone-950/70 via-stone-950/15 to-stone-950/30 pointer-events-none" />

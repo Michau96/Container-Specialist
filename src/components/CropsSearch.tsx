@@ -1,2 +1,11 @@
-export { CropsSearch, PlantCatalogView, default } from '../features/catalog/components/PlantCatalogView';
-export type { CropsSearchProps, PlantCatalogViewProps } from '../features/catalog/components/CropsSearch';
+export {
+  CropsSearch,
+  PlantCatalogView,
+  CatalogPage,
+  default,
+} from '../features/catalog/components/PlantCatalogView';
+export type {
+  PlantCatalogViewProps as CropsSearchProps,
+  PlantCatalogViewProps,
+  PlantCatalogViewProps as CatalogPageProps,
+} from '../features/catalog/components/PlantCatalogView';

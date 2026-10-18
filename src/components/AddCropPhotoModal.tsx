@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useScrollLock } from '../hooks/useScrollLock';
 import { Plant, MyCropItem, CropPhotoEntry } from '../types';
 import {
   calculateDayAndWeek,
@@ -106,9 +107,14 @@ export const AddCropPhotoModal: React.FC<Props> = ({
     onClose();
   };
 
+  useScrollLock(true);
+
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-5 animate-fade-in"
       role="dialog"
       aria-modal="true"
     >

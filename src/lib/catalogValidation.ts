@@ -138,11 +138,45 @@ export function isImageMetadataConsistent(plant: Partial<Plant>, visual: PlantVi
     };
   }
 
+  // 9b. Amanita / poisonous fly agaric placeholder check
+  const isAmanitaVisual =
+    url.includes('mushroom-amanita') ||
+    url.includes('amanita') ||
+    alt.includes('muchomor') ||
+    alt.includes('amanita');
+  if (isAmanitaVisual) {
+    return {
+      isConsistent: false,
+      reason: `Plant "${plant.name}" (${plant.id}) cannot use poisonous Amanita / red fly agaric image (${url})`,
+    };
+  }
+
+  // 9c. Generic placeholder check for edible crops
+  const isGenericPlaceholder =
+    url.includes('placeholder') ||
+    url.includes('default-cultivation') ||
+    url.includes('no-image');
+  if (isGenericPlaceholder) {
+    return {
+      isConsistent: false,
+      reason: `Plant "${plant.name}" (${plant.id}) cannot use generic placeholder asset (${url})`,
+    };
+  }
+
   // 10. Specific botanical matching checks for common balcony crops
-  if (plantId === 'boczniak-ostrygowaty') {
-    const isPleurotus = url.includes('pleurotus') || alt.includes('boczniak');
+  if (plantId === 'boczniak-ostrygowaty' || plantId === 'oyster-mushroom') {
+    const isPleurotus = url.includes('pleurotus') || url.includes('oyster') || alt.includes('boczniak') || alt.includes('oyster');
     if (!isPleurotus) {
       return { isConsistent: false, reason: `Boczniak ostrygowaty must have verified Pleurotus image` };
+    }
+  }
+
+  if (plantId === 'rzodkiewka-kielki' || plantId === 'radish-sprouts') {
+    const isRadishSprouts =
+      (url.includes('radish') || url.includes('rzodkiew') || alt.includes('rzodkiew') || alt.includes('radish')) &&
+      (url.includes('sprout') || alt.includes('kiełk') || alt.includes('kielk') || alt.includes('siewk') || alt.includes('microgreen'));
+    if (!isRadishSprouts) {
+      return { isConsistent: false, reason: `Kiełki i siewki rzodkiewki must have verified radish microgreens/sprouts image` };
     }
   }
 

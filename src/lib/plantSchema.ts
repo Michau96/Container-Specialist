@@ -56,6 +56,8 @@ export const PlantGroupSchema = z.enum(['warzywa', 'owoce', 'ziola', 'ozdobne', 
 export const PlantSchema = z.object({
   id: z.string().min(1, 'Plant canonical ID must be a non-empty string'),
   name: z.string().min(1, 'Plant name must be a non-empty string'),
+  slug: z.string().optional(),
+  imageUrl: z.string().optional(),
   common_name: z.string().optional(),
   botanical_name: z.string().optional(),
   search_keywords: z.array(z.string()).default([]),
@@ -238,7 +240,7 @@ export function resolvePlantRecord(plantInput: unknown): ResolvedPlantRecord {
     description: plant.summary || (plant as any).description || 'Brak opisu dla tej rośliny.',
     detailedGuide: plant.detailed_guide || plant.summary || '',
     visual: {
-      imageUrl: visual.imageUrl || GROUP_FALLBACK_IMAGES[plant.plant_group]?.imageUrl || GROUP_FALLBACK_IMAGES.warzywa.imageUrl,
+      imageUrl: (plant as any).imageUrl || visual.imageUrl || GROUP_FALLBACK_IMAGES[plant.plant_group]?.imageUrl || GROUP_FALLBACK_IMAGES.warzywa.imageUrl,
       alt: visualAlt,
       placeholderBg: visual.placeholderBg || 'from-stone-900 to-stone-800',
       emoji: visual.emoji || '🌱',

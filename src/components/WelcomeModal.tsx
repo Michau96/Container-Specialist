@@ -21,6 +21,7 @@ import { registerAccount, loginAccount } from '../lib/auth';
 import { signInWithGoogle } from '../lib/firebase';
 import { PasswordStrengthIndicator, PasswordMatchIndicator, evaluatePasswordMatch } from './PasswordStrengthIndicator';
 import { useLanguage } from '../lib/LanguageContext';
+import { useScrollLock } from '../hooks/useScrollLock';
 
 interface Props {
   isOpen: boolean;
@@ -51,6 +52,8 @@ export const WelcomeModal: React.FC<Props> = ({
   const [googleLoading, setGoogleLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+
+  useScrollLock(isOpen);
 
   if (!isOpen) return null;
 
@@ -139,7 +142,12 @@ export const WelcomeModal: React.FC<Props> = ({
   return (
     <div
       id="welcome-screen-backdrop"
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-stone-900/65 dark:bg-black/80 backdrop-blur-md overflow-y-auto animate-fade-in"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          onContinueAsGuest();
+        }
+      }}
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto animate-fade-in"
     >
       <div
         id="welcome-screen-dialog"
