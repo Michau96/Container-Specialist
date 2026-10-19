@@ -51,6 +51,7 @@ import {
 } from '../types';
 import { POLAND_REGIONS, ORIENTATION_OPTIONS, OrientationOption } from '../lib/api';
 import { LocationAutocomplete } from './LocationAutocomplete';
+import { voivodeships } from './OnboardingLocationStep';
 import { useScrollLock } from '../hooks/useScrollLock';
 import {
   validateRegion,
@@ -1114,12 +1115,16 @@ export const BalconySetupModal: React.FC<Props> = ({
   }, [activeTooltip]);
 
   const filteredRegions = useMemo(() => {
+    if (!regionSearch.trim()) return Object.keys(POLAND_REGIONS) as PolandRegionKey[];
+    const q = regionSearch.toLowerCase().trim();
     const allKeys = Object.keys(POLAND_REGIONS) as PolandRegionKey[];
     return allKeys.filter((regKey) => {
       const reg = POLAND_REGIONS[regKey];
+      const matchVoivodeship = voivodeships.find((v) => v.id === regKey);
       return (
-        reg.name.toLowerCase().includes(regionSearch.toLowerCase()) ||
-        regKey.toLowerCase().includes(regionSearch.toLowerCase())
+        reg.name.toLowerCase().includes(q) ||
+        regKey.toLowerCase().includes(q) ||
+        (matchVoivodeship && matchVoivodeship.cities.some((c) => c.toLowerCase().includes(q)))
       );
     });
   }, [regionSearch]);
@@ -2796,7 +2801,7 @@ export const BalconySetupModal: React.FC<Props> = ({
                     : 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer'
                 }`}
               >
-                <span>{isEn ? 'Next' : 'Dalej'}</span>
+                <span>{isEn ? 'Next >' : 'Dalej >'}</span>
                 <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             ) : (

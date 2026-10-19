@@ -1,309 +1,310 @@
-# Donicowy Specjalista – Kompletna Dokumentacja Systemu i Manual Użytkownika
+# Container Gardening Specialist – System Documentation & Complete User Manual
 
-> **Wersja:** 2.4 (Aktualizacja z modułem fenologicznym, procedurą ratunkową i odtwarzaczem Timelapse)  
-> **Przeznaczenie:** Zaawansowana platforma wsparcia ogrodnictwa pojemnikowego (warzywa, owoce, zioła i rośliny ozdobne na balkonach i tarasach).
-
----
-
-## Spis Treści
-
-1. [Wprowadzenie i Filozofia Aplikacji](#1-wprowadzenie-i-filozofia-aplikacji)
-2. [Architektura Techniczna Systemu](#2-architektura-techniczna-systemu)
-3. [Szczegółowy Opis Modułów Aplikacji](#3-szczegółowy-opis-modułów-aplikacji)
-   - [3.1. Profil Balkonu i Silnik Rekomendacji](#31-profil-balkonu-i-silnik-rekomendacji)
-   - [3.2. Baza Roślin i Inteligentny Dobór Gatunków](#32-baza-roślin-i-inteligentny-dobór-gatunków)
-   - [3.3. Centrum Dowodzenia: „Moje Uprawy”](#33-centrum-dowodzenia-moje-uprawy)
-   - [3.4. Dziennik Wzrostu & Animacja Poklatkowa (Timelapse)](#34-dziennik-wzrostu--animacja-poklatkowa-timelapse)
-   - [3.5. Procedura Ratunkowa (Rescue Flow)](#35-procedura-ratunkowa-rescue-flow)
-   - [3.6. Kalkulator Donic, Podłoża i Obciążenia Balkonu](#36-kalkulator-donic-podłoża-i-obciążenia-balkonu)
-   - [3.7. Kalendarz Prac Ogrodniczych](#37-kalendarz-prac-ogrodniczych)
-   - [3.8. Moduł Szklarenki Balkonowej](#38-moduł-szklarenki-balkonowej)
-   - [3.9. System Kont i Synchronizacja w Chmurze](#39-system-kont-i-synchronizacja-w-chmurze)
-4. [Instrukcja Użytkownika (Manual Krok po Kroku)](#4-instrukcja-użytkownika-manual-krok-po-kroku)
-   - [Krok 1: Kalibracja Twojego Balkonu](#krok-1-kalibracja-twojego-balkonu)
-   - [Krok 2: Dobór roślin i weryfikacja kompatybilności](#krok-2-dobór-roślin-i-weryfikacja-kompatybilności)
-   - [Krok 3: Dobór donicy, zakup ziemi i przygotowanie warstw](#krok-3-dobór-donicy-zakup-ziemi-i-przygotowanie-warstw)
-   - [Krok 4: Prowadzenie uprawy i codzienna opieka](#krok-4-prowadzenie-uprawy-i-codzienna-opieka)
-   - [Krok 5: Tworzenie pamiątkowego Timelapse ze wzrostu](#krok-5-tworzenie-pamiątkowego-timelapse-ze-wzrostu)
-   - [Krok 6: Co zrobić, gdy roślina choruje?](#krok-6-co-zrobić-gdy-roślina-choruje)
-5. [Eksperckie Zasady Uprawy Pojemnikowej](#5-eksperckie-zasady-uprawy-pojemnikowej)
+> **Version:** 2.5 (Updated with Phenological Engine, Rescue Diagnostics, Timelapse Video Player & Sticky Filter Navigation)  
+> **Target Audience:** Urban container gardeners cultivating vegetables, fruits, herbs, and companion plants on balconies, loggias, and rooftop terraces.
 
 ---
 
-## 1. Wprowadzenie i Filozofia Aplikacji
+## Table of Contents
 
-**Donicowy Specjalista** to specjalistyczna aplikacja stworzona w odpowiedzi na wyzwania ogrodnictwa miejskiego. Uprawa roślin w donicach na balkonie drastycznie różni się od tradycyjnej uprawy w gruncie:
-
-* **Ograniczona objętość bryły korzeniowej:** Korzenie w donicy nie mają możliwości ucieczki w głąb gleby w poszukiwaniu wody czy składników odżywczych.
-* **Ekstremalne wahania termiczne i hydrologiczne:** Ziemia w donicach nagrzewa się i przesycha wielokrotnie szybciej, a w chłodne noce korzenie są narażone na przemarzanie ze wszystkich stron.
-* **Czynniki wysokościowe i wiatrowe:** Wyższe piętra bloków charakteryzują się silnymi prądami powietrznymi, które łamią pędy, wywracają lekkie donice i drastycznie zwiększają transpirację (wysychanie liści).
-* **Ograniczenia nośności stropu balkonu:** Zbyt ciężkie, nasiąknięte wodą donice mogą przekroczyć bezpieczne obciążenie konstrukcyjne balkonu.
-
-Aplikacja eliminuje zgadywanie i błędy początkujących ogrodników, dostarczając **matematycznie i biologicznie zweryfikowane wytyczne** dopasowane do konkretnego balkonu w Polsce.
+1. [Introduction & Philosophy](#1-introduction--philosophy)
+2. [Technical Architecture](#2-technical-architecture)
+3. [Core Feature Breakdown](#3-core-feature-breakdown)
+   - [3.1. Balcony Microclimate Profile & Matching Engine](#31-balcony-microclimate-profile--matching-engine)
+   - [3.2. Plant Database & Variety Selector](#32-plant-database--variety-selector)
+   - [3.3. Command Center: "My Crops"](#33-command-center-my-crops)
+   - [3.4. Growth Photo Journal & Timelapse Video Player](#34-growth-photo-journal--timelapse-video-player)
+   - [3.5. Rescue Flow (Emergency Plant Diagnostics)](#35-rescue-flow-emergency-plant-diagnostics)
+   - [3.6. Container, Soil & Balcony Load Calculator](#36-container-soil--balcony-load-calculator)
+   - [3.7. Seasonal Gardening Calendar & Companion Planting](#37-seasonal-gardening-calendar--companion-planting)
+   - [3.8. Mini-Greenhouse & Cold Frame Management](#38-mini-greenhouse--cold-frame-management)
+   - [3.9. Offline-First Storage & Firebase Cloud Sync](#39-offline-first-storage--firebase-cloud-sync)
+4. [Step-by-Step User Instructions](#4-step-by-step-user-instructions)
+   - [Step 1: Calibrate Your Balcony Profile](#step-1-calibrate-your-balcony-profile)
+   - [Step 2: Select Suitable Crops & Verify Compatibility](#step-2-select-suitable-crops--verify-compatibility)
+   - [Step 3: Size Containers & Prepare Stratified Soil](#step-3-size-containers--prepare-stratified-soil)
+   - [Step 4: Routine Care, Watering Logs & Daily Hero Tasks](#step-4-routine-care-watering-logs--daily-hero-tasks)
+   - [Step 5: Photograph Growth & Play Back Timelapse Videos](#step-5-photograph-growth--play-back-timelapse-videos)
+   - [Step 6: Diagnose Sick Plants & Apply Rescue Protocols](#step-6-diagnose-sick-plants--apply-rescue-protocols)
+5. [Expert Container Cultivation Rules & Common Mistakes](#5-expert-container-cultivation-rules--common-mistakes)
 
 ---
 
-## 2. Architektura Techniczna Systemu
+## 1. Introduction & Philosophy
 
-Aplikacja została zbudowana w architekturze nowoczesnej aplikacji internetowej typu Full-Stack (SPA + API):
+**Container Gardening Specialist** (*Donicowy Specjalista*) was created specifically to solve the physical, thermal, and biological challenges of urban container gardening. Growing crops in pots on an apartment balcony is fundamentally different from traditional open-field or garden-plot agriculture:
+
+* **Restricted Root Volume:** In a container, roots cannot forage deeper into the ground for water or minerals. Substrate reserves are limited, meaning nutrients deplete quickly and root systems require precise watering schedules.
+* **Severe Thermal & Hydrological Swings:** Pot soil heats up and dries out exponentially faster than in-ground garden soil. In cold spells or early spring nights, root balls are exposed to freezing air on all sides.
+* **Wind Turbulence & Altitude Dynamics:** Upper floors experience high wind velocities that snap stems, topple lightweight containers, and drastically spike transpiration rates (drying leaves within hours).
+* **Structural Balcony Load Capacities:** Water-saturated containers weigh substantially more than dry soil. Without proper calculation, heavy wet soil can stress balcony load ratings.
+
+The application eliminates guesswork by providing **scientifically validated agrotechnical calculations** tailored to your specific balcony orientation, floor level, microclimate, and regional climate conditions.
+
+---
+
+## 2. Technical Architecture
+
+The application is structured as a modern Full-Stack Single-Page Application (SPA) with a lightweight Express backend proxy and optional Firebase persistence:
 
 ```
 ┌────────────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (React 18 + Vite)                      │
-│  - Komponenty: MyCropsView, PotCalculator, TimelapseModal, RescueFlow  │
-│  - Stylizacja: Tailwind CSS (wsparcie trybu jasnego i ciemnego)        │
-│  - Ikony: Lucide React                                                 │
-│  - Grafika: Dynamiczny renderer Canvas (przekrój gleby, kompresja foto)│
+│                        FRONTEND (React 19 + Vite)                      │
+│  - Core Views: MyCropsView, PotCalculator, PlantCatalogView, Calendar   │
+│  - Modals: RescueFlowModal, TimelapseModal, BalconySetupModal, Auth    │
+│  - UI: Tailwind CSS v4, Lucide Icons, Accessible Modals & useScrollLock│
+│  - Canvas Engine: 2D Soil Cross-Section Renderer, Client Compression   │
 └───────────────────▲────────────────────────────────▲───────────────────┘
                     │                                │
                     ▼                                ▼
 ┌──────────────────────────────────────┐  ┌──────────────────────────────┐
-│       LOKALNY STAN & STORAGE         │  │     BACKEND SERWER & CLOUD   │
-│  - LocalStorage (Offline-first)      │  │  - Express.js + Vite Server  │
-│  - Bezpieczny fallback dla gości     │  │  - Firebase Auth & Firestore │
-│  - Natychmiastowa responsywność      │  │  - REST API Pogody i Roślin  │
+│       CLIENT STATE & OFFLINE CACHE   │  │     BACKEND SERVICES & CLOUD │
+│  - LocalStorage (Instant startup)    │  │  - Express.js API proxy      │
+│  - Complete guest mode availability  │  │  - Open-Meteo Weather API    │
+│  - Zero network lag for interactions │  │  - Firebase Auth & Firestore │
 └──────────────────────────────────────┘  └──────────────────────────────┘
 ```
 
-### Kluczowe moduły w kodzie źródłowym:
-* `src/types.ts`: Definicje struktur danych (parametry balkonu, profile roślin, fazy fenologiczne, wpisy zdjęciowe, diagnozy ratunkowe).
-* `src/lib/cropGrowthPhases.ts`: Oś czasu rozwoju rośliny (obliczenia fenologiczne, etapy siewu, kwitnienia i zbioru).
-* `src/lib/cropPhotos.ts`: Zarządzanie zdjęciami, rekomendowany rytm (cadence), kalkulacja dni i tygodni, klatki demonstracyjne.
-* `src/lib/rescueData.ts`: Baza wiedzy procedury ratunkowej (diagnozy patogenów, szkodników, błędów fizjologicznych).
-* `src/lib/potSupportEvaluations.ts`: Analiza stabilności pojemników i doboru podpór w relacji do piętra i wiatru.
-* `src/lib/cropCostEstimates.ts`: Algorytm kalkulacji kosztów założenia i prowadzenia uprawy.
-* `src/lib/dailyRecommendations.ts`: Generator spersonalizowanych zaleceń dziennych bazujący na pogodzie i fazie rośliny.
+### Key Source Code Architecture:
+* `src/types.ts`: TypeScript contracts for balcony specifications, plant profiles, phenological stages, photo entries, and diagnostic trees.
+* `src/hooks/useScrollLock.ts`: Reusable hook preventing background page scrolling during open dialogs while compensating for scrollbar width.
+* `src/features/catalog/components/PlantCatalogView.tsx`: Catalog browser with sticky search header, quick-filter pills, and debounced indexing.
+* `src/components/ScrollToTopButton.tsx`: Floating smooth-scroll button with scroll-depth detection (`window.scrollY > 400`).
+* `src/lib/cropGrowthPhases.ts`: Phenological timeline logic calculating development milestones from sowing to harvest.
+* `src/lib/cropPhotos.ts`: Photo cadence monitoring, day/week calculations, and client-side canvas compression.
+* `src/lib/rescueData.ts`: Diagnostic knowledge base mapping visual symptoms to plant pathogens, pests, and physiological disorders.
+* `src/lib/potCalculations.ts` & `src/lib/potSupportEvaluations.ts`: Geometry volume algorithms and wind-support stability checks.
+* `src/lib/dailyRecommendations.ts`: Generator converting real-time weather forecasts and plant stages into daily actionable advice.
 
 ---
 
-## 3. Szczegółowy Opis Modułów Aplikacji
+## 3. Core Feature Breakdown
 
-### 3.1. Profil Balkonu i Silnik Rekomendacji
+### 3.1. Balcony Microclimate Profile & Matching Engine
 
-Sercem personalizacji jest **Kreator Profilu Balkonu** (`BalconySetupModal.tsx` oraz `BalconyDrawer.tsx`). Użytkownik określa w nim kluczowe parametry mikrośrodowiska:
+Every recommendation starts with your **Balcony Profile** (`BalconySetupModal.tsx` and `BalconyDrawer.tsx`). You can calibrate:
 
-1. **Wystawa słoneczna (Kierunek świata):**
-   * *Południowa (S)* – Pełne słońce (>6–8 h), ekstremalne nagrzewanie; idealne dla pomidorów, papryk, bakłażanów, lawendy.
-   * *Wschodnia (E)* – Łagodne słońce poranne (3–5 h); optymalne dla truskawek, sałat, ziół, szczypiorku.
-   * *Zachodnia (W)* – Silne, upalne słońce popołudniowe; wymaga odporności na przesuszanie.
-   * *Północna (N)* – Głęboki lub umiarkowany cień (<2 h słońca); dedykowana dla mięty, melisy, szpinaku, szczawiu, bluszczy.
-2. **Kondygnacja (Piętro):**
-   * *Parter / Niskie (1–2 p.)* – Osłonięte od wiatru, potencjalnie większa wilgotność, ryzyko zacienienia przez drzewa.
-   * *Średnie (3–5 p.)* – Umiarkowany wiatr, stabilne doświetlenie.
-   * *Wysokie (6+ p.)* – Silne porywy wiatru, szybka transpiracja, konieczność ciężkich donic i stabilnych podpór.
-3. **Stopień osłonięcia konstrukcji:**
-   * *Loggia / Wnęka* – Chroniona z 3 stron, zatrzymuje ciepło (efekt mikroszklarni).
-   * *Balkon klasyczny wystający* – Otwarty z 3 stron, przewiewny.
-   * *Taras dachowy* – Maksymalna ekspozycja na wiatr i słońce.
-4. **Godziny bezpośredniego słońca:** Dokładny suwak pozwalający skalibrować algorytm do rzeczywistych warunków.
-5. **Region Polski:** Kalibruje długość okresu wegetacyjnego oraz średnie daty ostatnich wiosennych przymrozków („Zimni Ogrodnicy” – 12–15 maja).
+1. **Sun Exposure (Compass Orientation):**
+   * **South (S):** Maximum intense sunlight (>6–8 hours/day), extreme heat accumulation. Ideal for tomatoes, peppers, eggplants, and Mediterranean herbs.
+   * **East (E):** Gentle morning sun (3–5 hours/day) with cool afternoons. Perfect for strawberries, lettuces, radishes, and leafy greens.
+   * **West (W):** Hot afternoon sun with intense drying potential. Requires heat-tolerant crops with adequate mulch.
+   * **North (N):** Shaded or cool indirect light (<2 hours direct sun). Best suited for mint, lemon balm, spinach, chives, and sorrel.
+2. **Floor Level & Wind Turbulence:**
+   * **Ground / Low (Floors 0–2):** Sheltered from high winds, higher humidity, potential shading from trees or adjacent buildings.
+   * **Mid (Floors 3–5):** Moderate wind currents, reliable direct light.
+   * **High (Floor 6+):** Strong wind gusts, rapid soil transpiration; requires sturdy containers, trellises secured to railings, and heavy pots.
+3. **Balcony Enclosure Type:**
+   * **Open Railing (*Ażurowa barierka*):** High airflow, excellent light reaching lower pots, higher wind exposure.
+   * **Solid Concrete Wall (*Murek betonowy*):** High wind protection, but shades the bottom 80–100 cm.
+   * **Recessed Loggia (*Loggia wnękowa*):** Sheltered on three sides, retaining thermal heat and creating a warm microclimate.
+   * **French Balcony (*Balkon francuski*):** Narrow railing space suitable for railing boxes or compact pots.
+4. **Direct Sunlight Hours:** Fine-tuning slider calibrating daily solar radiation.
+5. **Geographical Region & Hardiness:** Aligns sowing and transplanting dates with local spring frost patterns (*Cold Saints* / *Zimni Ogrodnicy*, May 12–15).
 
-#### Algorytm punktacji (Balcony Match Score 0–100%)
-Każda roślina w bazie posiada wektor tolerancji na słońce, wiatr i przestrzeń. System porównuje profil balkonu z wymogami rośliny i oblicza procent dopasowania, kategoryzując wynik:
-* **90–100% (Świetne dopasowanie):** Roślina będzie rosła niemal bezobsługowo.
-* **70–89% (Dobre warunki):** Udana uprawa przy standardowej pielęgnacji.
-* **50–69% (Wymagająca):** Wymaga osłon przeciwwiatrowych lub częstszego nawadniania.
-* **<50% (Niezalecana):** Ryzyko niepowodzenia z powodu zbyt małej ilości słońca lub zbyt silnego wiatru.
-
----
-
-### 3.2. Baza Roślin i Inteligentny Dobór Gatunków
-
-W zakładce **„Baza Roślin & Dobór”** użytkownik ma dostęp do katalogu roślin przetestowanych w warunkach doniczkowych:
-
-* **Kategorie:** Warzywa, Owoce, Zioła, Rośliny ozdobne i miododajne.
-* **Filtry terminowe:**
-  * *Wysiej teraz:* Pokazuje wyłącznie gatunki, dla których bieżący miesiąc jest optymalnym oknem siewu (w domu lub wprost do donic).
-  * *Sadź / Pikuj teraz:* Pokazuje rośliny gotowe do wysadzenia rozsad na zewnątrz.
-  * *Zbiory teraz:* Wskazuje rośliny w fazie owocowania.
-* **Karta Informacyjna Rośliny (`PlantDetailModal.tsx`):**
-  * Wymiary donicy: minimalna i optymalna objętość (w litrach) oraz głębokość.
-  * Zapotrzebowanie wodne i nawozowe.
-  * Kalendarz zabiegów miesiąc po miesiącu.
-  * **Alelopatia balkonowa:** Zestawienie dobrego sąsiedztwa (np. pomidor + bazylia) oraz złego sąsiedztwa (np. pomidor + koper lub ziemniak).
-  * Polecane odmiany karłowe i kompaktowe (idealne do skrzynek balkonowych).
+#### Balcony Match Score Algorithm (0–100%)
+The system matches plant requirements against your balcony's light, wind, and volume tolerances:
+* **90–100% (Perfect Match):** Crops that flourish with minimal intervention.
+* **70–89% (Good Match):** High success rate under standard care.
+* **50–69% (Demanding):** Requires windbreaks, extra watering, or shade protection.
+* **<50% (Not Recommended):** Unlikely to thrive due to insufficient sun or excessive wind.
 
 ---
 
-### 3.3. Centrum Dowodzenia: „Moje Uprawy”
+### 3.2. Plant Database & Variety Selector
 
-Główny ekran codziennej pracy ogrodnika (`MyCropsView.tsx`). Agreguje wszystkie aktywne rośliny użytkownika.
+The **Plant Database & Search** tab (`PlantCatalogView.tsx`) features plants verified for pot cultivation:
 
-#### Elementy kluczowe:
-1. **Dynamiczne Rekomendacje Dnia („Hero Tasks”):**
-   * Automatycznie generowane zadania na dany dzień, uwzględniające aktualną pogodę (np. *„Dziś upał 29°C: podlej pomidory wieczorem i uzupełnij ściółkę”* lub *„Ostrzeżenie o przymrozku: wnieś papryki do mieszkania”*).
-2. **Karta Aktywnej Uprawy:**
-   * **Przycisk szybkiego podlania („Podlej dzisiaj”):** Odnotowuje zabieg w historii i zeruje licznik dni od ostatniego nawodnienia.
-   * **Przycisk „Coś jest nie tak”:** Natychmiast uruchamia Procedurę Ratunkową.
-   * **Przycisk „Timelapse” z licznikiem kadrów:** Otwiera odtwarzacz wideo poklatkowego lub dodawanie nowego zdjęcia.
-3. **Podzakładki wewnątrz uprawy:**
-   * **Doniczka & Parametry podłoża:** Wskazuje wymaganą pojemność donicy, rodzaj materiału (terakota vs plastik vs tkanina), potrzebę drenażu oraz analizę konieczności podparcia przed wiatrem. Zawiera też kalkulator kosztów założenia uprawy (`CropCostEstimatorCard`) oraz poradnik zakupowy gleby (`SoilShoppingGuideCard`).
-   * **Harmonogram i fazy rozwoju (`CropGrowthPhaseTimeline`):** Oś czasu fenologicznego z podziałem na etapy:
-     1. *Siew i kiełkowanie*
-     2. *Pojawienie się pierwszych liści właściwych (pikowanie)*
-     3. *Intensywny wzrost wegetatywny*
-     4. *Pąkowanie i kwitnienie*
-     5. *Zawiązywanie owoców*
-     6. *Dojrzewanie i zbiory*
-     Każda faza zawiera dokładne zalecenia dotyczące podlewania, zraszania i nawożenia oraz miniatury zdjęć z tego okresu.
-   * **Dziennik zdjęć & Timelapse:** Szczegółowa galeria wszystkich ujęć rośliny z analizą regularności fotografowania.
-   * **Szklarenka balkonowa:** Wskazówki mikroklimatu w przypadku stosowania osłon.
-   * **Notatki i historia:** Osobisty dziennik ogrodniczy z rejestrem nawadniania.
+* **Categorized Groups:** Vegetables, Fruits, Herbs, Edible Flowers, Sprouts, and Fungi.
+* **Active Filter Navigation:**
+  * **"100% dopasowania" (Perfect Match):** Filters exclusively for plants ideally suited to your balcony profile.
+  * **"Termin aktywny" (Active Timing):** Shows crops with active sowing, planting, or harvesting windows.
+  * **"Wysiej teraz" (Sow Now):** Filters for species whose indoor or outdoor sowing window is open right now.
+  * **"Sadź teraz" (Plant Now):** Highlights seedlings ready for outdoor hardening and transplanting.
+* **Sticky Search Sub-Header:** Features a search input (`"Szukaj nowych upraw"`) with instant 150ms debouncing and a one-click clear button (`X`).
+* **Plant Detail Guide (`PlantDetailModal.tsx`):**
+  * Recommended container volume (minimum and optimal liters) and depth.
+  * Water and fertilizer intensity schedules.
+  * Month-by-month agrotechnical calendar.
+  * **Companion Planting Matrix (Allelopathy):** Highlights beneficial neighbors (e.g., tomatoes + basil) and harmful neighbors (e.g., tomatoes + fennel).
+  * Recommended compact and dwarf varieties tailored for balcony boxes.
 
 ---
 
-### 3.4. Dziennik Wzrostu & Animacja Poklatkowa (Timelapse)
+### 3.3. Command Center: "My Crops"
 
-Unikalny moduł (`TimelapseModal.tsx`, `AddCropPhotoModal.tsx`, `cropPhotos.ts`) pozwalający na rejestrowanie i ożywianie historii życia rośliny:
+The **"My Crops"** view (`MyCropsView.tsx`) is your daily urban farming dashboard:
 
-* **Zalecany rytm fotografowania (Cadence):** System rekomenduje wykonywanie **1 zdjęcia co 7–14 dni** (lub przy przejściu do kolejnej fazy fenologicznej).
-* **Inteligentne dodawanie zdjęć (`AddCropPhotoModal`):**
-  * Obsługa aparatu fotograficznego urządzenia lub wybór pliku z dysku/pamięci telefonu.
-  * Automatyczna kompresja i skalowanie obrazu w przeglądarce przy użyciu elementu HTML5 Canvas (oszczędność pamięci i natychmiastowe ładowanie).
-  * Automatyczne wyliczenie numeru dnia (np. *Dzień 28*) oraz tygodnia uprawy na podstawie daty siewu.
-  * Przypisanie kadru do fazy fenologicznej oraz pole na notatkę z obserwacji.
-* **Odtwarzacz Poklatkowy (`TimelapseModal`):**
-  * Płynne odtwarzanie poklatkowe (Play / Pause).
-  * Regulacja prędkości klatek: **0.5x, 1x, 2x, 3x**.
-  * Tryb pętli (Loop) oraz nawigacja klatka po klatce.
-  * Interaktywny pasek kadrów (Timeline Scrubber) z etykietami dni i faz.
-  * Tryb kinowy / pełnoekranowy dla prezentacji metamorfozy rośliny.
-  * **Zestaw demonstracyjny:** Użytkownik może jednym kliknięciem załadować 6 wzorcowych kadrów pomidora balkonowego, aby natychmiast przetestować działanie modułu.
-
----
-
-### 3.5. Procedura Ratunkowa (Rescue Flow)
-
-Gdy roślina wykazuje niepokojące objawy, moduł ratunkowy (`RescueFlowModal.tsx`) prowadzi użytkownika przez precyzyjną ścieżkę diagnostyczną:
-
-1. **Wybór problemu z listy objawów:**
-   * Przelanie (żółknące, oklapłe liście, mokre podłoże, gnicie korzeni).
-   * Przesuszenie (zwiędnięte liście, ziemia odstająca od brzegów donicy).
-   * Szkodniki: mszyce, przędziorki (pajęczynki), mączliki, wciornastki.
-   * Choroby grzybowe: mączniak prawdziwy (biały nalot), szara pleśń, zaraza ziemniaczana.
-   * Niedobory: chloroza żelazowa (żółknięcie między nerwami), brak azotu, niedobór wapnia (sucha zgnilizna wierzchołkowa pomidorów).
-   * Uszkodzenia mechaniczne: poparzenie słoneczne, połamane pędy po wichurze.
-2. **Plan działania krok po kroku:**
-   * Działanie natychmiastowe (np. *„Wstrzymaj podlewanie na 4 dni i zrób nakłucia w ziemi, by doprowadzić tlen do korzeni”*).
-   * Izolacja / kwarantanna rośliny (jeśli występuje ryzyko zarażenia innych upraw).
-   * Receptury na ekologiczne opryski (wyciąg z czosnku, szare mydło potasowe, woda z sodą oczyszczoną lub mlekiem).
-3. **Automatyczne zawieszenie podlewania:**
-   * Jeśli diagnoza wskaże przelanie, aplikacja aktywuje status **„Zawieszenie podlewania na N dni”** z widocznym licznikiem na karcie uprawy, blokując przypadkowe ponowne nawodnienie.
+1. **Weather-Adaptive Daily Tasks (*Hero Tasks*):**
+   * Real-time checklist dynamically generated from local forecasts (e.g., *"Heat wave alert (30°C): water tomatoes thoroughly in the evening and replenish top mulch"* or *"Heavy rainfall incoming: empty saucer water to protect roots"*).
+2. **Interactive Crop Card:**
+   * **Quick Water Button ("Podlej dzisiaj"):** Records watering events and resets the days-since-watered counter.
+   * **Emergency Button ("Coś jest nie tak"):** Instantly launches the diagnostic Rescue Flow.
+   * **Timelapse Button:** Displays current photo count and opens the frame animation viewer.
+3. **In-Depth Crop Detail Tabs:**
+   * **Container & Substrate:** Displays required container volume, material selection, drainage needs, and wind support recommendations.
+   * **Phenological Timeline (`CropGrowthPhaseTimeline`):** Tracks progress across 6 development milestones:
+     1. Sowing & Germination
+     2. Seedling & First True Leaves (Pricking out)
+     3. Active Vegetative Growth
+     4. Budding & Flowering
+     5. Fruit Setting
+     6. Ripening & Harvest
+   * **Photo Journal & Timelapse:** Timeline of all photos recorded for the plant with cadence regularity indicators.
+   * **Balcony Greenhouse Tips:** Microclimate guidelines for enclosed structures.
+   * **Notes & Irrigation History:** Timestamped care logbook.
 
 ---
 
-### 3.6. Kalkulator Donic, Podłoża i Obciążenia Balkonu
+### 3.4. Growth Photo Journal & Timelapse Video Player
 
-Moduł inżynieryjny (`PotCalculator.tsx`, `SoilCrossSection.tsx`):
+The **Timelapse & Photo Journal** module (`TimelapseModal.tsx`, `AddCropPhotoModal.tsx`, `cropPhotos.ts`) transforms your growing journey into an animated record:
 
-* **Obsługiwane kształty pojemników:**
-  1. *Okrągła / Stożkowa:* Średnica górna, średnica dolna, wysokość.
-  2. *Skrzynka balkonowa / Koryto prostokątne:* Długość, szerokość, wysokość.
-  3. *Kwadratowa / Sześcienna:* Długość boku, wysokość.
-  4. *Misa / Wisząca:* Promień i głębokość.
-* **Prawidłowy przekrój warstwowy podłoża (Graficzny schemat Canvas):**
-  * **Warstwa 1 (10–15% dna):** Drenaż z keramzytu lub żwiru płukanego (zapobiega zatykaniu otworów odpływowych).
-  * **Warstwa 2:** Agrowłóknina filtracyjna (oddziela drenaż od ziemi, zapobiegając zamulaniu keramzytu).
-  * **Warstwa 3 (75–80%):** Podłoże zasadnicze (ziemia uniwersalna/warzywna + kompost + 15–20% perlitu dla napowietrzenia).
-  * **Warstwa 4 (wierzch 2–3 cm):** Mulcz / ściółka (drobna kora sosnowa, keramzyt lub słoma) – redukuje parowanie o nawet 60%.
-* **Kalkulator Zakupowy:** Przelicza litry na standardowe worki sklepowe (np. worki ziemi 20L, worki keramzytu 5L, perlit 2L).
-* **Bezpieczeństwo Konstrukcyjne Balkonu:** Oblicza szacunkowy **ciężar donicy po obfitym podlaniu** (woda + mokra ziemia + waga pojemnika), ostrzegając przed przeciążeniem balustrady lub płyty balkonu.
-
----
-
-### 3.7. Kalendarz Prac Ogrodniczych
-
-Moduł terminarza (`CalendarView.tsx`):
-
-* **Widok dwufunkcyjny:**
-  * *Harmonogram moich upraw:* Pokazuje nadchodzące zabiegi wyłącznie dla roślin znajdujących się na Twoim balkonie.
-  * *Ogólny terminarz ogrodnika:* Przegląd prac dla wszystkich gatunków w danym miesiącu (styczeń – grudzień).
-* **Kolorystyczne kody czynności:**
-  * 🟡 Żółty: Siew w mieszkaniu na rozsadę (indoors).
-  * 🟢 Zielony: Siew bezpośredni do donic na balkonie.
-  * 🔵 Niebieski: Sadzenie / pikowanie / hartowanie rozsad.
-  * 🟣 Fioletowy: Kwitnienie i intensywne nawożenie.
-  * 🔴 Czerwony: Zbiory plonów.
+* **Cadence Guidance:** Recommends capturing **1 photo every 7–14 days** (or at major phase transitions).
+* **Smart Photo Capture (`AddCropPhotoModal`):**
+  * Supports direct camera capture or local file upload.
+  * Automatic in-browser compression via HTML5 Canvas (high resolution with minimal byte size for instant loading).
+  * Automatically calculates day numbers (e.g., *Day 28*) and weeks elapsed since sowing.
+  * Associates the photo with its active phenological phase and optional notes.
+* **Interactive Timelapse Player (`TimelapseModal`):**
+  * Smooth frame-by-frame animation with Play / Pause controls.
+  * Playback speed toggle: **0.5x, 1x, 2x, and 3x**.
+  * Continuous loop toggle and manual step navigation.
+  * Interactive timeline scrubber with day and phase badges.
+  * Fullscreen theater mode.
+  * **Instant Demo Set:** One-click loader adds 6 benchmark photos of a Balcony Tomato for immediate testing.
 
 ---
 
-### 3.8. Moduł Szklarenki Balkonowej
+### 3.5. Rescue Flow (Emergency Plant Diagnostics)
 
-Dla użytkowników posiadających małe szklarenki regałowe lub minitunele foliowe (`greenhouse.ts`):
-* Zasady wietrzenia w słoneczne dni (zapobieganie ugotowaniu rozsad – temperatura wewnątrz może przekroczyć 40°C już w kwietniu!).
-* Kontrola wilgotności i zraszania.
-* Zabezpieczenie przed skraplaniem wody na liściach (profilaktyka szarej pleśni).
+When a plant shows signs of distress, the **Rescue Flow** (`RescueFlowModal.tsx`) provides structured diagnostic triage:
 
----
-
-### 3.9. System Kont i Synchronizacja w Chmurze
-
-* **Model Offline-First:** Nowy użytkownik może natychmiast korzystać z aplikacji bez rejestracji – wszystkie dane są zapisywane w pamięci lokalnej (`LocalStorage`).
-* **Synchronizacja Firebase:** Po zalogowaniu e-mailem (`AuthModal.tsx` + `firebase.ts`) dane balkonu i upraw są automatycznie synchronizowane z chmurą Google Firestore, umożliwiając dostęp z telefonu, tabletu i komputera.
-
----
-
-## 4. Instrukcja Użytkownika (Manual Krok po Kroku)
-
-### Krok 1: Kalibracja Twojego Balkonu
-1. Po pierwszym uruchomieniu aplikacji kliknij **„Rozpocznij konfigurację”** (lub wejdź w zakładkę profilu balkonu w prawym górnym rogu).
-2. Wybierz stronę świata, na którą wychodzi Twój balkon (użyj kompasu w smartfonie, jeśli nie masz pewności).
-3. Podaj piętro budynku oraz określ stopień osłonięcia przed wiatrem.
-4. Wybierz region Polski i zatwierdź.
-5. *Efekt:* Baza roślin natychmiast przeliczy wskaźniki dopasowania dla wszystkich gatunków.
-
-### Krok 2: Dobór roślin i weryfikacja kompatybilności
-1. Przejdź do zakładki **„Baza Roślin & Dobór”**.
-2. Włącz filtr **„Wysiej teraz”** lub **„Sadź teraz”**, aby zobaczyć rośliny aktualne dla obecnej pory roku.
-3. Sprawdź wskaźnik zgodności (zielony pasek procentowy). Wybieraj rośliny z dopasowaniem powyżej 75%.
-4. Kliknij na roślinę, by przeczytać jej wymagania, sprawdzić dobre sąsiedztwo i wybrać docelową odmianę (np. pomidor karłowy *Vilma* zamiast wysokiego pomidora gruntowego).
-5. Kliknij **„+ Dodaj do Moich Upraw”**.
-
-### Krok 3: Dobór donicy, zakup ziemi i przygotowanie warstw
-1. Wejdź w zakładkę **„Kalkulator Donic & Podłoża”**.
-2. Wybierz donicę, którą posiadasz lub planujesz kupić (wprowadź jej wymiary w centymetrach).
-3. Sprawdź, czy jej litraż spełnia wymagania Twojej rośliny.
-4. Zobacz wygenerowaną listę zakupową (ile litrów drenażu, ziemi i perlitu potrzebujesz).
-5. Zaaranżuj donicę według schematu:
-   * Na dno wsyp 3–5 cm keramzytu.
-   * Ułóż krążek z agrowłókniny (opcjonalnie, ale bardzo zalecane).
-   * Wsyp wymieszaną ziemię z perlitem.
-   * Po posadzeniu rośliny posyp wierzch 2 cm kory lub keramzytu.
-
-### Krok 4: Prowadzenie uprawy i codzienna opieka
-1. Otwórz aplikację rano przy porannej kawie – sprawdź **„Zadania dnia”** na karcie **„Moje Uprawy”**.
-2. Sprawdź alerty pogodowe:
-   * W przypadku ulewy lub silnego wiatru – zabezpiecz pędy lub przestaw donice pod ścianę.
-   * W przypadku upału – podlej rośliny wczesnym rankiem lub po zachodzie słońca.
-3. Po podlaniu kliknij **„Podlej dzisiaj”** przy danej roślinie.
-
-### Krok 5: Tworzenie pamiątkowego Timelapse ze wzrostu
-1. Raz w tygodniu (np. w każdą niedzielę) podejdź do rośliny z telefonem.
-2. Na karcie uprawy kliknij przycisk **„Timelapse”** (lub wejdź w zakładkę *Dziennik zdjęć & Timelapse*).
-3. Kliknij **„+ Dodaj zdjęcie”** i zrób zdjęcie rośliny (staraj się trzymać aparat pod podobnym kątem i w podobnej odległości).
-4. Wybierz aktualny etap (np. *Kwitnienie*) i wpisz krótką notatkę (np. *„Pojawiły się pierwsze 3 żółte kwiatki!”*).
-5. Gdy zgromadzisz minimum 2–3 zdjęcia, kliknij **„Odtwórz timelapse”**. Obserwuj metamorfozę swojej rośliny, zmieniaj prędkości odtwarzania lub załaduj klatki demonstracyjne, by zobaczyć docelowy efekt!
-
-### Krok 6: Co zrobić, gdy roślina choruje?
-1. Jeśli zauważysz żółknące liście, plamy, szkodniki lub więdnięcie – nie podlewaj na oślep!
-2. Otwórz kartę tej rośliny i kliknij czerwony przycisk **„Coś jest nie tak”**.
-3. Zaznacz objawy, które obserwujesz.
-4. Przeczytaj diagnozę:
-   * Jeśli podłoże jest przelane – zaakceptuj wstrzymanie podlewania. Aplikacja włączy bezpieczne odliczanie dni do ponownego nawodnienia.
-   * Przygotuj zalecany ekologiczny oprysk (np. roztwór szarego mydła na mszyce lub wywar ze skrzypu/czosnku na grzyby).
+1. **Symptom Identification:**
+   * *Overwatering:* Yellowing lower leaves, drooping foliage, wet substrate, root rot smell.
+   * *Underwatering:* Crisp dry leaves, soil pulling away from pot edges.
+   * *Pests:* Aphids, spider mites (fine webs), whiteflies, fungus gnats, thrips.
+   * *Fungal Infections:* Powdery mildew (white powder coating), gray mold (botrytis), tomato early/late blight.
+   * *Nutrient Deficiencies:* Iron chlorosis (yellow leaves with green veins), nitrogen deficiency (overall pale greening), calcium deficiency (blossom-end rot on tomatoes).
+   * *Physical/Weather Damage:* Sunburn patches, wind-snapped branches.
+2. **Actionable Emergency Plan:**
+   * Immediate rescue steps (e.g., *"Halt watering for 4 days, aerate substrate with wooden skewers to deliver oxygen to roots"*).
+   * Plant quarantine recommendations if contagious pests or pathogens are detected.
+   * Organic treatment recipes (potassium horticultural soap, garlic extract, baking soda spray, diluted milk spray).
+3. **Automated Watering Suspension:**
+   * When diagnosing root over-saturation, the system automatically activates a **"Watering Suspended for N Days"** cooldown timer on the crop card, preventing premature re-watering.
 
 ---
 
-## 5. Eksperckie Zasady Uprawy Pojemnikowej
+### 3.6. Container, Soil & Balcony Load Calculator
 
-| Zagadnienie | Zasada Ekspercka | Najczęstszy Błąd |
+The engineering calculator (`PotCalculator.tsx`, `SoilCrossSection.tsx`) ensures safety and proper root development:
+
+* **Supported Container Shapes:**
+  * Cylindrical / Conical (Top diameter, bottom diameter, height)
+  * Rectangular Box / Trough (Length, width, height)
+  * Square / Cube (Side length, height)
+  * Round Bowl / Hanging Basket (Radius, depth)
+* **Ideal 4-Layer Substrate Profile (Interactive Canvas Diagram):**
+  * **Layer 1 (10–15% bottom depth):** Expanded clay aggregate (LECA / *keramzyt*) drainage layer preventing blocked drain holes.
+  * **Layer 2:** Permeable geotextile filter fleece separating drainage from potting mix.
+  * **Layer 3 (75–80% middle depth):** Aerated potting mix enriched with 15–20% horticultural perlite and worm castings/compost.
+  * **Layer 4 (Top 2–3 cm):** Organic pine bark mulch, coconut coir, or LECA mulch reducing surface evaporation by up to 60%.
+* **Shopping Bag Estimator:** Converts calculated liters into standard retail bag sizes (e.g., 20L soil bags, 5L LECA bags, 2L perlite bags).
+* **Structural Balcony Safety:** Computes **total saturated wet weight** (wet soil + water reserve + container tare) to prevent exceeding structural load allowances.
+
+---
+
+### 3.7. Seasonal Gardening Calendar & Companion Planting
+
+The **Calendar View** (`CalendarView.tsx`) provides seasonal planning:
+
+* **Dual-Mode Filtering:**
+  * *My Crops Schedule:* Shows upcoming tasks strictly for plants currently on your balcony.
+  * *Global Monthly Almanac:* Comprehensive monthly task overview for all temperate crops (January to December).
+* **Color-Coded Action Badges:**
+  * 🟡 Yellow: Indoor sowing for seedling starts.
+  * 🟢 Green: Direct outdoor sowing in balcony containers.
+  * 🔵 Blue: Transplanting, hardening off, and potting outdoors.
+  * 🟣 Purple: Peak flowering and nutrient feeding.
+  * 🔴 Red: Harvesting fruits, leaves, and roots.
+
+---
+
+### 3.8. Mini-Greenhouse & Cold Frame Management
+
+For gardeners using vertical tiered mini-greenhouses with plastic covers (`greenhouse.ts`):
+* **Thermal Management:** Morning ventilation guidelines to prevent scorching (interior greenhouse temperatures can exceed 40°C on sunny spring days).
+* **Condensation Control:** Air circulation routines to prevent fungal disease development on tender seedlings.
+
+---
+
+### 3.9. Offline-First Storage & Firebase Cloud Sync
+
+* **Zero-Setup Offline Mode:** Starts instantly without registration. All settings, crops, logs, and photos are saved securely in browser `localStorage`.
+* **Cloud Sync with Firebase:** Sign in with Google or email (`AuthModal.tsx` + `firebase.ts`) to synchronize your balcony and crop data across phones, tablets, and desktop computers.
+
+---
+
+## 4. Step-by-Step User Instructions
+
+### Step 1: Calibrate Your Balcony Profile
+1. On first launch, click **"Rozpocznij konfigurację"** (*Start Setup*) or open the Balcony Profile icon in the top header.
+2. Select your balcony's compass orientation (use your smartphone compass app if unsure).
+3. Specify your floor level, enclosure type (open railing, solid wall, or loggia), and average daily sun hours.
+4. Select your geographic region in Poland (e.g., *mazowieckie*, *małopolskie*).
+5. Click **"Zapisz profil balkonu"** (*Save Balcony Profile*). The entire plant catalog will immediately recompute match ratings.
+
+### Step 2: Select Suitable Crops & Verify Compatibility
+1. Navigate to the **"Baza Roślin & Dobór"** (*Plant Catalog & Selection*) tab.
+2. Use the sticky header search bar to find species or click quick-filter pills like **"100% dopasowania"** or **"Wysiej teraz"**.
+3. Target plants with a suitability score above 75%.
+4. Click any plant card to inspect its care sheet, container size needs, and companion planting compatibility.
+5. Choose your target cultivar (e.g., dwarf patio tomato *Vilma* instead of an indeterminate field tomato).
+6. Click **"+ Dodaj do balkonu"** (*Add to My Balcony*).
+
+### Step 3: Size Containers & Prepare Stratified Soil
+1. Open the **"Kalkulator Donic & Podłoża"** (*Pot & Soil Calculator*) tab.
+2. Enter the dimensions (in centimeters) of your planters.
+3. Verify that the calculated volume meets the plant's recommended liter capacity.
+4. Check the shopping list to purchase the right number of soil, LECA, and perlite bags.
+5. Layer your container:
+   * Pour 3–5 cm of LECA drainage at the bottom.
+   * Place a circle of geotextile filter fabric.
+   * Fill with pre-mixed potting soil and perlite.
+   * Plant your seedling and top with 2 cm of mulch.
+
+### Step 4: Routine Care, Watering Logs & Daily Hero Tasks
+1. Check your morning **Hero Tasks** in the **"Moje Uprawy"** (*My Crops*) tab for weather-driven advice.
+2. Review local weather alerts:
+   * Strong wind / rainstorm: Move pots closer to the building wall.
+   * Heatwave: Water thoroughly early in the morning or after sunset.
+3. After watering, click **"Podlej dzisiaj"** (*Water Today*) on the crop card to log the action.
+
+### Step 5: Photograph Growth & Play Back Timelapse Videos
+1. Once every 7–14 days, photograph your plant from the same angle and distance.
+2. Click **"Timelapse"** on the crop card, then select **"+ Dodaj zdjęcie"** (*Add Photo*).
+3. Confirm the automatically detected phenological phase and add a short note (e.g., *"First flower blossoms opened!"*).
+4. Once you have multiple photos, click **"Odtwórz timelapse"** (*Play Timelapse*). Adjust the playback speed between 0.5x and 3x, or toggle fullscreen mode.
+
+### Step 6: Diagnose Sick Plants & Apply Rescue Protocols
+1. If you spot wilting, pest webbing, or leaf spots, click **"Coś jest nie tak"** (*Something is Wrong*).
+2. Select your observed symptoms from the interactive checklist.
+3. Follow the diagnostic recommendations:
+   * If overwatered: Accept the automatic watering suspension cooldown.
+   * Prepare the recommended organic remedy spray (e.g., potassium soap for aphids or baking soda solution for mildew).
+
+---
+
+## 5. Expert Container Cultivation Rules & Common Mistakes
+
+| Horticultural Topic | Recommended Expert Practice | Common Beginner Mistake |
 | :--- | :--- | :--- |
-| **Podlewanie** | Sprawdzaj wilgotność palcem na głębokości 3–4 cm. Podlewaj obficie, ale rzadziej, aż woda lekko wycieknie na podstawkę. Po 20 minutach wylej nadmiar wody z podstawki. | Codzienne, płytkie chlapanie małą ilością wody lub pozostawianie donicy stojącej stale w wodzie (gnicie korzeni). |
-| **Drenaż** | Każda donica balkonowa **musi** mieć otwory odpływowe i minimum 3–5 cm warstwy keramzytu na dnie. | Sadzenie bezpośrednio do osłonek bez dziur na dnie. |
-| **Dobór Ziemi** | Stosuj lekkie podłoże strukturalne z dodatkiem 15–20% perlitu i kompostu. Ziemia ogrodowa z worka często zbija się w twardą bryłę. | Używanie ciężkiej gliniastej ziemi wykopanej z ogródka lub najtańszego torfu, który po wyschnięciu nie chłonie wody. |
-| **Wiatr na Piętrach** | Na 3. piętrze i wyżej stosuj ciężkie donice z terakoty lub betonu architektonicznego i mocuj pędy do drabinek bambusowych przywiązanych do balustrady. | Pozostawianie wysokich pomidorów w lekkich plastikowych doniczkach bez podparcia – wywrócenie przy pierwszym podmuchu. |
-| **Nawożenie** | W donicach składniki pokarmowe wypłukują się z każdym podlaniem. Od fazy kwitnienia stosuj nawozy organiczne (biohumus, nawóz z alg, melasa potasowa) co 7–14 dni. | Przelanie nawozem mineralnym (zasolenie podłoża i poparzenie korzeni) lub brak nawożenia przez cały sezon. |
+| **Watering** | Check soil moisture with a finger 3–4 cm deep. Water deeply until a few drops drain into the saucer. Empty excess saucer water after 20 minutes. | Daily shallow sprinkling that wets only the top centimeter, or leaving pots sitting permanently in stagnant saucer water. |
+| **Drainage** | Every container **must** have drainage holes and a 3–5 cm bottom layer of expanded clay aggregate (LECA). | Planting in decorative outer cachepots without bottom drainage holes, leading to inevitable root rot. |
+| **Soil Selection** | Use loose potting soil blended with 15–20% horticultural perlite and compost. | Using dense garden dirt dug from outdoor soil, which compacts into an airless, water-repellent block in pots. |
+| **Wind Protection** | On floors 3 and higher, use heavy terracotta or concrete pots and stake tall plants to railings with flexible ties. | Leaving tall tomatoes or peppers in lightweight plastic containers, which blow over in the first wind gust. |
+| **Fertilization** | Nutrients leach out of container substrate with every watering. Apply balanced organic fertilizer (biohumus, seaweed extract) every 7–14 days during active growth. | Overdosing with synthetic chemical fertilizer granules (burning roots) or failing to fertilize at all throughout the season. |
 
 ---
 
-*Aplikacja „Donicowy Specjalista” – Twój balkonowy asystent ogrodniczy od nasionka po obfite zbiory.*
+*Container Gardening Specialist (Donicowy Specjalista) – Your intelligent urban companion from seed to harvest.*

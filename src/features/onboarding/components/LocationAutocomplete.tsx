@@ -108,6 +108,17 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
         />
       </div>
 
+      {filteredRegions.length === 0 && (
+        <div
+          data-testid="location-empty-state"
+          className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 text-xs sm:text-sm flex items-start gap-3 animate-fade-in my-2"
+        >
+          <p className="font-semibold">
+            Nie znaleziono lokalizacji. Wybierz województwo ręcznie z listy.
+          </p>
+        </div>
+      )}
+
       <div
         ref={listRef}
         id="location-suggestions-list"
@@ -135,7 +146,7 @@ export const LocationAutocomplete: React.FC<LocationAutocompleteProps> = ({
               onKeyDown={(e) => handleItemKeyDown(e, index, regKey)}
               className={`p-3 rounded-xl border border-border bg-card hover:bg-emerald-50 hover:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:outline-none transition-colors cursor-pointer flex items-center justify-between group min-h-[44px] min-w-[44px] text-left text-xs sm:text-sm font-semibold dark:border-stone-800 dark:bg-stone-900 dark:hover:bg-emerald-950/40 dark:hover:border-emerald-500 ${
                 isSelected
-                  ? 'border-2 border-emerald-600 dark:border-emerald-400 bg-emerald-50/90 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/30'
+                  ? 'border-2 border-emerald-500 bg-emerald-50/50 dark:border-emerald-400 dark:bg-emerald-950 text-emerald-950 dark:text-emerald-100 ring-2 ring-emerald-500/30'
                   : isSingleRemaining
                   ? 'border-emerald-500 dark:border-emerald-400 bg-emerald-50/50 dark:bg-emerald-950/40 text-stone-900 dark:text-stone-100 ring-2 ring-emerald-500/50 dark:ring-emerald-400/50 shadow-xs'
                   : isFocused
