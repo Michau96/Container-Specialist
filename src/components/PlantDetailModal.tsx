@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useScrollLock } from '../hooks/useScrollLock';
 import {
@@ -34,6 +34,7 @@ import { getPlantGreenhouseInfo } from '../lib/greenhouse';
 import { getPlantVarieties } from '../lib/varietyData';
 import { resolvePlantRecord } from '../lib/plantSchema';
 import { useLanguage } from '../lib/LanguageContext';
+import { getTranslatedPlant, getTranslatedVarietyBadge } from '../lib/plantTranslations';
 
 interface Props {
   plant: Plant | null;
@@ -46,7 +47,7 @@ interface Props {
 }
 
 export const PlantDetailModal: React.FC<Props> = ({
-  plant,
+  plant: rawPlant,
   onClose,
   onOpenPotCalc,
   isMyCrop = false,
@@ -57,6 +58,8 @@ export const PlantDetailModal: React.FC<Props> = ({
   const { language } = useLanguage();
   const isEn = language === 'en';
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
+
+  const plant = useMemo(() => (rawPlant ? getTranslatedPlant(rawPlant, language) : null), [rawPlant, language]);
 
   // Canonical resolution ensures modal title, alt text, recommendations, and plantId match exactly
   const resolved = plant ? resolvePlantRecord(plant) : null;
@@ -746,7 +749,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                           {item.name}
                         </span>
                         <span className="text-[10px] font-semibold text-stone-700 dark:text-stone-300 bg-stone-200/80 dark:bg-stone-700 px-2 py-0.5 rounded-full">
-                          {item.badge}
+                          {isEn ? getTranslatedVarietyBadge(item.badge, 'en') : item.badge}
                         </span>
                       </div>
                       <p className="text-[11px] text-stone-600 dark:text-stone-400 mt-0.5 leading-relaxed">

@@ -55,7 +55,7 @@ export const CropGrowthPhaseTimeline: React.FC<Props> = ({
   const photos = [...(crop.photos || [])].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
-  const cadence = getPhotoCadenceInfo(crop, plant);
+  const cadence = getPhotoCadenceInfo(crop, plant, isEn);
 
   const selectedPhase: PlantGrowthPhase = info.phases[selectedPhaseIndex] || info.currentPhase;
   const isSelectedCurrent = selectedPhaseIndex === info.currentPhaseIndex;

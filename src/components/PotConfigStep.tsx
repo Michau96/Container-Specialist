@@ -12,6 +12,8 @@ import {
 import { Plant, PotShape, LegacyPotMaterial, SupportType } from '../types';
 import { POT_MATERIAL_OPTIONS, POT_SUPPORT_OPTIONS } from '../lib/potSupportEvaluations';
 import { useLanguage } from '../lib/LanguageContext';
+export { PotConfigurationStep } from './PotConfigurationStep';
+export type { PotConfigurationStepProps } from './PotConfigurationStep';
 
 export interface PotConfigStepProps {
   availablePlants: Plant[];
@@ -489,6 +491,18 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
             </div>
           </div>
         </>
+      )}
+
+      {/* Live calculation badge right below dimension input fields */}
+      {volumeLiters > 0 && (
+        <div
+          data-testid="pot-volume-live-badge"
+          className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-sm font-medium border border-emerald-200"
+        >
+          <span>
+            🪴 Szacowana objętość: <strong>{volumeLiters} L</strong> podłoża
+          </span>
+        </div>
       )}
 
       {/* Sub-requirement 7: Do not hide validation errors inside collapsed sections */}

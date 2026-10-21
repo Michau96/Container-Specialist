@@ -102,7 +102,7 @@ export const TimelapseModal: React.FC<Props> = ({
 
   const currentPhoto: CropPhotoEntry | undefined = photos[currentIndex];
   const firstPhoto: CropPhotoEntry | undefined = photos[0];
-  const cadence = getPhotoCadenceInfo(crop, plant);
+  const cadence = getPhotoCadenceInfo(crop, plant, isEn);
 
   const handleNext = () => {
     setIsPlaying(false);

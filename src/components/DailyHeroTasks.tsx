@@ -29,7 +29,8 @@ import {
   DailyCropsRecommendation,
   UserAccount,
 } from '../types';
-import { isWateringSuspended, getDaysRemainingInSuspension } from '../lib/rescueData';
+import { isWateringSuspended, getDaysRemainingInSuspension, getLocalizedRescuePlan } from '../lib/rescueData';
+import { getPlantName } from '../lib/plantTranslations';
 import { useLanguage } from '../lib/LanguageContext';
 
 export interface DailyTaskItem {
@@ -133,26 +134,27 @@ export const DailyHeroTasks: React.FC<Props> = ({
       const cropKey = crop.id || `${crop.plantId}_${crop.selectedVariety || index}`;
       const rawVariety = crop.selectedVariety || plant?.top_varieties?.[0]?.name || plant?.varieties?.[0] || '';
       const variety = typeof rawVariety === 'string' ? rawVariety : (rawVariety as any)?.name || '';
-      const plantName = plant?.name || (isEn ? 'Plant' : 'Roślina');
+      const plantName = (plant ? getPlantName(plant, isEn ? 'en' : 'pl') : '') || plant?.name || (isEn ? 'Plant' : 'Roślina');
 
       // CHECK FOR ACTIVE RESCUE MODE FIRST
       if (crop.rescuePlan?.active) {
-        const isSuspended = isWateringSuspended(crop.rescuePlan);
-        const daysLeft = getDaysRemainingInSuspension(crop.rescuePlan);
+        const locPlan = getLocalizedRescuePlan(crop.rescuePlan, isEn ? 'en' : 'pl') || crop.rescuePlan;
+        const isSuspended = isWateringSuspended(locPlan);
+        const daysLeft = getDaysRemainingInSuspension(locPlan);
         const rescueTaskId = `rescue_${cropKey}_${todayStr}`;
         const isRescueDoneToday = genericCompletedTaskIds.includes(rescueTaskId);
 
         const rescueTitle = isEn
-          ? `🚨 Rescue ${plantName.toLowerCase()}: ${crop.rescuePlan.issueTitle}`
-          : `🚨 Ratuj ${plantName.toLowerCase()}: ${crop.rescuePlan.issueTitle}`;
+          ? `🚨 Rescue ${plantName.toLowerCase()}: ${locPlan.issueTitle}`
+          : `🚨 Ratuj ${plantName.toLowerCase()}: ${locPlan.issueTitle}`;
         
         const rescueSubtitle = isSuspended
           ? isEn
-            ? `Watering schedule SUSPENDED (${daysLeft > 0 ? `${daysLeft} days left` : 'holding period'}). ${crop.rescuePlan.immediateAction}`
-            : `Harmonogram podlewania ZAWIESZONY (${daysLeft > 0 ? `jeszcze ${daysLeft} dni` : 'karencja'}). ${crop.rescuePlan.immediateAction}`
+            ? `Watering schedule SUSPENDED (${daysLeft > 0 ? `${daysLeft} days left` : 'holding period'}). ${locPlan.immediateAction}`
+            : `Harmonogram podlewania ZAWIESZONY (${daysLeft > 0 ? `jeszcze ${daysLeft} dni` : 'karencja'}). ${locPlan.immediateAction}`
           : isEn
-          ? `Water suspension ended. Follow steps: ${crop.rescuePlan.immediateAction}`
-          : `Karencja wstrzymania wody minęła. Wykonaj zalecenia: ${crop.rescuePlan.immediateAction}`;
+          ? `Water suspension ended. Follow steps: ${locPlan.immediateAction}`
+          : `Karencja wstrzymania wody minęła. Wykonaj zalecenia: ${locPlan.immediateAction}`;
 
         tasks.push({
           id: rescueTaskId,
@@ -163,7 +165,7 @@ export const DailyHeroTasks: React.FC<Props> = ({
           subtitle: rescueSubtitle,
           badge: isEn ? '🚑 Rescue Mode' : '🚑 Tryb ratunkowy',
           badgeTone: 'rose',
-          icon: crop.rescuePlan.issueIcon || '🚑',
+          icon: locPlan.issueIcon || '🚑',
           iconBg: 'from-rose-500/20 to-amber-500/20 text-rose-700 dark:text-rose-300 border-rose-300 dark:border-rose-800',
           actionText: isRescueDoneToday ? (isEn ? 'Steps Done' : 'Kroki wykonane') : (isEn ? 'Rescue Steps' : 'Kroki ratunkowe'),
           isCompleted: isRescueDoneToday,

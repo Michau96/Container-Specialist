@@ -88,7 +88,12 @@ export interface PhotoCadenceInfo {
   canPlayTimelapse: boolean;
 }
 
-export function getPhotoCadenceInfo(crop: MyCropItem, _plant?: Plant): PhotoCadenceInfo {
+export function getPhotoCadenceInfo(
+  crop: MyCropItem,
+  _plant?: Plant,
+  langOrIsEn: boolean | string = false
+): PhotoCadenceInfo {
+  const isEn = langOrIsEn === true || langOrIsEn === 'en';
   const photos = crop.photos || [];
   const sorted = [...photos].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   const lastPhoto = sorted.length > 0 ? sorted[sorted.length - 1] : null;
@@ -100,8 +105,10 @@ export function getPhotoCadenceInfo(crop: MyCropItem, _plant?: Plant): PhotoCade
       daysSinceLastPhoto: null,
       isDueForPhoto: true,
       isOverdue: false,
-      cadenceMessage: 'Zrób pierwsze zdjęcie, by rozpocząć tworzenie animacji poklatkowej (timelapse)!',
-      badgeLabel: 'Zrób 1. zdjęcie',
+      cadenceMessage: isEn
+        ? 'Take your first photo to start building a timelapse animation!'
+        : 'Zrób pierwsze zdjęcie, by rozpocząć tworzenie animacji poklatkowej (timelapse)!',
+      badgeLabel: isEn ? 'Take 1st photo' : 'Zrób 1. zdjęcie',
       canPlayTimelapse: false,
     };
   }
@@ -118,18 +125,26 @@ export function getPhotoCadenceInfo(crop: MyCropItem, _plant?: Plant): PhotoCade
   let badgeLabel = '';
 
   if (diffDays === 0) {
-    cadenceMessage = 'Zdjęcie zrobione dzisiaj! Kolejny kadr zrób za 7–14 dni, by uchwycić skok wzrostu.';
-    badgeLabel = 'Zdjęcie dodane dziś ✓';
+    cadenceMessage = isEn
+      ? 'Photo taken today! Capture your next shot in 7–14 days to track growth.'
+      : 'Zdjęcie zrobione dzisiaj! Kolejny kadr zrób za 7–14 dni, by uchwycić skok wzrostu.';
+    badgeLabel = isEn ? 'Photo added today ✓' : 'Zdjęcie dodane dziś ✓';
   } else if (diffDays < 7) {
     const daysLeft = 7 - diffDays;
-    cadenceMessage = `Ostatnie zdjęcie dodano ${diffDays} dni temu. Następny kadr zalecany za ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'}.`;
-    badgeLabel = `${diffDays} dni temu`;
+    cadenceMessage = isEn
+      ? `Last photo taken ${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago. Next shot recommended in ${daysLeft} ${daysLeft === 1 ? 'day' : 'days'}.`
+      : `Ostatnie zdjęcie dodano ${diffDays} dni temu. Następny kadr zalecany za ${daysLeft} ${daysLeft === 1 ? 'dzień' : 'dni'}.`;
+    badgeLabel = isEn ? `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago` : `${diffDays} dni temu`;
   } else if (diffDays < 14) {
-    cadenceMessage = `Minęło ${diffDays} dni od ostatniego kadru – idealny moment na uwiecznienie postępu tego tygodnia!`;
-    badgeLabel = 'Czas na kadr tygodnia';
+    cadenceMessage = isEn
+      ? `${diffDays} days since last photo – perfect time to capture this week's progress!`
+      : `Minęło ${diffDays} dni od ostatniego kadru – idealny moment na uwiecznienie postępu tego tygodnia!`;
+    badgeLabel = isEn ? 'Time for weekly photo' : 'Czas na kadr tygodnia';
   } else {
-    cadenceMessage = `Minęło już ${diffDays} dni od ostatniego zdjęcia. Roślina na pewno mocno podrosła – dodaj nowy kadr!`;
-    badgeLabel = 'Zaległe zdjęcie';
+    cadenceMessage = isEn
+      ? `${diffDays} days have passed since your last photo. Your plant has surely grown – snap a new photo!`
+      : `Minęło już ${diffDays} dni od ostatniego zdjęcia. Roślina na pewno mocno podrosła – dodaj nowy kadr!`;
+    badgeLabel = isEn ? 'Overdue photo' : 'Zaległe zdjęcie';
   }
 
   return {

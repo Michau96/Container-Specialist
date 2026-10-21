@@ -541,8 +541,8 @@ export default function App() {
   }, [plants, myCropIds]);
 
   const dailyRecommendation = useMemo(() => {
-    return computeDailyRecommendation(weather, userSpec, myPlants, myCrops);
-  }, [weather, userSpec, myPlants, myCrops]);
+    return computeDailyRecommendation(weather, userSpec, myPlants, myCrops, language);
+  }, [weather, userSpec, myPlants, myCrops, language]);
 
   // Switch plant group (Wszystkie / Warzywa / Owoce / Zioła / Ozdobne)
   const handleGroupChange = (group: PlantGroup) => {

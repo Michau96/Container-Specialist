@@ -21,6 +21,8 @@ import {
   createRescuePlan,
   isWateringSuspended,
   getDaysRemainingInSuspension,
+  getLocalizedRescueIssue,
+  getLocalizedRescuePlan,
 } from '../lib/rescueData';
 import { useLanguage } from '../lib/LanguageContext';
 import { getPlantName } from '../lib/plantTranslations';
@@ -52,21 +54,23 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [isChangingIssue, setIsChangingIssue] = useState<boolean>(false);
 
-  // Active plan state
-  const activePlan = crop.rescuePlan?.active ? crop.rescuePlan : null;
-  const isSuspended = isWateringSuspended(activePlan ?? undefined);
-  const remainingDays = getDaysRemainingInSuspension(activePlan ?? undefined);
+  // Active plan state with full dynamic localization
+  const rawActivePlan = crop.rescuePlan?.active ? crop.rescuePlan : null;
+  const activePlan = rawActivePlan ? getLocalizedRescuePlan(rawActivePlan, isEn ? 'en' : 'pl') : null;
+  const isSuspended = isWateringSuspended(rawActivePlan ?? undefined);
+  const remainingDays = getDaysRemainingInSuspension(rawActivePlan ?? undefined);
 
-  // Filtered issues
+  // Filtered issues localized
   const filteredIssues = useMemo(() => {
-    if (categoryFilter === 'all') return RESCUE_ISSUES;
-    return RESCUE_ISSUES.filter((i) => i.category === categoryFilter);
-  }, [categoryFilter]);
+    const list = categoryFilter === 'all' ? RESCUE_ISSUES : RESCUE_ISSUES.filter((i) => i.category === categoryFilter);
+    return list.map((i) => getLocalizedRescueIssue(i, isEn ? 'en' : 'pl'));
+  }, [categoryFilter, isEn]);
 
   // Selected issue definition for previewing before activation
   const previewIssue = useMemo<RescueIssueDefinition | undefined>(() => {
-    return RESCUE_ISSUES.find((i) => i.id === selectedIssueId);
-  }, [selectedIssueId]);
+    const raw = RESCUE_ISSUES.find((i) => i.id === selectedIssueId);
+    return raw ? getLocalizedRescueIssue(raw, isEn ? 'en' : 'pl') : undefined;
+  }, [selectedIssueId, isEn]);
 
   if (!isOpen) return null;
 
@@ -76,7 +80,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
 
   const handleConfirmActivation = () => {
     if (!selectedIssueId) return;
-    const newPlan = createRescuePlan(selectedIssueId, getPlantName(plant, language));
+    const newPlan = createRescuePlan(selectedIssueId, getPlantName(plant, language), isEn ? 'en' : 'pl');
     if (newPlan) {
       onActivatePlan(newPlan);
       setIsChangingIssue(false);
@@ -84,12 +88,12 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
   };
 
   const handleToggleStepCompleted = (stepIdx: number) => {
-    if (!activePlan) return;
-    const currentSteps = { ...(activePlan.completedSteps || {}) };
+    if (!crop.rescuePlan) return;
+    const currentSteps = { ...(crop.rescuePlan.completedSteps || {}) };
     currentSteps[stepIdx] = !currentSteps[stepIdx];
 
     const updatedPlan: CropRescuePlan = {
-      ...activePlan,
+      ...crop.rescuePlan,
       completedSteps: currentSteps,
     };
 

@@ -160,7 +160,7 @@ npm start
 
 ```
 ├── USER_GUIDE.md                # Comprehensive English User Manual & Horticultural Guide
-├── DOKUMENTACJA_I_MANUAL.md     # Full System Documentation & Step-by-Step Manual (English)
+├── DOCUMENTATION_AND_MANUAL.md  # Full System Documentation & Step-by-Step Manual (English)
 ├── README.md                    # Project overview & technical guide
 ├── package.json                 # Scripts and dependencies
 ├── server.ts                    # Express API server & Vite production runner
@@ -210,7 +210,7 @@ npm start
 
 For in-depth explanations of the horticultural algorithms, soil stratification formulas, and complete step-by-step user tutorials, refer to:
 * [`USER_GUIDE.md`](./USER_GUIDE.md) — Complete English User Manual & System Guide
-* [`DOKUMENTACJA_I_MANUAL.md`](./DOKUMENTACJA_I_MANUAL.md) — Complete System Documentation (English)
+* [`DOCUMENTATION_AND_MANUAL.md`](./DOCUMENTATION_AND_MANUAL.md) — Complete System Documentation (English)
 
 ---
 

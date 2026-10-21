@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Sprout,
   Plus,
@@ -57,10 +57,11 @@ import { TimelapseModal } from './TimelapseModal';
 import { AddCropPhotoModal } from './AddCropPhotoModal';
 import { getCropTimelineInfo } from '../lib/cropGrowthPhases';
 import { getPlantGreenhouseInfo, getGreenhouseDailyCareTip } from '../lib/greenhouse';
-import { isWateringSuspended, getDaysRemainingInSuspension } from '../lib/rescueData';
+import { isWateringSuspended, getDaysRemainingInSuspension, getLocalizedRescuePlan } from '../lib/rescueData';
 import { getPlantVisual } from '../lib/plantImages';
 import { SAMPLE_TOMATO_TIMELAPSE, getPhotoCadenceInfo } from '../lib/cropPhotos';
 import { useLanguage } from '../lib/LanguageContext';
+import { getPlantName } from '../lib/plantTranslations';
 
 interface Props {
   myCrops: MyCropItem[];
@@ -251,8 +252,12 @@ export const MyCropsView: React.FC<Props> = ({
       ? getGreenhouseDailyCareTip(selectedPlant, !!selectedCrop.inGreenhouse, weather)
       : null;
 
-  // Rescue Flow status for selected crop
-  const isSelectedCropRescueActive = !!selectedCrop?.rescuePlan?.active;
+  // Rescue Flow status for selected crop with full localization
+  const localizedRescuePlan = useMemo(() => {
+    if (!selectedCrop?.rescuePlan?.active) return null;
+    return getLocalizedRescuePlan(selectedCrop.rescuePlan, isEn ? 'en' : 'pl') || null;
+  }, [selectedCrop?.rescuePlan, isEn]);
+  const isSelectedCropRescueActive = !!localizedRescuePlan?.active;
   const isSelectedCropWateringSuspended = isWateringSuspended(selectedCrop?.rescuePlan);
   const selectedCropSuspensionDaysRemaining = getDaysRemainingInSuspension(selectedCrop?.rescuePlan);
 
@@ -528,7 +533,7 @@ export const MyCropsView: React.FC<Props> = ({
                         <div className="min-w-0 pr-1">
                           <div className="flex items-center gap-1.5">
                             <span className="font-bold text-xs truncate max-w-[130px] sm:max-w-[180px]">
-                              {plant?.name || (isEn ? 'Crop' : 'Roślina')}
+                              {plant ? getPlantName(plant, language) : (isEn ? 'Crop' : 'Roślina')}
                             </span>
                             {crop.rescuePlan?.active && (
                               <span
@@ -614,7 +619,7 @@ export const MyCropsView: React.FC<Props> = ({
                       <div className="min-w-0 space-y-1.5">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="text-2xl sm:text-3xl font-extrabold text-stone-900 dark:text-stone-100 tracking-tight leading-tight">
-                            {selectedPlant.name}
+                            {selectedPlant ? getPlantName(selectedPlant, language) : ''}
                           </h3>
                           {(selectedCrop.potCount || 1) > 1 && (
                             <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700">
@@ -662,7 +667,7 @@ export const MyCropsView: React.FC<Props> = ({
                                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-600"></span>
                               </span>
                               <span>
-                                {isEn ? '🚨 Rescue Mode:' : '🚨 Tryb ratunkowy:'} {selectedCrop.rescuePlan?.issueTitle}
+                                {isEn ? '🚨 Rescue Mode:' : '🚨 Tryb ratunkowy:'} {localizedRescuePlan?.issueTitle || selectedCrop.rescuePlan?.issueTitle}
                               </span>
                               {isSelectedCropWateringSuspended && (
                                 <span className="text-[10px] font-semibold text-rose-800 dark:text-rose-200 bg-rose-200/80 dark:bg-rose-900 px-1.5 py-0.2 rounded-md">
@@ -720,7 +725,7 @@ export const MyCropsView: React.FC<Props> = ({
                             <div className="text-left">
                               <div className="leading-tight">{isEn ? 'Rescue Plan' : 'Plan ratunkowy'}</div>
                               <div className="text-[10px] font-normal text-rose-100 opacity-90">
-                                {selectedCrop.rescuePlan?.issueTitle} • {isEn ? 'Open' : 'Otwórz'}
+                                {(localizedRescuePlan || selectedCrop.rescuePlan)?.issueTitle} • {isEn ? 'Open' : 'Otwórz'}
                               </div>
                             </div>
                           </button>
@@ -931,38 +936,38 @@ export const MyCropsView: React.FC<Props> = ({
                   )}
 
                   {/* 1.5. ACTIVE RESCUE PLAN BANNER & CHECKLIST */}
-                  {isSelectedCropRescueActive && selectedCrop.rescuePlan && (
+                  {isSelectedCropRescueActive && localizedRescuePlan && (
                     <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-rose-50/90 via-amber-50/50 to-orange-50/70 dark:from-rose-950/40 dark:via-stone-900 dark:to-amber-950/30 border-2 border-rose-300 dark:border-rose-800/80 shadow-xs space-y-3.5">
                       <div className="flex items-start justify-between gap-3 flex-wrap sm:flex-nowrap">
                         <div className="flex items-start gap-3">
                           <div className="w-14 h-14 rounded-2xl overflow-hidden border border-rose-300 dark:border-rose-700 shrink-0 bg-stone-100 dark:bg-stone-800 relative shadow-2xs">
-                            {selectedCrop.rescuePlan.imageUrl ? (
+                            {localizedRescuePlan.imageUrl ? (
                               <img
-                                src={selectedCrop.rescuePlan.imageUrl}
-                                alt={selectedCrop.rescuePlan.issueTitle}
+                                src={localizedRescuePlan.imageUrl}
+                                alt={localizedRescuePlan.issueTitle}
                                 className="w-full h-full object-cover"
                                 referrerPolicy="no-referrer"
                               />
                             ) : (
                               <span className="w-full h-full flex items-center justify-center text-2xl">
-                                {selectedCrop.rescuePlan.issueIcon}
+                                {localizedRescuePlan.issueIcon}
                               </span>
                             )}
                           </div>
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-200 dark:bg-rose-900 text-rose-900 dark:text-rose-200 uppercase tracking-wider">
-                                {selectedCrop.rescuePlan.symptomBadge}
+                                {localizedRescuePlan.symptomBadge}
                               </span>
                               <span className="text-xs font-bold text-rose-800 dark:text-rose-300">
                                 {isEn ? '🚨 Rescue plan in progress' : '🚨 Plan ratunkowy w toku'}
                               </span>
                             </div>
                             <h4 className="font-extrabold text-sm sm:text-base text-stone-900 dark:text-stone-100 mt-0.5">
-                              {selectedCrop.rescuePlan.issueTitle}
+                              {localizedRescuePlan.issueTitle}
                             </h4>
                             <p className="text-xs text-stone-600 dark:text-stone-300 mt-0.5 leading-relaxed">
-                              {selectedCrop.rescuePlan.diagnosis}
+                              {localizedRescuePlan.diagnosis}
                             </p>
                           </div>
                         </div>
@@ -1025,7 +1030,7 @@ export const MyCropsView: React.FC<Props> = ({
                           </span>
                         </div>
                         <div className="grid grid-cols-1 gap-1.5">
-                          {selectedCrop.rescuePlan.steps.map((step, idx) => {
+                          {localizedRescuePlan.steps.map((step, idx) => {
                             const isDone = !!selectedCrop.rescuePlan?.completedSteps?.[idx];
                             return (
                               <button
@@ -1064,6 +1069,16 @@ export const MyCropsView: React.FC<Props> = ({
                           })}
                         </div>
                       </div>
+
+                      {/* What to avoid banner */}
+                      {localizedRescuePlan.whatToAvoid && (
+                        <div className="p-3 rounded-xl bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/60 text-xs text-amber-950 dark:text-amber-200 flex items-start gap-2">
+                          <span className="shrink-0 mt-0.5">⚠️</span>
+                          <div>
+                            <strong>{isEn ? 'What to avoid:' : 'Czego unikać:'}</strong> {localizedRescuePlan.whatToAvoid}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1418,7 +1433,7 @@ export const MyCropsView: React.FC<Props> = ({
 
                             {/* Cadence Status Bar */}
                             {(() => {
-                              const cadence = getPhotoCadenceInfo(selectedCrop, selectedPlant);
+                              const cadence = getPhotoCadenceInfo(selectedCrop, selectedPlant, isEn);
                               return (
                                 <div className="p-3.5 rounded-xl bg-white dark:bg-stone-900/80 border border-stone-200/80 dark:border-stone-700/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                                   <div className="flex items-center gap-2.5">
