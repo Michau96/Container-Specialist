@@ -3,6 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { useScrollLock } from '../hooks/useScrollLock';
 import {
   X,
+  X as XIcon,
   Compass,
   Building,
   MapPin,
@@ -240,50 +241,38 @@ export const BalconyProfileDrawer: React.FC<BalconyProfileDrawerProps> = ({
 
         {/* Drawer Container */}
         <DialogPrimitive.Content
-          className="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-background shadow-2xl flex flex-col border-l border-border animate-in slide-in-from-right duration-300 focus:outline-none"
+          className="fixed inset-y-0 right-0 z-50 w-full w-screen max-w-md bg-background bg-white dark:bg-stone-900 shadow-2xl flex flex-col border-l border-border border-zinc-100 dark:border-stone-800 overscroll-contain animate-in slide-in-from-right duration-300 focus:outline-none"
           id="balcony-spec-drawer"
           data-testid="balcony-spec-drawer"
           aria-label={isEn ? 'Your Balcony Specifications' : 'Parametry Twojego balkonu'}
         >
           {/* Top Header */}
-          <div className="p-5 sm:p-6 border-b border-border bg-background/80 backdrop-blur-md flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 flex items-center justify-center shadow-xs">
-                <Compass className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogPrimitive.Title asChild>
-                  <h2 className="text-base font-bold text-foreground tracking-tight flex items-center gap-2">
-                    <span>{isEn ? 'My Balcony' : 'Mój balkon'}</span>
-                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800">
-                      {isEn ? 'Settings' : 'Parametry'}
-                    </span>
-                  </h2>
-                </DialogPrimitive.Title>
-                <DialogPrimitive.Description asChild>
-                  <p className="text-xs text-muted-foreground">
-                    {isEn ? 'Microclimate and growing conditions' : 'Mikroklimat i warunki uprawowe'}
-                  </p>
-                </DialogPrimitive.Description>
-              </div>
-            </div>
+          <header className="p-6 border-b border-zinc-100 dark:border-stone-800 flex items-center justify-between shrink-0">
+            <DialogPrimitive.Title asChild>
+              <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <span>{isEn ? 'Microclimate summary' : 'Podsumowanie mikroklimatu'}</span>
+              </h2>
+            </DialogPrimitive.Title>
+            <DialogPrimitive.Description className="sr-only">
+              {isEn ? 'Microclimate and growing conditions summary' : 'Podsumowanie mikroklimatu i warunki uprawowe'}
+            </DialogPrimitive.Description>
 
             <DialogPrimitive.Close asChild>
               <button
                 id="close-balcony-drawer-btn"
                 data-testid="close-balcony-drawer"
                 type="button"
-                className="hover:bg-accent rounded-full p-2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-                title={isEn ? 'Close panel (Esc)' : 'Zamknij panel (Esc)'}
-                aria-label={isEn ? 'Close panel' : 'Zamknij panel'}
+                aria-label={isEn ? 'Close summary' : 'Zamknij podsumowanie'}
+                title={isEn ? 'Close summary (Esc)' : 'Zamknij podsumowanie (Esc)'}
+                className="p-2 rounded-lg rounded-full text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:bg-accent transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <XIcon className="w-5 h-5" />
               </button>
             </DialogPrimitive.Close>
-          </div>
+          </header>
 
-          {/* Scrollable Content Body */}
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+          {/* Scrollable Content Body with overscroll-contain */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 overscroll-contain">
             {/* Account Sync Status Card */}
             <div className="p-3.5 rounded-2xl bg-card border border-border shadow-2xs">
               {currentUser ? (
@@ -460,14 +449,14 @@ export const BalconyProfileDrawer: React.FC<BalconyProfileDrawerProps> = ({
             </div>
           </div>
 
-          {/* Drawer Footer with restructured action buttons */}
-          <div className="p-5 sm:p-6 border-t border-border bg-background/90 backdrop-blur-md space-y-2.5">
+          {/* Drawer Footer with structured action buttons */}
+          <footer className="p-4 bg-zinc-50 dark:bg-stone-900 border-t border-zinc-100 dark:border-stone-800 shrink-0 space-y-2">
             <button
               id="drawer-select-plants-btn"
               data-testid="drawer-select-plants"
               type="button"
               onClick={handleSelectPlants}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-xl shadow-sm transition-all"
+              className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-xl shadow-sm transition-all focus:ring-2 focus:ring-emerald-500 cursor-pointer"
             >
               {isEn ? 'Go to plant selection' : 'Przejdź do doboru roślin'}
             </button>
@@ -477,14 +466,14 @@ export const BalconyProfileDrawer: React.FC<BalconyProfileDrawerProps> = ({
               data-testid="drawer-open-full-setup"
               type="button"
               onClick={handleOpenFullSetup}
-              className="w-full bg-transparent hover:bg-muted text-foreground py-2.5 rounded-xl border border-border text-sm font-medium transition-colors"
+              className="w-full bg-transparent hover:bg-muted text-foreground py-2.5 rounded-xl border border-border text-sm font-medium transition-colors cursor-pointer"
             >
               <span className="flex items-center justify-center gap-2">
                 <Settings className="w-4 h-4" />
                 <span>{isEn ? 'Edit Balcony Settings' : 'Zmień parametry balkonu'}</span>
               </span>
             </button>
-          </div>
+          </footer>
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

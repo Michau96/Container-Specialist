@@ -349,7 +349,7 @@ export const RescueFlowModal: React.FC<RescueFlowModalProps> = ({
                     onClick={() => setCategoryFilter(cat.id)}
                     className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition cursor-pointer font-medium ${
                       categoryFilter === cat.id
-                        ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold shadow-xs'
+                        ? 'bg-stone-900 text-white dark:bg-emerald-600 dark:text-white font-bold shadow-xs'
                         : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                     }`}
                   >

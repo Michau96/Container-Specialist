@@ -107,20 +107,20 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-step3-title"
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 transition-all my-auto"
+        className="bg-white dark:bg-stone-900 rounded-2xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-100 dark:border-stone-800 transition-all my-auto"
       >
         {/* Fixed Header */}
-        <div className="p-5 border-b border-slate-100 flex items-center justify-between flex-shrink-0">
+        <div className="p-5 border-b border-slate-100 dark:border-stone-800 flex items-center justify-between flex-shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
+              <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
                 Krok 3 z 3
               </span>
             </div>
-            <h2 id="onboarding-step3-title" className="text-xl font-bold text-slate-800">
+            <h2 id="onboarding-step3-title" className="text-xl font-bold text-slate-800 dark:text-stone-100">
               {title}
             </h2>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <p className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">
               Określ rodzaj donic, typ balustrady i czas, jaki chcesz poświęcić na podlewanie.
             </p>
           </div>
@@ -130,7 +130,7 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Zamknij"
-              className="min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-[0.98] text-slate-700 hover:text-slate-900 border border-slate-200 transition-all cursor-pointer font-bold text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              className="min-w-11 min-h-11 w-11 h-11 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-slate-100 dark:bg-stone-800 hover:bg-slate-200 dark:hover:bg-stone-700 active:scale-[0.98] text-slate-700 dark:text-stone-200 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-stone-700 transition-all cursor-pointer font-bold text-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
             >
               ✕
             </button>
@@ -138,24 +138,24 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
         </div>
 
         {/* Scrollable Body */}
-        <div className="p-6 overflow-y-auto flex-1 space-y-6">
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 overscroll-contain">
           {/* Sekcja: Wymiary i liczba donic */}
           <div data-testid="pot-dimensions-section" className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                <Layers className="w-4 h-4 text-emerald-600" />
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
+                <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>Wymiary i liczba donic</span>
               </label>
 
               {/* Kształt donicy */}
-              <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-semibold">
+              <div className="flex bg-slate-100 dark:bg-stone-800 p-0.5 rounded-lg border border-slate-200 dark:border-stone-700 text-xs font-semibold">
                 <button
                   type="button"
                   onClick={() => setPotShape('rectangular')}
                   className={`min-h-[44px] px-3 rounded-md transition cursor-pointer ${
                     potShape === 'rectangular'
-                      ? 'bg-white text-emerald-950 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-stone-700 text-emerald-950 dark:text-emerald-300 font-bold shadow-2xs'
+                      : 'text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200'
                   }`}
                 >
                   Prostokątna
@@ -165,8 +165,8 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                   onClick={() => setPotShape('round')}
                   className={`min-h-[44px] px-3 rounded-md transition cursor-pointer ${
                     potShape === 'round'
-                      ? 'bg-white text-emerald-950 font-bold shadow-2xs'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-stone-700 text-emerald-950 dark:text-emerald-300 font-bold shadow-2xs'
+                      : 'text-slate-600 dark:text-stone-400 hover:text-slate-900 dark:hover:text-stone-200'
                   }`}
                 >
                   Okrągła
@@ -175,13 +175,13 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
             </div>
 
             {/* Suwaki wymiarów */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 bg-slate-50 dark:bg-stone-800/60 p-4 rounded-xl border border-slate-100 dark:border-stone-700/60">
               {potShape === 'rectangular' ? (
                 <>
                   <div>
-                    <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                    <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700 dark:text-stone-300">
                       <span>Długość:</span>
-                      <span className="font-bold text-emerald-700">{potLength} cm</span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400">{potLength} cm</span>
                     </div>
                     <input
                       type="range"
@@ -190,13 +190,13 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                       step={5}
                       value={potLength}
                       onChange={(e) => setPotLength(Number(e.target.value))}
-                      className="w-full accent-emerald-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                      className="w-full accent-emerald-600 h-2 bg-slate-200 dark:bg-stone-700 rounded-lg cursor-pointer"
                     />
                   </div>
                   <div>
-                    <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                    <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700 dark:text-stone-300">
                       <span>Szerokość:</span>
-                      <span className="font-bold text-emerald-700">{potWidth} cm</span>
+                      <span className="font-bold text-emerald-700 dark:text-emerald-400">{potWidth} cm</span>
                     </div>
                     <input
                       type="range"
@@ -205,15 +205,15 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                       step={2}
                       value={potWidth}
                       onChange={(e) => setPotWidth(Number(e.target.value))}
-                      className="w-full accent-emerald-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                      className="w-full accent-emerald-600 h-2 bg-slate-200 dark:bg-stone-700 rounded-lg cursor-pointer"
                     />
                   </div>
                 </>
               ) : (
                 <div className="sm:col-span-2">
-                  <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                  <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700 dark:text-stone-300">
                     <span>Średnica:</span>
-                    <span className="font-bold text-emerald-700">{potDiameter} cm</span>
+                    <span className="font-bold text-emerald-700 dark:text-emerald-400">{potDiameter} cm</span>
                   </div>
                   <input
                     type="range"
@@ -222,15 +222,15 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                     step={5}
                     value={potDiameter}
                     onChange={(e) => setPotDiameter(Number(e.target.value))}
-                    className="w-full accent-emerald-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                    className="w-full accent-emerald-600 h-2 bg-slate-200 dark:bg-stone-700 rounded-lg cursor-pointer"
                   />
                 </div>
               )}
 
               <div>
-                <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700 dark:text-stone-300">
                   <span>Wysokość:</span>
-                  <span className="font-bold text-emerald-700">{potHeight} cm</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">{potHeight} cm</span>
                 </div>
                 <input
                   type="range"
@@ -239,30 +239,30 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                   step={2}
                   value={potHeight}
                   onChange={(e) => setPotHeight(Number(e.target.value))}
-                  className="w-full accent-emerald-600 h-2 bg-slate-200 rounded-lg cursor-pointer"
+                  className="w-full accent-emerald-600 h-2 bg-slate-200 dark:bg-stone-700 rounded-lg cursor-pointer"
                 />
               </div>
 
               <div>
-                <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700">
+                <div className="flex justify-between text-xs mb-1 font-semibold text-slate-700 dark:text-stone-300">
                   <span>Liczba jednakowych donic:</span>
-                  <span className="font-bold text-emerald-700">{potCount} szt.</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">{potCount} szt.</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setPotCount((c) => Math.max(1, c - 1))}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-slate-100 dark:hover:bg-stone-700 text-slate-700 dark:text-stone-200 font-bold cursor-pointer"
                   >
                     -
                   </button>
-                  <span className="flex-1 text-center font-bold text-slate-800 text-sm">
+                  <span className="flex-1 text-center font-bold text-slate-800 dark:text-stone-100 text-sm">
                     {potCount}
                   </span>
                   <button
                     type="button"
                     onClick={() => setPotCount((c) => Math.min(20, c + 1))}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 font-bold"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-slate-100 dark:hover:bg-stone-700 text-slate-700 dark:text-stone-200 font-bold cursor-pointer"
                   >
                     +
                   </button>
@@ -271,16 +271,16 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
             </div>
 
             {/* Obliczona pojemność */}
-            <div className="p-3 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center justify-between text-xs">
-              <span className="text-emerald-900 font-medium">Objętość 1 donicy:</span>
-              <span className="font-bold text-emerald-800 text-sm">{currentVolume} litrów</span>
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-800/60 flex items-center justify-between text-xs">
+              <span className="text-emerald-900 dark:text-emerald-300 font-medium">Objętość 1 donicy:</span>
+              <span className="font-bold text-emerald-800 dark:text-emerald-200 text-sm">{currentVolume} litrów</span>
             </div>
           </div>
 
           {/* Sekcja: Typ balustrady */}
-          <div className="space-y-3 pt-4 border-t border-slate-100">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-emerald-600" />
+          <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-stone-800">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
+              <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Typ balustrady (barierka)</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -296,24 +296,24 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                   onClick={() => setBalconyType(r.key)}
                   className={`min-h-[48px] p-3 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer active:scale-[0.98] ${
                     balconyType === r.key
-                      ? 'border-2 border-emerald-600 bg-emerald-50 text-emerald-950 font-semibold shadow-xs'
-                      : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-600 hover:bg-slate-50'
+                      ? 'border-2 border-emerald-600 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-100 font-semibold shadow-xs'
+                      : 'border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-800 dark:text-stone-100 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-slate-50 dark:hover:bg-stone-750'
                   }`}
                 >
                   <div className="flex items-center justify-between font-bold text-sm">
                     <span>{r.label}</span>
-                    {balconyType === r.key && <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />}
+                    {balconyType === r.key && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 stroke-[3]" />}
                   </div>
-                  <span className="text-xs text-slate-500 mt-0.5">{r.desc}</span>
+                  <span className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">{r.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
           {/* Sekcja: Czas na podlewanie */}
-          <div className="space-y-3 pt-4 border-t border-slate-100">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-emerald-600" />
+          <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-stone-800">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-stone-300 flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
               <span>Czas na podlewanie (częstotliwość)</span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -328,15 +328,15 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
                   onClick={() => setCareTime(c.key)}
                   className={`min-h-[48px] p-3 rounded-xl border text-left transition flex flex-col justify-between cursor-pointer active:scale-[0.98] ${
                     careTime === c.key
-                      ? 'border-2 border-emerald-600 bg-emerald-50 text-emerald-950 font-semibold shadow-xs'
-                      : 'border-slate-200 bg-white text-slate-800 hover:border-emerald-600 hover:bg-slate-50'
+                      ? 'border-2 border-emerald-600 dark:border-emerald-500 bg-emerald-50 dark:bg-emerald-950/60 text-emerald-950 dark:text-emerald-100 font-semibold shadow-xs'
+                      : 'border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-800 dark:text-stone-100 hover:border-emerald-600 dark:hover:border-emerald-500 hover:bg-slate-50 dark:hover:bg-stone-750'
                   }`}
                 >
                   <div className="flex items-center justify-between font-bold text-sm">
                     <span>{c.label}</span>
-                    {careTime === c.key && <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />}
+                    {careTime === c.key && <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400 stroke-[3]" />}
                   </div>
-                  <span className="text-xs text-slate-500 mt-0.5">{c.desc}</span>
+                  <span className="text-xs text-slate-500 dark:text-stone-400 mt-0.5">{c.desc}</span>
                 </button>
               ))}
             </div>
@@ -344,16 +344,17 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
         </div>
 
         {/* Sticky Action Footer */}
-        <div
+        <footer
+          id="onboarding-step3-footer"
           data-testid="onboarding-step3-footer"
-          className="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 flex-shrink-0"
+          className="sticky bottom-0 shrink-0 flex-shrink-0 p-4 bg-slate-50 dark:bg-stone-900 border-t border-slate-100 dark:border-stone-800 flex items-center justify-between z-10"
         >
           <div className="flex items-center gap-2">
             {onBack ? (
               <button
                 type="button"
                 onClick={onBack}
-                className="min-h-[48px] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 rounded-xl hover:bg-slate-200 border border-slate-200 bg-white transition flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 min-h-[48px] px-4 py-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-stone-800 border border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Wstecz</span>
@@ -362,11 +363,18 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="min-h-[48px] px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 rounded-xl hover:bg-slate-200 border border-slate-200 bg-white transition flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 min-h-[48px] px-4 py-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-stone-800 border border-slate-200 dark:border-stone-700 bg-white dark:bg-stone-800 transition flex items-center gap-1.5 cursor-pointer active:scale-[0.98]"
               >
                 <span>Wstecz</span>
               </button>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-100 min-h-[48px] px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Wstecz</span>
+              </button>
+            )}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -374,7 +382,7 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
               <button
                 type="button"
                 onClick={handleNextStep}
-                className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-800 font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
+                className="w-full sm:w-auto min-h-[48px] px-5 py-3 rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 hover:bg-slate-100 dark:hover:bg-stone-700 active:scale-[0.98] text-slate-800 dark:text-stone-100 font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 <span>Dalej &gt;</span>
               </button>
@@ -383,7 +391,7 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
             <button
               type="button"
               onClick={handleSaveAndContinue}
-              className="w-full sm:w-auto min-h-[48px] px-6 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-semibold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              className="px-6 py-2.5 min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white font-medium text-sm shadow-sm transition-all focus:ring-2 focus:ring-emerald-500 focus:outline-none flex items-center justify-center gap-2 cursor-pointer"
             >
               <Sparkles className="w-4 h-4 text-emerald-200" />
               <span>Zapisz i przejdź</span>
@@ -400,7 +408,7 @@ export const OnboardingStep3Modal: React.FC<OnboardingStep3ModalProps> = ({
               </button>
             )}
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );

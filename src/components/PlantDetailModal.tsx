@@ -255,7 +255,7 @@ export const PlantDetailModal: React.FC<Props> = ({
                 className={`hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer border ${
                   isMyCrop
                     ? 'bg-emerald-600 text-white border-emerald-500 hover:bg-red-600 hover:border-red-500'
-                    : 'bg-white text-stone-900 border-white hover:bg-stone-100 shadow-xs'
+                    : 'bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 border-white dark:border-stone-700 hover:bg-stone-100 dark:hover:bg-stone-700 shadow-xs'
                 }`}
               >
                 {isMyCrop ? (

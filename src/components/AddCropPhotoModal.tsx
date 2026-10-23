@@ -170,7 +170,7 @@ export const AddCropPhotoModal: React.FC<Props> = ({
                   referrerPolicy="no-referrer"
                 />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                  <label className="px-4 py-2 rounded-xl bg-white text-stone-900 font-bold text-xs cursor-pointer shadow-md hover:bg-stone-100 transition">
+                  <label className="px-4 py-2 rounded-xl bg-white dark:bg-stone-800 text-stone-900 dark:text-stone-100 font-bold text-xs cursor-pointer shadow-md hover:bg-stone-100 dark:hover:bg-stone-700 transition">
                     {isEn ? 'Change photo' : 'Zmień zdjęcie'}
                     <input
                       type="file"

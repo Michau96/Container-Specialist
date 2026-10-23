@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   X,
+  X as XIcon,
   AlertCircle,
   CloudSun,
   HeartHandshake,
@@ -155,7 +156,7 @@ export const WelcomeModal: React.FC<Props> = ({
       >
         {/* Top Decorative Bar */}
         <div className="bg-gradient-to-r from-emerald-700 via-teal-700 to-emerald-800 px-6 py-5 sm:py-6 text-white relative">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 pr-12">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/25 flex items-center justify-center shadow-inner">
                 <Sprout className="w-6 h-6 text-emerald-100" />
@@ -175,11 +176,11 @@ export const WelcomeModal: React.FC<Props> = ({
               type="button"
               id="skip-welcome-btn"
               onClick={onContinueAsGuest}
-              className="min-w-[44px] min-h-[44px] w-11 h-11 flex items-center justify-center rounded-xl bg-red-600 hover:bg-red-700 text-white transition-colors cursor-pointer shrink-0 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-800"
-              title={isEn ? 'Go to app' : 'Przejdź do aplikacji'}
               aria-label={isEn ? 'Close and go to app' : 'Zamknij i przejdź do aplikacji'}
+              title={isEn ? 'Close and go to app' : 'Zamknij i przejdź do aplikacji'}
+              className="absolute top-4 right-4 p-2 rounded-full text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
-              <X className="w-5 h-5 stroke-[2.5]" />
+              <XIcon className="w-5 h-5" />
             </button>
           </div>
         </div>

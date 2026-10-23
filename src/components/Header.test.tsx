@@ -122,12 +122,13 @@ describe('Header / Navbar Navigation Component - Mój balkon Tooltip & Indicator
     expect(balconyBtn.getAttribute('aria-label')).not.toBe('Mój balkon - profil skonfigurowany');
 
     const indicator = screen.getByTestId('balcony-status-indicator');
-    expect(indicator).toHaveAttribute('aria-hidden', 'true');
+    expect(indicator).toHaveAttribute('title', 'Profil wymaga uzupełnienia');
     expect(indicator.className).toContain('relative');
-    expect(indicator.className).toContain('inline-flex');
+    expect(indicator.className).toContain('flex');
     expect(indicator.className).toContain('h-2.5');
     expect(indicator.className).toContain('w-2.5');
-    expect(indicator.className).toContain('bg-amber-400');
+    expect(indicator.querySelector('.animate-ping')).toBeInTheDocument();
+    expect(screen.getByText('Profil balkonu wymaga dokończenia konfiguracji')).toBeInTheDocument();
   });
 
   it('works with Navbar and HeaderNavigation aliases', () => {
@@ -163,5 +164,29 @@ describe('Header / Navbar Navigation Component - Mój balkon Tooltip & Indicator
     );
 
     expect(screen.getAllByTestId('open-balcony-drawer-btn').length).toBe(2);
+  });
+
+  it('renders indicator badge with animated ping, title tooltip and screen-reader announcement when profile is incomplete', () => {
+    render(
+      <LanguageProvider>
+        <Header
+          activeTab="my_crops"
+          onTabChange={vi.fn()}
+          userSpec={incompleteSpec}
+          isConfigured={false}
+          darkMode={false}
+          onToggleDarkMode={vi.fn()}
+        />
+      </LanguageProvider>
+    );
+
+    const srAnnouncement = screen.getByText('Profil balkonu wymaga dokończenia konfiguracji');
+    expect(srAnnouncement).toBeInTheDocument();
+    expect(srAnnouncement).toHaveClass('sr-only');
+
+    const indicator = screen.getByTestId('balcony-status-indicator');
+    expect(indicator).toHaveAttribute('title', 'Profil wymaga uzupełnienia');
+    expect(indicator.querySelector('.animate-ping')).toHaveClass('bg-amber-400');
+    expect(indicator.querySelector('.bg-amber-500')).toBeInTheDocument();
   });
 });

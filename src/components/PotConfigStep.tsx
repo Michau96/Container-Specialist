@@ -661,7 +661,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
               onClick={() => setPotCount(num)}
               className={`min-w-[44px] min-h-[44px] w-11 h-11 rounded-xl text-xs font-bold transition flex items-center justify-center cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                 potCount === num
-                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 shadow-xs border-2 border-stone-900 dark:border-white'
+                  ? 'bg-stone-900 dark:bg-emerald-600 text-white shadow-xs border-2 border-stone-900 dark:border-emerald-500'
                   : 'bg-white dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-700'
               }`}
             >

@@ -198,4 +198,65 @@ describe('BalconyProfileDrawer component', () => {
     // Header button aria-label might be Zamknij panel, but check footer does not have a button with exact text
     expect(screen.queryByText('Zamknij panel')).toBeNull();
   });
+
+  it('applies overscroll-contain to drawer container and scrollable content body', () => {
+    render(
+      <BalconyProfileDrawer
+        isOpen={true}
+        onClose={vi.fn()}
+        userSpec={mockSpec}
+        onOpenFullSetup={vi.fn()}
+      />
+    );
+
+    const drawer = screen.getByTestId('balcony-spec-drawer');
+    expect(drawer.className).toContain('overscroll-contain');
+
+    const scrollableBody = drawer.querySelector('.overflow-y-auto');
+    expect(scrollableBody).toBeInTheDocument();
+    expect(scrollableBody?.className).toContain('overscroll-contain');
+    expect(scrollableBody?.className).toContain('flex-1');
+  });
+
+  it('renders header with "Podsumowanie mikroklimatu" and accessible close button', () => {
+    render(
+      <BalconyProfileDrawer
+        isOpen={true}
+        onClose={vi.fn()}
+        userSpec={mockSpec}
+        onOpenFullSetup={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('heading', { level: 2, name: /Podsumowanie mikroklimatu/i })).toBeInTheDocument();
+
+    const closeBtn = screen.getByLabelText('Zamknij podsumowanie');
+    expect(closeBtn).toBeInTheDocument();
+    expect(closeBtn.querySelector('svg')).toBeInTheDocument();
+  });
+
+  it('attaches overflow: hidden to document.body when open and restores it when closed', () => {
+    const handleClose = vi.fn();
+    const { rerender } = render(
+      <BalconyProfileDrawer
+        isOpen={true}
+        onClose={handleClose}
+        userSpec={mockSpec}
+        onOpenFullSetup={vi.fn()}
+      />
+    );
+
+    expect(document.body.style.overflow).toBe('hidden');
+
+    rerender(
+      <BalconyProfileDrawer
+        isOpen={false}
+        onClose={handleClose}
+        userSpec={mockSpec}
+        onOpenFullSetup={vi.fn()}
+      />
+    );
+
+    expect(document.body.style.overflow).toBe('');
+  });
 });

@@ -11,6 +11,8 @@ export interface Translations {
   signedInAs: string;
   themeLight: string;
   themeDark: string;
+  themeTitle: string;
+  preferencesTitle: string;
   language: string;
   polish: string;
   english: string;
@@ -201,6 +203,8 @@ export const translations: Record<Language, Translations> = {
     signedInAs: 'Zalogowano jako',
     themeLight: 'Jasny',
     themeDark: 'Ciemny',
+    themeTitle: 'Motyw interfejsu',
+    preferencesTitle: 'Wygląd i język',
     language: 'Język',
     polish: 'Polski',
     english: 'English',

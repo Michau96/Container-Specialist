@@ -78,10 +78,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-modal-title"
-        className="flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden rounded-2xl bg-background max-w-[560px] w-full text-stone-900 dark:text-stone-100 shadow-2xl border border-border transition-all my-auto"
+        className="flex flex-col max-h-[90vh] md:max-h-[85vh] max-h-[90dvh] overflow-hidden rounded-2xl bg-background bg-white dark:bg-stone-900 max-w-[560px] w-full text-stone-900 dark:text-stone-100 shadow-2xl border border-border border-zinc-100 dark:border-stone-800 transition-all my-auto"
       >
         {/* Fixed Top Bar */}
-        <div className="flex-shrink-0 p-6 border-b border-border/40">
+        <div className="shrink-0 flex-shrink-0 p-6 border-b border-border/40 border-zinc-100 dark:border-stone-800">
           <div className="flex items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-2 mb-1">
@@ -303,16 +303,23 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           )}
         </div>
 
-        {/* Sticky Bottom Container */}
-        <div className="flex-shrink-0 p-4 bg-background/95 backdrop-blur-sm border-t border-border flex items-center justify-between sticky bottom-0 z-10">
+        {/* Sticky Action Footer */}
+        <footer className="sticky bottom-0 shrink-0 flex-shrink-0 bg-white/90 bg-white/95 bg-background/95 dark:bg-stone-900/95 backdrop-blur-md backdrop-blur-sm p-4 border-t border-zinc-200 border-zinc-100 border-border flex items-center justify-between z-10">
           <div className="flex items-center gap-2">
-            {onClose && (
+            {onClose ? (
               <button
                 type="button"
                 onClick={onClose}
-                className="min-h-[44px] px-4 py-2 text-xs sm:text-sm font-bold text-stone-700 dark:text-stone-300 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-border transition flex items-center gap-1.5 cursor-pointer"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 min-h-[44px] px-4 py-2 rounded-xl hover:bg-stone-100 dark:hover:bg-stone-800 border border-border border-zinc-200 dark:border-stone-700 transition flex items-center gap-1.5 cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
+                <span>Wstecz</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 min-h-[44px] px-4 py-2 rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+              >
                 <span>Wstecz</span>
               </button>
             )}
@@ -321,16 +328,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </span>
           </div>
 
-          {/* CTA Button */}
+          {/* CTA Button permanently visible in footer */}
           <button
             type="button"
             onClick={handleSave}
-            className="min-h-[48px] px-6 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-md transition-all active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+            className="px-6 py-2.5 min-h-[48px] rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm shadow-sm shadow-md transition-all active:scale-[0.98] focus:ring-2 focus:ring-emerald-500 focus:outline-none flex items-center justify-center gap-2 cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-emerald-200" />
             <span>Zapisz i przejdź</span>
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

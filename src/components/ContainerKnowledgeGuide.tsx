@@ -20,15 +20,15 @@ export const ContainerKnowledgeGuide: React.FC = () => {
   return (
     <div id="container-knowledge-guide" className="space-y-6">
       {/* Intro Banner */}
-      <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs">
-        <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 uppercase tracking-wider mb-1">
-          <Layers className="w-4 h-4 text-emerald-700" />
+      <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-xs">
+        <div className="flex items-center gap-2 text-xs font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-wider mb-1">
+          <Layers className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
           <span>{isEn ? 'Gardening Knowledge Compendium' : 'Kompendium wiedzy ogrodniczej'}</span>
         </div>
-        <h2 className="text-xl sm:text-2xl font-bold text-stone-900">
+        <h2 className="text-xl sm:text-2xl font-bold text-stone-900 dark:text-stone-100">
           {isEn ? 'Golden Rules of Balcony Container Gardening' : 'Złote Zasady Uprawy Warzyw w Donicach na Balkonie'}
         </h2>
-        <p className="text-xs sm:text-sm text-stone-600 mt-1 max-w-3xl leading-relaxed">
+        <p className="text-xs sm:text-sm text-stone-600 dark:text-stone-300 mt-1 max-w-3xl leading-relaxed">
           {isEn
             ? 'Container gardening is fundamentally different from in-ground cultivation. A pot is a miniature, closed ecosystem: soil heats up 3 times faster, nutrients leach out with each watering, and roots rely exclusively on your watering routine.'
             : 'Uprawa w pojemnikach diametralnie różni się od uprawy w gruncie. Donica to miniaturowy, zamknięty ekosystem: ziemia nagrzewa się 3 razy szybciej, składniki odżywcze ulegają wypłukiwaniu z podlewaniem, a korzenie nie mają skąd pobrać wilgoci poza Twoją konewką.'}
@@ -38,27 +38,27 @@ export const ContainerKnowledgeGuide: React.FC = () => {
       {/* Grid of Knowledge Pillars */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Pillar 1: Drenaż i Otwory */}
-        <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-xs space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-800">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 flex items-center justify-center text-emerald-800 dark:text-emerald-300">
               <Droplets className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-stone-900 text-base">
+              <h3 className="font-bold text-stone-900 dark:text-stone-100 text-base">
                 {isEn ? '1. Drainage & Holes – A Matter of Survival' : '1. Drenaż i odpływ – sprawa życia i śmierci'}
               </h3>
-              <span className="text-xs text-emerald-800 font-semibold">
+              <span className="text-xs text-emerald-800 dark:text-emerald-400 font-semibold">
                 {isEn ? 'No drainage = root rot' : 'Brak odpływu = gnicie korzeni'}
               </span>
             </div>
           </div>
-          <p className="text-xs text-stone-600 leading-relaxed">
+          <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
             {isEn
               ? 'The most common beginner mistake is planting in decorative pots without drainage holes. Water from irrigation or rain gathers at the bottom, cutting oxygen from roots. Within 48 hours, suffocation and root rot occur.'
               : 'Najczęstszy błąd początkujących to sadzenie warzyw w osłonkach bez dziur w dnie. Woda z podlewania lub ulewy gromadzi się na dnie, odcinając tlen od korzeni. W ciągu 48 godzin dochodzi do uduszenia i gnicia.'}
           </p>
-          <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 text-xs space-y-1.5 text-stone-700">
-            <div className="font-semibold text-stone-900">
+          <div className="p-3 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200/80 dark:border-stone-700/80 text-xs space-y-1.5 text-stone-700 dark:text-stone-300">
+            <div className="font-semibold text-stone-900 dark:text-stone-100">
               {isEn ? 'Drainage layer instructions:' : 'Instrukcja warstwy drenażowej:'}
             </div>
             <div>
@@ -80,35 +80,35 @@ export const ContainerKnowledgeGuide: React.FC = () => {
         </div>
 
         {/* Pillar 2: Materiał Donicy a Temperatura */}
-        <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-xs space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-800">
+            <div className="w-10 h-10 rounded-2xl bg-amber-100 dark:bg-amber-950/60 flex items-center justify-center text-amber-800 dark:text-amber-300">
               <Maximize2 className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-stone-900 text-base">
+              <h3 className="font-bold text-stone-900 dark:text-stone-100 text-base">
                 {isEn ? '2. Pot Material: Plastic, Terracotta or Fabric?' : '2. Materiał donicy: Tworzywo, Terakota czy Geowłóknina?'}
               </h3>
-              <span className="text-xs text-amber-800 font-semibold">
+              <span className="text-xs text-amber-800 dark:text-amber-400 font-semibold">
                 {isEn ? 'Root temperature matters' : 'Temperatura korzeni ma znaczenie'}
               </span>
             </div>
           </div>
-          <div className="text-xs text-stone-600 space-y-2 leading-relaxed">
+          <div className="text-xs text-stone-600 dark:text-stone-300 space-y-2 leading-relaxed">
             <div>
-              <strong>{isEn ? 'Plastic / Synthetic pots:' : 'Donice plastikowe/tworzywo:'}</strong>{' '}
+              <strong className="text-stone-900 dark:text-stone-100">{isEn ? 'Plastic / Synthetic pots:' : 'Donice plastikowe/tworzywo:'}</strong>{' '}
               {isEn
                 ? 'Retain moisture well, but black pots in southern sun heat up to 50°C and cook roots. Always pick light colors (white, sand, grey) or wrap dark pots with reed/wicker mats.'
                 : 'Dobrze trzymają wilgoć, ale czarne donice na południowym słońcu nagrzewają się do 50°C i gotują korzenie. Zawsze wybieraj jasne (białe, szare, piaskowe) lub owiń ciemne matą wiklinową.'}
             </div>
             <div>
-              <strong>{isEn ? 'Terracotta (unglazed clay):' : 'Terakota (gliniane nieszkliwione):'}</strong>{' '}
+              <strong className="text-stone-900 dark:text-stone-100">{isEn ? 'Terracotta (unglazed clay):' : 'Terakota (gliniane nieszkliwione):'}</strong>{' '}
               {isEn
                 ? 'Porous walls breathe and cool root balls via micro-evaporation. Downside: soil dries faster and needs more frequent watering.'
                 : 'Ścianki oddychają i chłodzą bryłę korzeniową przez mikroodparowywanie. Minus: ziemia schnie szybciej, wymaga częstszego podlewania.'}
             </div>
             <div>
-              <strong>{isEn ? 'Fabric Grow Bags (Smart Pots):' : 'Worki uprawowe (Smart Pots):'}</strong>{' '}
+              <strong className="text-stone-900 dark:text-stone-100">{isEn ? 'Fabric Grow Bags (Smart Pots):' : 'Worki uprawowe (Smart Pots):'}</strong>{' '}
               {isEn
                 ? 'Great option made of geotextile fabric. Provides natural air-pruning (roots don\'t circle the pot edges, but branch outward throughout the medium).'
                 : 'Hitem są worki z grubej geowłókniny. Zapewniają tzw. \'air-pruning\' (korzenie nie krążą wokół ścianek, lecz rozkrzewiają się w głąb).'}
@@ -117,27 +117,27 @@ export const ContainerKnowledgeGuide: React.FC = () => {
         </div>
 
         {/* Pillar 3: Ziemia i Podłoże */}
-        <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-xs space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-sky-100 flex items-center justify-center text-sky-800">
+            <div className="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950/60 flex items-center justify-center text-sky-800 dark:text-sky-300">
               <Layers className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-stone-900 text-base">
+              <h3 className="font-bold text-stone-900 dark:text-stone-100 text-base">
                 {isEn ? '3. Substrate: Why NEVER Garden Topsoil?' : '3. Podłoże: Dlaczego NIE brać ziemi z ogródka?'}
               </h3>
-              <span className="text-xs text-sky-800 font-semibold">
+              <span className="text-xs text-sky-800 dark:text-sky-400 font-semibold">
                 {isEn ? 'Structure, perlite & water retention' : 'Struktura, perlit i retencja'}
               </span>
             </div>
           </div>
-          <p className="text-xs text-stone-600 leading-relaxed">
+          <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
             {isEn
               ? 'Soil dug up from gardens or plots compacts into an impermeable hard brick inside a pot after frequent watering, suffocating roots and carrying pathogens or nematodes.'
               : 'Ziemia wykopana z ogrodu lub działki w donicy pod wpływem częstego podlewania zbija się w nieprzepuszczalną \'skałę\' i cementuje korzenie, a do tego przenosi nicienie i patogeny grzybowe.'}
           </p>
-          <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 text-xs space-y-1 text-stone-700">
-            <div className="font-semibold text-stone-900">
+          <div className="p-3 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200/80 dark:border-stone-700/80 text-xs space-y-1 text-stone-700 dark:text-stone-300">
+            <div className="font-semibold text-stone-900 dark:text-stone-100">
               {isEn ? 'Recipe for ideal container potting mix:' : 'Przepis na idealną mieszankę do donic:'}
             </div>
             <div>
@@ -164,27 +164,27 @@ export const ContainerKnowledgeGuide: React.FC = () => {
         </div>
 
         {/* Pillar 4: Nawożenie i Pielęgnacja */}
-        <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs space-y-3">
+        <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-xs space-y-3">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-rose-100 flex items-center justify-center text-rose-800">
+            <div className="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/60 flex items-center justify-center text-rose-800 dark:text-rose-300">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-bold text-stone-900 text-base">
+              <h3 className="font-bold text-stone-900 dark:text-stone-100 text-base">
                 {isEn ? '4. Fertilizing in Containers: Small Regular Doses' : '4. Nawożenie w pojemnikach: Zasada małych dawek'}
               </h3>
-              <span className="text-xs text-rose-800 font-semibold">
+              <span className="text-xs text-rose-800 dark:text-rose-400 font-semibold">
                 {isEn ? 'Nutrients wash out in 4-6 weeks' : 'Składniki wypłukują się po 4 tygodniach'}
               </span>
             </div>
           </div>
-          <p className="text-xs text-stone-600 leading-relaxed">
+          <p className="text-xs text-stone-600 dark:text-stone-300 leading-relaxed">
             {isEn
               ? 'Even high-end potting soil with starter fertilizer becomes depleted after 4-6 weeks of frequent watering. From June onwards, fruiting vegetables (tomatoes, peppers, cucumbers) need regular nourishment.'
               : 'Nawet najdroższa ziemia \'z nawozem startowym\' po 4-6 tygodniach intensywnego podlewania zostaje wyjałowiona. Od czerwca rośliny owocujące (pomidory, papryki, ogórki) muszą być regularnie zasilane.'}
           </p>
-          <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 text-xs space-y-1 text-stone-700">
-            <div className="font-semibold text-stone-900">
+          <div className="p-3 bg-stone-50 dark:bg-stone-800/60 rounded-2xl border border-stone-200/80 dark:border-stone-700/80 text-xs space-y-1 text-stone-700 dark:text-stone-300">
+            <div className="font-semibold text-stone-900 dark:text-stone-100">
               {isEn ? 'What to feed balcony vegetables?' : 'Czym zasilać warzywa balkonowe?'}
             </div>
             <div>
@@ -207,14 +207,14 @@ export const ContainerKnowledgeGuide: React.FC = () => {
       </div>
 
       {/* Ekologiczna ochrona balkonu */}
-      <div className="bg-white rounded-3xl p-6 border border-stone-200 shadow-xs">
-        <h3 className="font-bold text-stone-900 text-lg mb-3 flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-emerald-800" />
+      <div className="bg-white dark:bg-stone-900 rounded-3xl p-6 border border-stone-200 dark:border-stone-800 shadow-xs">
+        <h3 className="font-bold text-stone-900 dark:text-stone-100 text-lg mb-3 flex items-center gap-2">
+          <ShieldCheck className="w-5 h-5 text-emerald-800 dark:text-emerald-400" />
           <span>{isEn ? 'Organic Balcony SOS: Aphids, Spider Mites & Mildew' : 'Ekologiczne SOS na balkonie: Mszyce, Przędziorki i Mączniak'}</span>
         </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-stone-700">
-          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1">
-            <strong className="text-stone-900 block text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-stone-700 dark:text-stone-300">
+          <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700/80 space-y-1">
+            <strong className="text-stone-900 dark:text-stone-100 block text-sm">
               {isEn ? 'Spider Mites (dry air)' : 'Przędziorki (suche powietrze)'}
             </strong>
             <p>
@@ -224,8 +224,8 @@ export const ContainerKnowledgeGuide: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1">
-            <strong className="text-stone-900 block text-sm">
+          <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700/80 space-y-1">
+            <strong className="text-stone-900 dark:text-stone-100 block text-sm">
               {isEn ? 'Aphids on tender shoots' : 'Mszyce na młodych pędach'}
             </strong>
             <p>
@@ -235,8 +235,8 @@ export const ContainerKnowledgeGuide: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-1">
-            <strong className="text-stone-900 block text-sm">
+          <div className="p-4 rounded-2xl bg-stone-50 dark:bg-stone-800/60 border border-stone-200/80 dark:border-stone-700/80 space-y-1">
+            <strong className="text-stone-900 dark:text-stone-100 block text-sm">
               {isEn ? 'Blight and Powdery Mildew' : 'Zaraza i mączniak (choroby grzybowe)'}
             </strong>
             <p>
@@ -249,11 +249,11 @@ export const ContainerKnowledgeGuide: React.FC = () => {
       </div>
 
       {/* Źródła bibliograficzne */}
-      <div className="bg-[#FAF8F5] p-5 rounded-2xl border border-stone-200 text-xs text-stone-600">
-        <h4 className="font-semibold text-stone-900 mb-1">
+      <div className="bg-[#FAF8F5] dark:bg-stone-900/90 p-5 rounded-2xl border border-stone-200 dark:border-stone-800 text-xs text-stone-600 dark:text-stone-400">
+        <h4 className="font-semibold text-stone-900 dark:text-stone-100 mb-1">
           {isEn ? 'Verified gardening sources integrated in this advisory engine:' : 'Zweryfikowane źródła ogrodnicze włączone do algorytmu poradnika:'}
         </h4>
-        <p className="leading-relaxed text-stone-500">
+        <p className="leading-relaxed text-stone-500 dark:text-stone-400">
           {isEn
             ? 'Knowledge base formulated based on multi-year horticultural guidelines and research from gardening literature: "Działkowiec" magazine (Container Garden & Balcony sections), PoradnikOgrodniczy.pl, Murator Dom & Ogród, and Polish agricultural advisory publications.'
             : 'Baza wiedzy powstała na podstawie wieloletnich zaleceń i badań publikowanych w polskich periodykach oraz portalach ogrodniczych: Miesięcznik Działkowiec (działy: \'Ogród w pojemnikach\', \'Balkon i taras\'), PoradnikOgrodniczy.pl, wydawnictwa Murator Dom & Ogród oraz materiały instruktażowe Zielonego Pogotowia.'}
@@ -262,4 +262,3 @@ export const ContainerKnowledgeGuide: React.FC = () => {
     </div>
   );
 };
-

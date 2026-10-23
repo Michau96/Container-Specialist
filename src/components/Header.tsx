@@ -69,6 +69,7 @@ export const Header: React.FC<Props> = ({
       !isNaN(userSpec.floor)
   );
   const isConfigured = typeof isConfiguredProp === 'boolean' ? isConfiguredProp : isSpecComplete;
+  const isProfileIncomplete = !isConfigured;
 
   // Formatting for configured tooltip content
   const orientItem = ORIENTATION_OPTIONS.find((o) => o.key === userSpec?.orientation);
@@ -182,18 +183,28 @@ export const Header: React.FC<Props> = ({
                         ? 'Mój balkon - profil skonfigurowany'
                         : 'Mój balkon - profil nieskonfigurowany'
                     }
-                    className="px-3.5 py-1.5 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 text-stone-800 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-2 cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    className="relative inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-zinc-700 hover:text-zinc-900 bg-white dark:bg-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 dark:text-stone-200 hover:text-emerald-800 dark:hover:text-emerald-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] transition cursor-pointer shadow-2xs group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                     title={isConfigured ? configuredTooltipText : incompleteTooltipText}
                   >
                     <Settings className="w-4 h-4 text-emerald-600 dark:text-emerald-400 group-hover:rotate-45 transition-transform duration-300" />
                     <span>{t('myBalcony')}</span>
-                    <span
-                      className={`relative inline-flex h-2.5 w-2.5 rounded-full transition-all duration-300 ${
-                        isConfigured ? 'bg-emerald-500' : 'bg-amber-400'
-                      }`}
-                      aria-hidden="true"
-                      data-testid="balcony-status-indicator"
-                    />
+                    {isProfileIncomplete ? (
+                      <span
+                        className="relative flex h-2.5 w-2.5"
+                        title="Profil wymaga uzupełnienia"
+                        data-testid="balcony-status-indicator"
+                      >
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500" />
+                        <span className="sr-only">Profil balkonu wymaga dokończenia konfiguracji</span>
+                      </span>
+                    ) : (
+                      <span
+                        className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500 transition-all duration-300"
+                        aria-hidden="true"
+                        data-testid="balcony-status-indicator"
+                      />
+                    )}
                   </button>
                 </TooltipTrigger>
                 <TooltipContent

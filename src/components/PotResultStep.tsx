@@ -913,7 +913,7 @@ export const PotResultStep: React.FC<PotResultStepProps> = ({
           <button
             type="button"
             onClick={() => onSelectPlant(currentPlant)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-bold hover:bg-stone-800 dark:hover:bg-stone-200 transition flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-stone-900 dark:bg-emerald-700 text-white text-xs font-bold hover:bg-stone-800 dark:hover:bg-emerald-600 transition flex items-center justify-center gap-2 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
             <span>{isEn ? `View plant profile: ${currentPlant.name}` : `Zobacz profil rośliny: ${currentPlant.name}`}</span>

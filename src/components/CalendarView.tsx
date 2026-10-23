@@ -365,7 +365,7 @@ export const CalendarView: React.FC<Props> = ({
                       onClick={() => setSelectedPeriodId(p1)}
                       className={`py-1.5 px-1 text-[11px] rounded-lg font-semibold transition flex flex-col items-center justify-center relative cursor-pointer ${
                         isP1Selected
-                          ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 shadow-xs'
+                          ? 'bg-stone-900 text-white dark:bg-emerald-600 dark:text-white shadow-xs'
                           : isP1Current
                           ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-bold'
                           : 'bg-white dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-600'
@@ -386,7 +386,7 @@ export const CalendarView: React.FC<Props> = ({
                       onClick={() => setSelectedPeriodId(p2)}
                       className={`py-1.5 px-1 text-[11px] rounded-lg font-semibold transition flex flex-col items-center justify-center relative cursor-pointer ${
                         isP2Selected
-                          ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 shadow-xs'
+                          ? 'bg-stone-900 text-white dark:bg-emerald-600 dark:text-white shadow-xs'
                           : isP2Current
                           ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-800 font-bold'
                           : 'bg-white dark:bg-stone-700 hover:bg-stone-100 dark:hover:bg-stone-600 text-stone-700 dark:text-stone-200 border border-stone-200 dark:border-stone-600'

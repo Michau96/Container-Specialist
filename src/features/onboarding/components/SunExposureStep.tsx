@@ -133,7 +133,7 @@ export const SunExposureStep: React.FC<SunExposureStepProps> = ({
               onClick={() => onExposureFilterChange('main')}
               className={`min-h-[44px] px-3.5 py-2 rounded-xl font-bold transition cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                 exposureFilter === 'main'
-                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-bold shadow-xs'
+                  ? 'bg-stone-900 dark:bg-emerald-700 text-white font-bold shadow-xs'
                   : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white bg-stone-100 dark:bg-stone-800'
               }`}
             >
@@ -146,7 +146,7 @@ export const SunExposureStep: React.FC<SunExposureStepProps> = ({
               onClick={() => onExposureFilterChange('all')}
               className={`min-h-[44px] px-3.5 py-2 rounded-xl font-bold transition cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                 exposureFilter === 'all'
-                  ? 'bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 font-bold shadow-xs'
+                  ? 'bg-stone-900 dark:bg-emerald-700 text-white font-bold shadow-xs'
                   : 'text-stone-700 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white bg-stone-100 dark:bg-stone-800'
               }`}
             >

@@ -35,7 +35,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       class="absolute top-3.5 left-3.5 z-10"
     >
       <span
-        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-md backdrop-blur-md inline-flex items-center gap-1"
         data-testid="plant-badge-match-truskawka-wisząca"
       >
         88% dopasowania
@@ -193,7 +193,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       class="absolute top-3.5 left-3.5 z-10"
     >
       <span
-        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-md backdrop-blur-md inline-flex items-center gap-1"
         data-testid="plant-badge-match-szczypiorek-ziola"
       >
         88% dopasowania
@@ -351,7 +351,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       class="absolute top-3.5 left-3.5 z-10"
     >
       <span
-        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+        class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-md backdrop-blur-md inline-flex items-center gap-1"
         data-testid="plant-badge-match-pomidor-karlowy"
       >
         88% dopasowania

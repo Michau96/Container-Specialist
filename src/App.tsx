@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import {
   Sparkles,
   Search,
+  Search as SearchIcon,
   Info,
   Sprout,
   ArrowRight,
@@ -62,7 +63,7 @@ import { getPlantTimingInfo, getCalendarPeriodId, getPeriodHumanLabel } from './
 import { getPlantLifestylePills } from './lib/plantLifestyle';
 import { useLanguage } from './lib/LanguageContext';
 import { getTranslatedPlant, getPlantGroupLabel } from './lib/plantTranslations';
-import { ScrollToTopButton } from './components/ScrollToTopButton';
+import { BackToTopButton } from './components/BackToTop';
 
 export default function App() {
   const { language, t } = useLanguage();
@@ -808,116 +809,117 @@ export default function App() {
         {/* Tab 2: Szukaj nowych upraw (pełna baza wiedzy) */}
         {activeTab === 'search_crops' && (
           <div className="space-y-6">
-            {/* 1. Primary Catalog Search Control (Prominent at top of catalog, uncluttered) */}
-            <div
+            {/* Sticky Catalog Controls Section */}
+            <section
               data-testid="catalog-search-card"
-              className="bg-white dark:bg-stone-900 rounded-[2rem] p-5 sm:p-6 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3.5"
+              className="sticky top-0 z-30 bg-white/85 dark:bg-zinc-900/85 backdrop-blur-md border-b border-zinc-200/80 dark:border-zinc-800 transition-shadow py-3 px-4 shadow-sm rounded-2xl"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <label
-                  htmlFor="search-vegetables-input"
-                  data-testid="catalog-search-label"
-                  className="block text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100"
-                >
-                  {isEn ? 'Search Container Crop Catalog' : 'Szukaj w katalogu upraw'}
-                </label>
-
-                {/* Clearly labeled control to reveal/hide advanced filters (Req 6) */}
-                <button
-                  id="toggle-advanced-filters-btn"
-                  data-testid="toggle-advanced-filters-btn"
-                  type="button"
-                  aria-expanded={showAdvancedFilters}
-                  aria-controls="advanced-filters-panel"
-                  onClick={() => setShowAdvancedFilters((prev) => !prev)}
-                  className={`min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center justify-between sm:justify-start gap-2 cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
-                    showAdvancedFilters || activeAdvancedFiltersCount > 0
-                      ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 shadow-2xs'
-                      : 'bg-stone-50 dark:bg-stone-800 border-stone-300 dark:border-stone-700 text-stone-800 dark:text-stone-200 hover:bg-stone-100 dark:hover:bg-stone-750'
-                  }`}
-                >
-                  <div className="flex items-center gap-1.5">
-                    <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />
-                    <span>
-                      {showAdvancedFilters
-                        ? isEn
-                          ? 'Hide advanced filters'
-                          : 'Ukryj filtry zaawansowane'
-                        : isEn
-                        ? 'Advanced filters'
-                        : 'Filtry zaawansowane'}
-                    </span>
-                  </div>
-                  {activeAdvancedFiltersCount > 0 && (
-                    <span
-                      data-testid="active-filters-count-badge"
-                      className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-700 text-white"
-                    >
-                      {activeAdvancedFiltersCount}
-                    </span>
-                  )}
-                  {showAdvancedFilters ? (
-                    <ChevronUp className="w-3.5 h-3.5 ml-0.5" />
-                  ) : (
-                    <ChevronDown className="w-3.5 h-3.5 ml-0.5" />
-                  )}
-                </button>
-              </div>
-
-              <div className="relative">
-                <label
-                  htmlFor="search-vegetables-input"
-                  id="plant-search-label"
-                  className="sr-only"
-                >
-                  {isEn ? 'Search plant or variety' : 'Szukaj rośliny lub odmiany'}
-                </label>
-                <Search className="w-5 h-5 text-stone-500 dark:text-stone-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-                <input
-                  id="search-vegetables-input"
-                  name="plant-search"
-                  data-testid="plant-search-input"
-                  data-alias-testid="catalog-search-input"
-                  type="search"
-                  role="searchbox"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Escape') {
-                      setSearchQuery('');
-                    }
-                  }}
-                  placeholder={
-                    isEn
-                      ? 'Search plant or variety (e.g. tomato, Vilma, radish, basil)...'
-                      : 'Szukaj rośliny lub odmiany (np. pomidor, Vilma, rzodkiewka, bazylia)...'
-                  }
-                  className="w-full pl-11 pr-28 py-3 sm:py-3.5 text-sm sm:text-base rounded-2xl border border-stone-300 dark:border-stone-700 bg-stone-50 dark:bg-stone-800/80 text-stone-900 dark:text-stone-100 placeholder-stone-500 dark:placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-emerald-700 dark:focus:ring-emerald-400 transition shadow-inner"
-                />
-
-                {searchQuery && (
-                  <button
-                    id="clear-search-btn"
-                    data-testid="clear-search-btn"
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      document.getElementById('search-vegetables-input')?.focus();
-                    }}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 min-h-[44px] min-w-[44px] px-3 py-1.5 text-xs font-semibold text-stone-800 dark:text-stone-200 hover:text-stone-950 dark:hover:text-white bg-stone-200/90 dark:bg-stone-700/90 hover:bg-stone-300 dark:hover:bg-stone-600 rounded-xl transition-colors cursor-pointer flex items-center justify-center gap-1.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400"
-                    aria-label={isEn ? 'Clear search' : 'Wyczyść wyszukiwanie'}
+              <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center gap-3">
+                <div className="relative w-full flex-1">
+                  <label
+                    htmlFor="search-vegetables-input"
+                    id="plant-search-label"
+                    data-testid="catalog-search-label"
+                    className="sr-only"
                   >
-                    <X className="w-3.5 h-3.5" />
-                    <span>{isEn ? 'Clear' : 'Wyczyść'}</span>
+                    {isEn ? 'Search plant or variety' : 'Szukaj rośliny lub odmiany'}
+                  </label>
+                  <SearchIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400 pointer-events-none" />
+                  <input
+                    id="search-vegetables-input"
+                    name="plant-search"
+                    data-testid="plant-search-input"
+                    data-alias-testid="catalog-search-input"
+                    type="text"
+                    role="searchbox"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setSearchQuery('');
+                    }}
+                    placeholder={isEn ? 'Search plant or variety' : 'Szukaj rośliny lub odmiany'}
+                    className="w-full pl-10 pr-10 py-2 text-sm bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:bg-white dark:focus:bg-zinc-800 text-stone-900 dark:text-stone-100 placeholder-zinc-400 dark:placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      id="clear-search-btn"
+                      data-testid="clear-search-btn"
+                      type="button"
+                      onClick={() => {
+                        setSearchQuery('');
+                        document.getElementById('search-vegetables-input')?.focus();
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1.5 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 rounded-lg transition-colors cursor-pointer"
+                      aria-label={isEn ? 'Clear search' : 'Wyczyść wyszukiwanie'}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Quick Category Chips List */}
+                <div
+                  className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto no-scrollbar py-1 shrink-0"
+                  role="group"
+                  aria-label={isEn ? 'Category' : 'Kategoria'}
+                >
+                  {[
+                    { id: 'wszystkie', label: isEn ? 'All' : 'Wszystkie' },
+                    { id: 'warzywa', label: isEn ? 'Vegetables' : 'Warzywa' },
+                    { id: 'ziola', label: isEn ? 'Herbs' : 'Zioła' },
+                    { id: 'owoce', label: isEn ? 'Fruits' : 'Owoce' },
+                    { id: 'ozdobne', label: isEn ? 'Ornamental' : 'Ozdobne' },
+                    { id: 'kielki', label: isEn ? 'Sprouts' : 'Kiełki' },
+                    { id: 'grzyby', label: isEn ? 'Mushrooms' : 'Grzyby' },
+                  ].map((cat) => {
+                    const isActive = selectedGroup === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        id={`quick-cat-pill-${cat.id}`}
+                        data-testid={`quick-cat-pill-${cat.id}`}
+                        type="button"
+                        onClick={() => setSelectedGroup(cat.id as any)}
+                        className={`min-h-[36px] px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                          isActive
+                            ? 'bg-emerald-600 text-white shadow-xs'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-zinc-200/80 dark:border-zinc-700'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    id="toggle-advanced-filters-btn"
+                    data-testid="toggle-advanced-filters-btn"
+                    type="button"
+                    aria-expanded={showAdvancedFilters}
+                    aria-controls="advanced-filters-panel"
+                    onClick={() => setShowAdvancedFilters((prev) => !prev)}
+                    className={`min-h-[36px] px-3 py-1.5 rounded-full text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer border focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                      showAdvancedFilters || activeAdvancedFiltersCount > 0
+                        ? 'bg-emerald-50 dark:bg-emerald-950/60 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200'
+                        : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                    <span>{showAdvancedFilters ? (isEn ? 'Hide filters' : 'Ukryj filtry') : (isEn ? 'Filters' : 'Filtry')}</span>
+                    {activeAdvancedFiltersCount > 0 && (
+                      <span data-testid="active-filters-count-badge" className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-emerald-700 text-white">
+                        {activeAdvancedFiltersCount}
+                      </span>
+                    )}
                   </button>
-                )}
+                </div>
               </div>
 
               {/* Result count and query context after searching */}
               {searchQuery.trim() && (
                 <div
                   data-testid="search-results-context"
-                  className="flex items-center justify-between text-xs sm:text-sm text-stone-700 dark:text-stone-300 bg-emerald-50/80 dark:bg-emerald-950/40 px-4 py-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60"
+                  className="max-w-6xl mx-auto mt-2.5 flex items-center justify-between text-xs sm:text-sm text-stone-700 dark:text-stone-300 bg-emerald-50/80 dark:bg-emerald-950/40 px-4 py-2 rounded-xl border border-emerald-200/80 dark:border-emerald-800/60"
                 >
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="font-semibold text-emerald-900 dark:text-emerald-200">
@@ -951,7 +953,7 @@ export default function App() {
               {!showAdvancedFilters && activeAdvancedFiltersCount > 0 && (
                 <div
                   data-testid="active-filters-summary"
-                  className="flex items-center gap-2 flex-wrap pt-1 text-xs"
+                  className="max-w-6xl mx-auto flex items-center gap-2 flex-wrap pt-2 text-xs"
                 >
                   <span className="font-semibold text-stone-500 dark:text-stone-400 text-[11px] uppercase tracking-wider">
                     {isEn ? 'Active filters:' : 'Aktywne filtry:'}
@@ -1010,7 +1012,7 @@ export default function App() {
                   </button>
                 </div>
               )}
-            </div>
+            </section>
 
             {/* Feedback / Toast Confirmation Banner for Add Crop */}
             {addFeedback && (
@@ -1208,7 +1210,7 @@ export default function App() {
                       onClick={() => handleGroupChange(g.id as PlantGroup)}
                       className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition text-xs cursor-pointer flex items-center gap-1.5 ${
                         selectedGroup === g.id
-                          ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold shadow-xs'
+                          ? 'bg-stone-900 text-white dark:bg-emerald-600 dark:text-white font-bold shadow-xs'
                           : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                       }`}
                     >
@@ -1233,7 +1235,7 @@ export default function App() {
                       onClick={() => handleGroupChange('wszystkie')}
                       className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                         selectedGroup === 'wszystkie'
-                          ? 'bg-stone-900 text-white border-stone-900 dark:bg-stone-100 dark:text-stone-900 dark:border-stone-100 shadow-sm'
+                          ? 'bg-stone-900 text-white border-stone-900 dark:bg-stone-800 dark:text-stone-100 dark:border-stone-600 shadow-sm ring-2 ring-stone-500/20'
                           : 'bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
                       }`}
                     >
@@ -1242,7 +1244,7 @@ export default function App() {
                         <span
                           className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                             selectedGroup === 'wszystkie'
-                              ? 'bg-stone-800 dark:bg-stone-200 text-stone-200 dark:text-stone-800'
+                              ? 'bg-stone-800 dark:bg-stone-700 text-stone-200 dark:text-stone-200'
                               : 'bg-white dark:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-600'
                           }`}
                         >
@@ -1254,7 +1256,7 @@ export default function App() {
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'wszystkie'
-                              ? 'text-stone-300 dark:text-stone-600'
+                              ? 'text-stone-300 dark:text-stone-400'
                               : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
@@ -1439,7 +1441,7 @@ export default function App() {
                       onClick={() => handleGroupChange('grzyby')}
                       className={`p-3 rounded-2xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
                         selectedGroup === 'grzyby'
-                          ? 'bg-stone-800 text-white border-stone-800 dark:bg-stone-200 dark:text-stone-900 dark:border-stone-200 shadow-sm'
+                          ? 'bg-stone-800 text-white border-stone-800 dark:bg-stone-800 dark:text-amber-200 dark:border-amber-700/60 shadow-sm ring-2 ring-amber-500/20'
                           : 'bg-stone-50 dark:bg-stone-800/60 hover:bg-stone-100 dark:hover:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700'
                       }`}
                     >
@@ -1448,7 +1450,7 @@ export default function App() {
                         <span
                           className={`text-xs font-bold px-2 py-0.5 rounded-full ${
                             selectedGroup === 'grzyby'
-                              ? 'bg-stone-900 dark:bg-stone-300 text-stone-100 dark:text-stone-900'
+                              ? 'bg-stone-900 dark:bg-amber-950/80 text-stone-100 dark:text-amber-300'
                               : 'bg-white dark:bg-stone-700 text-stone-800 dark:text-stone-200 border border-stone-200 dark:border-stone-600'
                           }`}
                         >
@@ -1460,7 +1462,7 @@ export default function App() {
                         <div
                           className={`text-[11px] ${
                             selectedGroup === 'grzyby'
-                              ? 'text-stone-300 dark:text-stone-600'
+                              ? 'text-stone-300 dark:text-stone-400'
                               : 'text-stone-500 dark:text-stone-400'
                           }`}
                         >
@@ -1606,7 +1608,7 @@ export default function App() {
                   onClick={() => setTimingFilter('all')}
                   className={`min-h-[44px] px-3.5 py-1.5 rounded-full whitespace-nowrap transition text-xs cursor-pointer flex items-center justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 ${
                     timingFilter === 'all'
-                      ? 'bg-stone-900 text-white dark:bg-stone-100 dark:text-stone-900 font-bold shadow-xs'
+                      ? 'bg-stone-900 text-white dark:bg-emerald-700 dark:text-white font-bold shadow-xs'
                       : 'bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-stone-700'
                   }`}
                 >
@@ -1820,7 +1822,7 @@ export default function App() {
                       setSelectedGroup('wszystkie');
                       setTimingFilter('all');
                     }}
-                    className="mt-4 px-5 py-2.5 bg-stone-900 dark:bg-stone-100 text-white dark:text-stone-900 rounded-xl text-xs sm:text-sm font-semibold hover:bg-stone-800 dark:hover:bg-stone-200 transition cursor-pointer min-h-[44px]"
+                    className="mt-4 px-5 py-2.5 bg-stone-900 dark:bg-emerald-700 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-stone-800 dark:hover:bg-emerald-600 transition cursor-pointer min-h-[44px]"
                   >
                     {isEn ? `Show all plants (${plants.length})` : `Pokaż wszystkie rośliny (${plants.length})`}
                   </button>
@@ -1990,17 +1992,17 @@ export default function App() {
       {accountToast && (
         <div
           id="account-status-toast"
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-stone-900/95 dark:bg-stone-100 text-white dark:text-stone-900 text-xs font-semibold shadow-2xl border border-stone-700/80 dark:border-stone-300 animate-in slide-in-from-bottom-5 fade-in duration-300 backdrop-blur-md"
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl bg-stone-900/95 dark:bg-stone-800 text-white dark:text-stone-100 text-xs font-semibold shadow-2xl border border-stone-700/80 dark:border-stone-700 animate-in slide-in-from-bottom-5 fade-in duration-300 backdrop-blur-md"
         >
           {accountToast.type === 'success' ? (
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400 dark:text-emerald-400 shrink-0" />
           ) : (
-            <ShieldCheck className="w-4 h-4 text-sky-400 dark:text-sky-600 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-sky-400 dark:text-sky-400 shrink-0" />
           )}
           <span>{accountToast.message}</span>
           <button
             onClick={() => setAccountToast(null)}
-            className="ml-2 text-stone-400 hover:text-white dark:hover:text-stone-900 p-0.5 cursor-pointer"
+            className="ml-2 text-stone-400 hover:text-white dark:hover:text-white p-0.5 cursor-pointer"
           >
             <X className="w-3.5 h-3.5" />
           </button>
@@ -2029,7 +2031,7 @@ export default function App() {
           </div>
         </div>
       </footer>
-      <ScrollToTopButton />
+      <BackToTopButton />
     </div>
   );
 }

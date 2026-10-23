@@ -108,14 +108,14 @@ export const PlantCard: React.FC<Props> = ({
           {score < 70 ? (
             <span
               data-testid={`plant-badge-attention-${plant.id}`}
-              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 shadow-md backdrop-blur-md inline-flex items-center gap-1"
             >
               Wymaga uwagi
             </span>
           ) : (
             <span
               data-testid={`plant-badge-match-${plant.id}`}
-              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 shadow-md backdrop-blur-md inline-flex items-center gap-1"
+              className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-md backdrop-blur-md inline-flex items-center gap-1"
             >
               {`${score}% dopasowania`}
             </span>
