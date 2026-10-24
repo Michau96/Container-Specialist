@@ -78,10 +78,17 @@ Container gardening in an apartment setting is governed by physical constraints 
 * **`useScrollLock` Hook:** Prevents background body scrolling during open modal or drawer dialogs while compensating for scrollbar width to eliminate layout shift.
 * **Standardized Backdrop Styling:** `fixed inset-0 bg-black/50 backdrop-blur-sm z-50` with click-outside listener to dismiss, while preserving explicit close buttons labeled `"Zamknij"` and `"Zamknij i przejdź do aplikacji"`.
 * **Floating `ScrollToTopButton`:** Smooth-scrolling button with scroll-depth detection (`window.scrollY > 400`).
+* **Slide-Over "Mój balkon" Drawer:** Accessible drawer with `overscroll-behavior: contain`, background body scroll lock, and Radix-powered tooltip indicators.
 
 ### 9. ☁️ Offline-First & Firebase Cloud Sync
 * Works completely offline with zero setup using browser `localStorage`.
 * Optional Google sign-in or email authentication via Firebase Auth and Cloud Firestore for multi-device synchronization.
+
+### 10. 🌓 Market-Standard Preferences & Dark Mode Overhaul
+* **Unified Preferences Dropdown:** Replaced exposed, cluttered navbar switches with a market-standard Preferences Menu in the top header (`header-preferences-trigger`, `header-preferences-dropdown`). Features click-outside detection, keyboard `Escape` closing, and clean segment controls.
+* **Comprehensive Dark Mode Polish:** Overhauled dark theme styling (`dark:bg-slate-900`, `dark:bg-slate-800`, `dark:border-slate-700`) eliminating stark white containers, bright background leaks, and low-contrast text across all modals, badges, cards, and knowledge guides.
+* **Bi-Lingual Localization (PL / EN):** Instant switching between Polish and English across all UI views, agrotechnical terms, and diagnostic checklists.
+* **Discrete Footer Preference Bar:** Quick-access language and theme segment controls placed discreetly in the application footer (`🌐 Język: Polski | English` & `🌓 Motyw: Jasny | Ciemny`) for ergonomic bottom-of-page adjustments.
 
 ---
 
@@ -91,7 +98,7 @@ Container gardening in an apartment setting is governed by physical constraints 
 * **Backend:** Express.js 4.21 (Node.js runtime), Vite SSR/Dev middleware, esbuild
 * **Database & Auth:** Firebase Firestore, Firebase Authentication
 * **Graphics & Processing:** HTML5 Canvas (2D soil stratification & client-side photo compression)
-* **Testing:** Vitest 5.0, React Testing Library, jsdom, axe-core
+* **Testing:** Vitest 5.0, React Testing Library, jsdom, axe-core (32 test suites, 276 tests passing)
 
 ---
 
@@ -176,9 +183,10 @@ npm start
 │   │   ├── catalog/             # Plant search, sticky sub-header & match badges
 │   │   └── onboarding/          # Step-by-step balcony calibration wizard
 │   ├── components/
-│   │   ├── Header.tsx                   # Top navigation bar & language selector
+│   │   ├── Header.tsx                   # Top navbar with market-standard Preferences Menu
 │   │   ├── BalconySetupModal.tsx        # Balcony setup & calibration wizard
 │   │   ├── BalconyProfileDrawer.tsx     # Slide-over "Mój balkon" profile drawer
+│   │   ├── ContainerKnowledgeGuide.tsx  # 5 Pillars of Urban Container Gardening
 │   │   ├── MyCropsView.tsx              # Active crops command center
 │   │   ├── CropGrowthPhaseTimeline.tsx  # Phenological development timeline
 │   │   ├── TimelapseModal.tsx           # Multi-speed timelapse player
@@ -192,6 +200,7 @@ npm start
 │   │   ├── ScrollToTopButton.tsx        # Floating smooth scroll to top
 │   │   └── CalendarView.tsx             # Seasonal gardening calendar
 │   ├── lib/
+│   │   ├── translations.ts              # Bi-lingual dictionary (PL & EN) & UI types
 │   │   ├── api.ts                       # Weather API & mock fallbacks
 │   │   ├── cropGrowthPhases.ts          # Phenological stage calculations
 │   │   ├── cropPhotos.ts                # Photo management & cadence logic

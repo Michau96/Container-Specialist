@@ -394,6 +394,8 @@ export const translations: Record<Language, Translations> = {
     signedInAs: 'Signed in as',
     themeLight: 'Light',
     themeDark: 'Dark',
+    themeTitle: 'Theme',
+    preferencesTitle: 'Preferences & Language',
     language: 'Language',
     polish: 'Polski',
     english: 'English',

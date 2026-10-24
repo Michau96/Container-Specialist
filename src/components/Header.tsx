@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Sprout,
   Calendar,
@@ -11,6 +11,7 @@ import {
   HelpCircle,
   Globe,
   Check,
+  ChevronDown,
 } from 'lucide-react';
 import { UserBalconySpec, UserAccount } from '../types';
 import { useLanguage } from '../lib/LanguageContext';
@@ -59,6 +60,31 @@ export const Header: React.FC<Props> = ({
 }) => {
   const { language, setLanguage, t } = useLanguage();
   const handleOpenDrawer = onOpenBalconyDrawer || onOpenSetup || (() => {});
+
+  const [isPreferencesOpen, setIsPreferencesOpen] = useState(false);
+  const preferencesRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (preferencesRef.current && !preferencesRef.current.contains(event.target as Node)) {
+        setIsPreferencesOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsPreferencesOpen(false);
+      }
+    };
+
+    if (isPreferencesOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isPreferencesOpen]);
 
   // Determine whether the balcony profile is configured
   const isSpecComplete = Boolean(
@@ -128,47 +154,8 @@ export const Header: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Actions: Language Switcher + Subtle "Mój balkon" Drawer trigger + Account + Theme */}
+          {/* Actions: "Mój balkon" Drawer trigger + Account + Help + Preferences Dropdown */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Top Bar Language Switcher */}
-            <div
-              id="header-language-switcher"
-              className="flex items-center bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-[1rem] p-0.5 shadow-2xs"
-              role="group"
-              aria-label={t('switchLanguage')}
-            >
-              <button
-                id="header-lang-pl-btn"
-                type="button"
-                onClick={() => setLanguage('pl')}
-                className={`px-2.5 py-1.5 rounded-[0.8rem] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  language === 'pl'
-                    ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs'
-                    : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
-                }`}
-                title="Wersja polska (PL)"
-                aria-pressed={language === 'pl'}
-              >
-                <span>🇵🇱</span>
-                <span>PL</span>
-              </button>
-              <button
-                id="header-lang-en-btn"
-                type="button"
-                onClick={() => setLanguage('en')}
-                className={`px-2.5 py-1.5 rounded-[0.8rem] text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                  language === 'en'
-                    ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs'
-                    : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
-                }`}
-                title="English version (EN)"
-                aria-pressed={language === 'en'}
-              >
-                <span>🇬🇧</span>
-                <span>EN</span>
-              </button>
-            </div>
-
             {/* "Mój balkon" Button with Radix Tooltip */}
             <TooltipProvider delayDuration={150}>
               <Tooltip open={tooltipOpen}>
@@ -276,27 +263,150 @@ export const Header: React.FC<Props> = ({
               </button>
             )}
 
-            {/* Dark Mode Switch */}
-            <button
-              id="dark-mode-toggle-btn"
-              type="button"
-              onClick={onToggleDarkMode}
-              className="p-2 bg-stone-100 dark:bg-stone-800 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-stone-700 dark:text-amber-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs"
-              aria-label={darkMode ? t('themeLight') : t('themeDark')}
-              title={darkMode ? t('themeLight') : t('themeDark')}
-            >
-              {darkMode ? (
-                <>
-                  <Sun className="w-4 h-4 text-amber-400" />
-                  <span className="hidden lg:inline text-stone-200">{t('themeLight')}</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4 text-stone-600" />
-                  <span className="hidden lg:inline text-stone-700">{t('themeDark')}</span>
-                </>
+            {/* Preferences Dropdown (Market-standard hidden menu for Theme & Language) */}
+            <div className="relative" ref={preferencesRef}>
+              <button
+                id="header-preferences-trigger"
+                data-testid="header-preferences-trigger"
+                type="button"
+                onClick={() => setIsPreferencesOpen((prev) => !prev)}
+                className={`min-h-[40px] px-2.5 py-1.5 bg-stone-100 dark:bg-stone-800 hover:bg-stone-200 dark:hover:bg-stone-700 text-stone-700 dark:text-stone-300 border border-stone-200 dark:border-stone-700 rounded-[1rem] text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer shadow-2xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  isPreferencesOpen ? 'ring-2 ring-emerald-500 bg-stone-200 dark:bg-stone-700' : ''
+                }`}
+                aria-label={t('preferencesTitle')}
+                aria-expanded={isPreferencesOpen}
+                aria-haspopup="true"
+                title={`${t('preferencesTitle')}: ${language.toUpperCase()} • ${darkMode ? t('themeDark') : t('themeLight')}`}
+              >
+                {darkMode ? (
+                  <Moon className="w-4 h-4 text-sky-400" />
+                ) : (
+                  <Sun className="w-4 h-4 text-amber-500" />
+                )}
+                <span className="text-[11px] font-bold uppercase tracking-wider">{language}</span>
+                <ChevronDown className={`w-3.5 h-3.5 text-stone-400 transition-transform duration-200 ${isPreferencesOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {isPreferencesOpen && (
+                <div
+                  id="header-preferences-dropdown"
+                  data-testid="header-preferences-dropdown"
+                  role="menu"
+                  aria-label={t('preferencesTitle')}
+                  className="absolute right-0 top-full mt-2 z-50 w-64 p-3.5 bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 rounded-2xl shadow-xl space-y-3.5 animate-in fade-in-0 zoom-in-95 duration-150"
+                >
+                  <div className="flex items-center justify-between pb-1.5 border-b border-stone-100 dark:border-stone-800">
+                    <span className="text-[11px] font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">
+                      {t('preferencesTitle')}
+                    </span>
+                    <span className="text-[10px] text-stone-400 font-medium">
+                      {language.toUpperCase()} • {darkMode ? t('themeDark') : t('themeLight')}
+                    </span>
+                  </div>
+
+                  {/* Section 1: Motyw (Theme) */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-stone-700 dark:text-stone-300">
+                      <span className="flex items-center gap-1.5">
+                        {darkMode ? <Moon className="w-3.5 h-3.5 text-sky-400" /> : <Sun className="w-3.5 h-3.5 text-amber-500" />}
+                        <span>{t('themeTitle')}</span>
+                      </span>
+                      <span className="text-[11px] font-normal text-stone-400">
+                        {darkMode ? t('themeDark') : t('themeLight')}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl border border-stone-200/80 dark:border-stone-700/80">
+                      <button
+                        type="button"
+                        id="theme-light-btn"
+                        onClick={() => {
+                          if (darkMode) onToggleDarkMode();
+                        }}
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          !darkMode
+                            ? 'bg-white dark:bg-stone-700 text-stone-900 dark:text-stone-100 shadow-2xs'
+                            : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                        }`}
+                        aria-pressed={!darkMode}
+                      >
+                        <Sun className="w-3.5 h-3.5 text-amber-500" />
+                        <span>{t('themeLight')}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        id="dark-mode-toggle-btn"
+                        data-testid="dark-mode-toggle-btn"
+                        onClick={() => {
+                          if (!darkMode) onToggleDarkMode();
+                        }}
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          darkMode
+                            ? 'bg-stone-900 text-white dark:bg-stone-700 dark:text-stone-100 shadow-2xs'
+                            : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                        }`}
+                        aria-pressed={darkMode}
+                        aria-label={darkMode ? t('themeLight') : t('themeDark')}
+                      >
+                        <Moon className="w-3.5 h-3.5 text-sky-400" />
+                        <span>{t('themeDark')}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Section 2: Język (Language) */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-semibold text-stone-700 dark:text-stone-300">
+                      <span className="flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>{t('language')}</span>
+                      </span>
+                      <span className="text-[11px] font-normal text-stone-400">
+                        {language === 'pl' ? 'Polski' : 'English'}
+                      </span>
+                    </div>
+                    <div
+                      id="header-language-switcher"
+                      role="group"
+                      aria-label={t('switchLanguage')}
+                      className="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 dark:bg-stone-800 rounded-xl border border-stone-200/80 dark:border-stone-700/80"
+                    >
+                      <button
+                        id="header-lang-pl-btn"
+                        type="button"
+                        onClick={() => setLanguage('pl')}
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          language === 'pl'
+                            ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs'
+                            : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                        }`}
+                        aria-pressed={language === 'pl'}
+                        title="Wersja polska (PL)"
+                      >
+                        <span>🇵🇱</span>
+                        <span>PL</span>
+                      </button>
+
+                      <button
+                        id="header-lang-en-btn"
+                        type="button"
+                        onClick={() => setLanguage('en')}
+                        className={`py-1.5 px-2.5 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
+                          language === 'en'
+                            ? 'bg-white dark:bg-stone-700 text-emerald-800 dark:text-emerald-300 shadow-2xs'
+                            : 'text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-stone-200'
+                        }`}
+                        aria-pressed={language === 'en'}
+                        title="English version (EN)"
+                      >
+                        <span>🇬🇧</span>
+                        <span>EN</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
               )}
-            </button>
+            </div>
           </div>
         </div>
 

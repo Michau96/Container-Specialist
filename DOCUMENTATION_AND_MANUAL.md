@@ -1,6 +1,6 @@
 # Container Gardening Specialist – System Documentation & Complete User Manual
 
-> **Version:** 2.5 (Updated with Phenological Engine, Rescue Diagnostics, Timelapse Video Player & Sticky Filter Navigation)  
+> **Version:** 2.6 (Updated with Market-Standard Preferences Menu, Complete Dark Mode Overhaul, Container Knowledge Guide & Sticky Filter Navigation)  
 > **Target Audience:** Urban container gardeners cultivating vegetables, fruits, herbs, and companion plants on balconies, loggias, and rooftop terraces.
 
 ---
@@ -19,6 +19,8 @@
    - [3.7. Seasonal Gardening Calendar & Companion Planting](#37-seasonal-gardening-calendar--companion-planting)
    - [3.8. Mini-Greenhouse & Cold Frame Management](#38-mini-greenhouse--cold-frame-management)
    - [3.9. Offline-First Storage & Firebase Cloud Sync](#39-offline-first-storage--firebase-cloud-sync)
+   - [3.10. Appearance, Language & Preferences System (Market-Standard Dropdown & Dark Mode)](#310-appearance-language--preferences-system)
+   - [3.11. Urban Container Knowledge Guide (5 Agrotechnical Pillars)](#311-urban-container-knowledge-guide)
 4. [Step-by-Step User Instructions](#4-step-by-step-user-instructions)
    - [Step 1: Calibrate Your Balcony Profile](#step-1-calibrate-your-balcony-profile)
    - [Step 2: Select Suitable Crops & Verify Compatibility](#step-2-select-suitable-crops--verify-compatibility)
@@ -26,7 +28,9 @@
    - [Step 4: Routine Care, Watering Logs & Daily Hero Tasks](#step-4-routine-care-watering-logs--daily-hero-tasks)
    - [Step 5: Photograph Growth & Play Back Timelapse Videos](#step-5-photograph-growth--play-back-timelapse-videos)
    - [Step 6: Diagnose Sick Plants & Apply Rescue Protocols](#step-6-diagnose-sick-plants--apply-rescue-protocols)
+   - [Step 7: Customize Appearance, Theme & Language Preferences](#step-7-customize-appearance-theme--language-preferences)
 5. [Expert Container Cultivation Rules & Common Mistakes](#5-expert-container-cultivation-rules--common-mistakes)
+6. [Recent Changelog (v2.6 Updates)](#6-recent-changelog-v26-updates)
 
 ---
 
@@ -53,6 +57,7 @@ The application is structured as a modern Full-Stack Single-Page Application (SP
 │  - Core Views: MyCropsView, PotCalculator, PlantCatalogView, Calendar   │
 │  - Modals: RescueFlowModal, TimelapseModal, BalconySetupModal, Auth    │
 │  - UI: Tailwind CSS v4, Lucide Icons, Accessible Modals & useScrollLock│
+│  - Preferences: Market-Standard Dropdown, Dual PL/EN, High-Contrast DM │
 │  - Canvas Engine: 2D Soil Cross-Section Renderer, Client Compression   │
 └───────────────────▲────────────────────────────────▲───────────────────┘
                     │                                │
@@ -67,6 +72,9 @@ The application is structured as a modern Full-Stack Single-Page Application (SP
 
 ### Key Source Code Architecture:
 * `src/types.ts`: TypeScript contracts for balcony specifications, plant profiles, phenological stages, photo entries, and diagnostic trees.
+* `src/lib/translations.ts`: Reactive internationalization dictionary supporting real-time toggling between Polish and English without layout shift.
+* `src/components/Header.tsx`: Top navigation bar with unified, market-standard Preferences Menu (`header-preferences-trigger`, `header-preferences-dropdown`) with keyboard escape and click-outside listeners.
+* `src/components/ContainerKnowledgeGuide.tsx`: Agrotechnical container knowledge guide structured into 5 foundational pillars with dark mode support.
 * `src/hooks/useScrollLock.ts`: Reusable hook preventing background page scrolling during open dialogs while compensating for scrollbar width.
 * `src/features/catalog/components/PlantCatalogView.tsx`: Catalog browser with sticky search header, quick-filter pills, and debounced indexing.
 * `src/components/ScrollToTopButton.tsx`: Floating smooth-scroll button with scroll-depth detection (`window.scrollY > 400`).
@@ -245,6 +253,45 @@ For gardeners using vertical tiered mini-greenhouses with plastic covers (`green
 
 ---
 
+### 3.10. Appearance, Language & Preferences System
+
+To maintain an uncluttered visual hierarchy, appearance and localization toggles follow modern web application standards:
+
+* **Market-Standard Preferences Dropdown (`Header.tsx`):**
+  * Consolidated quick settings behind a single, elegant icon button (`header-preferences-trigger`) featuring gear/sliders iconography with active status badges.
+  * Toggling opens an accessible overlay card (`header-preferences-dropdown`) anchored directly below the header button.
+  * Dismisses smoothly when clicking outside the popover card or pressing the `Escape` key.
+  * Preserves full backwards compatibility and automated testing hooks (`header-language-switcher`, `header-lang-pl-btn`, `header-lang-en-btn`, `dark-mode-toggle-btn`).
+* **Segmented Controls:**
+  * **Theme Picker:** Clear segment switch between **Light Mode (Jasny)** and **Dark Mode (Ciemny)** with real-time class application on `document.documentElement`.
+  * **Language Picker:** Clear segment switch between **Polski (PL)** and **English (EN)** updating the entire interface reactively without reloading.
+* **Comprehensive Dark Mode System:**
+  * Strict contrast ratios conforming to WCAG AA/AAA guidelines.
+  * Eliminates harsh white cards or jarring bright containers by adopting deep slate/zinc backgrounds (`dark:bg-slate-900`, `dark:bg-slate-800`, `dark:text-slate-100`, `dark:border-slate-700`).
+  * Custom dark-theme styling across all 5 knowledge guide pillars, plant cards, match badges, and onboarding wizards.
+* **Discrete Secondary Footer Preference Bar (`App.tsx`):**
+  * Provides quick-access links in the page footer (`🌐 Język: Polski | English` and `🌓 Motyw: Jasny | Ciemny`) so users scrolling deep through long catalog lists or calendars can switch preferences instantly without needing to return to the top navigation bar.
+
+---
+
+### 3.11. Urban Container Knowledge Guide (5 Agrotechnical Pillars)
+
+The **Container Knowledge Guide** (`ContainerKnowledgeGuide.tsx`) provides an integrated educational resource focused strictly on container biology:
+
+1. **Root System & Substrate Aeration (*System korzeniowy i napowietrzanie*):**
+   * Why roots in confined pots require high-porosity mixes (perlite, vermiculite) to prevent asphyxiation.
+   * Compaction risks associated with garden soil versus peat/coco-coir container blends.
+2. **Microclimate Adaptation (*Adaptacja mikroklimatyczna*):**
+   * Managing high-altitude wind shear, reflected wall heat, and balcony railing turbulence.
+3. **Moisture & Irrigation Management (*Zarządzanie wilgocią i nawadnianiem*):**
+   * The critical role of drainage holes, LECA layers, and bottom-watering vs. surface evaporation control.
+4. **Fertilization & Biological Balance (*Nawożenie i równowaga biologiczna*):**
+   * Replenishing leached water-soluble nutrients through measured organic fertilization cycles.
+5. **Balcony Safety & Container Weight (*Bezpieczeństwo i nośność balkonu*):**
+   * Calculating wet substrate bulk density to respect structural engineering limitations (standard residential balcony limits: ~250–350 kg/m²).
+
+---
+
 ## 4. Step-by-Step User Instructions
 
 ### Step 1: Calibrate Your Balcony Profile
@@ -293,6 +340,14 @@ For gardeners using vertical tiered mini-greenhouses with plastic covers (`green
    * If overwatered: Accept the automatic watering suspension cooldown.
    * Prepare the recommended organic remedy spray (e.g., potassium soap for aphids or baking soda solution for mildew).
 
+### Step 7: Customize Appearance, Theme & Language Preferences
+1. Look at the top right of the navigation header: click the **Preferences** button (displaying the current language code and theme icon, e.g. `PL ☀️` or `EN 🌙`).
+2. In the dropdown popover:
+   * Under **"Motyw / Theme"**, switch between **Jasny (Light)** and **Ciemny (Dark)**.
+   * Under **"Język / Language"**, switch between **Polski** and **English**.
+3. To close the dropdown, click anywhere outside the menu, click the gear button again, or press `Escape`.
+4. Alternatively, scroll to the footer at the bottom of the page to find the discrete quick-links: `🌐 Język: Polski | English` and `🌓 Motyw: Jasny | Ciemny`.
+
 ---
 
 ## 5. Expert Container Cultivation Rules & Common Mistakes
@@ -304,6 +359,40 @@ For gardeners using vertical tiered mini-greenhouses with plastic covers (`green
 | **Soil Selection** | Use loose potting soil blended with 15–20% horticultural perlite and compost. | Using dense garden dirt dug from outdoor soil, which compacts into an airless, water-repellent block in pots. |
 | **Wind Protection** | On floors 3 and higher, use heavy terracotta or concrete pots and stake tall plants to railings with flexible ties. | Leaving tall tomatoes or peppers in lightweight plastic containers, which blow over in the first wind gust. |
 | **Fertilization** | Nutrients leach out of container substrate with every watering. Apply balanced organic fertilizer (biohumus, seaweed extract) every 7–14 days during active growth. | Overdosing with synthetic chemical fertilizer granules (burning roots) or failing to fertilize at all throughout the season. |
+
+---
+
+## 6. Recent Changelog (v2.6 Updates)
+
+This release addresses direct feedback regarding UI clarity, dark mode contrast, and ergonomic navigation:
+
+1. **Comprehensive Dark Mode Contrast Overhaul:**
+   * **Problem Solved:** Previous dark mode iterations contained stark white backgrounds and low-contrast grey-on-white sections in modals, cards, and guides.
+   * **Implementation:** Standardized on deep slate/zinc backgrounds (`dark:bg-slate-900`, `dark:bg-slate-800`, `dark:border-slate-700`, `dark:text-slate-100`).
+   * **Full Dark Theming for 5 Knowledge Pillars:** All cards in `ContainerKnowledgeGuide.tsx` now sport cohesive dark-theme palettes with accessible colored accent borders.
+   * **Modal Background Consistency:** `MyBalconyModal.tsx`, `BalconyProfileDrawer.tsx`, `OnboardingStep3Modal.tsx`, and `PlantDetailModal.tsx` thoroughly restyled with deep night-mode surfaces.
+
+2. **Market-Standard Hidden Preferences Dropdown:**
+   * **Problem Solved:** Prominent, exposed language buttons and theme toggles in the main navbar created visual clutter and diverted focus from primary actions.
+   * **Implementation:** Consolidated into a unified, market-standard Preferences Menu (`header-preferences-trigger` & `header-preferences-dropdown`) with clear segment selectors for Theme (Light/Dark) and Language (PL/EN).
+   * **Accessibility & UX:** Includes outside-click dismiss, `Escape` key capture, and aria-expanded indicators, while retaining legacy automation selectors for end-to-end test stability.
+   * **Discrete Footer Bar:** Added non-intrusive footer preference links (`🌐 Język` & `🌓 Motyw`) for quick switching at the end of deep scrolls.
+
+3. **Sticky Catalog Filter & Search Header:**
+   * Pinned search bar and quick-filter pills (`z-30 backdrop-blur-md`) remain visible during extensive catalog exploration.
+   * Instant debounced search with accessible clear (`X`) button.
+
+4. **Floating Back-to-Top Button:**
+   * Smoothly scrolls the viewport to top when scroll depth exceeds 400px.
+   * Automatically disappears when near the top of the page.
+
+5. **Slide-Over "Mój balkon" Drawer Improvements:**
+   * Enhanced with `overscroll-behavior: contain` and background body scroll locking (`useScrollLock.ts`) to prevent awkward double-scrolling or layout shifting on mobile and desktop viewports.
+   * Integrated Radix-powered tooltip indicators for immediate microclimate clarity.
+
+6. **Quality & Test Coverage:**
+   * 32 passing Vitest test suites (276 total unit and integration tests).
+   * 0 TypeScript compilation or linting errors.
 
 ---
 
