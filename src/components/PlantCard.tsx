@@ -146,8 +146,8 @@ export const PlantCard: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* CONTENT SECTION (Streamlined first viewport: name, 1-2 key attributes, primary action) */}
-      <div className="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900">
+      {/* CONTENT SECTION (Compact first viewport: name, horizontal badges, primary action) */}
+      <div className="p-4 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900">
         <div className="space-y-2">
           {/* Category Tag */}
           <div className="flex items-center justify-between">
@@ -165,16 +165,33 @@ export const PlantCard: React.FC<Props> = ({
             data-testid={`plant-title-${plant.id}`}
             data-plant-id={plant.id}
             title={plant.name}
-            className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+            className="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 min-h-[1.75rem]"
           >
             {plant.name}
           </h3>
 
-          {/* 3. FIRST VIEWPORT ELEMENT: ONE OR TWO KEY GROWING ATTRIBUTES */}
+          {/* 3. HORIZONTAL CONTAINER FOR COMPATIBILITY BADGE & POT REQUIREMENTS */}
           <div
             data-testid={`plant-key-attributes-${plant.id}`}
-            className="flex items-center gap-2 flex-wrap pt-0.5"
+            className="flex flex-wrap items-center gap-2 pt-0.5"
           >
+            {/* Compatibility Badge (e.g. 100% dopasowania / Wymaga uwagi) */}
+            {score < 70 ? (
+              <span
+                data-testid={`plant-badge-attention-${plant.id}`}
+                className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-50 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/80 shadow-2xs inline-flex items-center gap-1"
+              >
+                Wymaga uwagi
+              </span>
+            ) : (
+              <span
+                data-testid={`plant-badge-match-${plant.id}`}
+                className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-2xs inline-flex items-center gap-1"
+              >
+                {`${score}% dopasowania`}
+              </span>
+            )}
+
             {/* Key attribute 1: Pot requirement */}
             <div
               data-testid={`plant-attr-pot-${plant.id}`}
@@ -188,7 +205,7 @@ export const PlantCard: React.FC<Props> = ({
               </span>
             </div>
 
-            {/* Key attribute 2: Sun / Light requirement or Best Sowing */}
+            {/* Key attribute 2: Sun / Light requirement */}
             <div
               data-testid={`plant-attr-sun-${plant.id}`}
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 text-xs font-semibold border border-amber-300 dark:border-amber-700"
@@ -201,13 +218,13 @@ export const PlantCard: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Compact summary (Req 4 & 5): strictly clamped to prevent unpredictable layout shifts, full text accessible to AT */}
+          {/* Compact summary: clamped with line-clamp-2 to prevent arbitrary text expansion */}
           <div className="relative pt-0.5">
             <p
               data-testid={`plant-description-${plant.id}`}
               data-plant-id={plant.id}
               title={plant.summary}
-              className="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+              className="text-xs text-stone-700 dark:text-stone-300 line-clamp-2 leading-relaxed"
             >
               {plant.summary}
             </p>
@@ -221,12 +238,12 @@ export const PlantCard: React.FC<Props> = ({
           </div>
         </div>
 
-        {/* 4. FIRST VIEWPORT ELEMENT: ONE PRIMARY ACTION + EQUAL HEIGHT ACTION AREA */}
+        {/* 4. PRIMARY ACTION AREA CLEARLY POSITIONED AT BOTTOM */}
         <div
           data-testid={`plant-action-area-${plant.id}`}
-          className="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+          className="mt-auto pt-2 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-1.5"
         >
-          {/* Primary CTA button with equal height min-h-[44px] */}
+          {/* Primary CTA button with min-h-[44px] */}
           {onAddCrop ? (
             <button
               id={`add-plant-cta-${plant.id}`}
@@ -242,7 +259,7 @@ export const PlantCard: React.FC<Props> = ({
                 if (isAdding) return;
                 onAddCrop(plant);
               }}
-              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+              className={`w-full mt-2 min-h-[44px] h-11 py-2.5 px-4 rounded-xl font-medium transition-all hover:brightness-105 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                 isAdding
                   ? 'bg-emerald-600/70 text-white cursor-wait opacity-80'
                   : isMyCrop
@@ -260,8 +277,12 @@ export const PlantCard: React.FC<Props> = ({
                   <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
                   <span>
                     {language === 'en'
-                      ? `In crops (${cropCount > 1 ? `${cropCount}x` : 'added'}) • Add another +`
-                      : `W uprawach (${cropCount > 1 ? `${cropCount}x` : 'dodano'}) • Dodaj kolejną +`}
+                      ? cropCount > 1
+                        ? `In crops (${cropCount}x)`
+                        : 'In crops (added)'
+                      : cropCount > 1
+                      ? `W uprawach (${cropCount}x)`
+                      : 'W uprawach (dodano)'}
                   </span>
                 </>
               ) : (
@@ -283,7 +304,7 @@ export const PlantCard: React.FC<Props> = ({
                 e.stopPropagation();
                 onRequestAddVariety(plant);
               }}
-              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+              className={`w-full mt-2 min-h-[44px] h-11 py-2.5 px-4 rounded-xl font-medium transition-all hover:brightness-105 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                 isMyCrop
                   ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                   : 'bg-emerald-700 hover:bg-emerald-800 text-white hover:shadow-md'
@@ -294,8 +315,12 @@ export const PlantCard: React.FC<Props> = ({
                   <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
                   <span>
                     {language === 'en'
-                      ? `In crops (${cropCount > 1 ? `${cropCount}x` : 'added'}) • Add another +`
-                      : `W uprawach (${cropCount > 1 ? `${cropCount}x` : 'dodano'}) • Dodaj kolejną +`}
+                      ? cropCount > 1
+                        ? `In crops (${cropCount}x)`
+                        : 'In crops (added)'
+                      : cropCount > 1
+                      ? `W uprawach (${cropCount}x)`
+                      : 'W uprawach (dodano)'}
                   </span>
                 </>
               ) : (
@@ -317,7 +342,7 @@ export const PlantCard: React.FC<Props> = ({
                 e.stopPropagation();
                 onToggleMyCrop(plant.id);
               }}
-              className={`w-full min-h-[44px] h-11 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
+              className={`w-full mt-2 min-h-[44px] h-11 py-2.5 px-4 rounded-xl font-medium transition-all hover:brightness-105 active:scale-[0.98] flex items-center justify-center gap-2 cursor-pointer shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 dark:focus-visible:ring-emerald-400 focus-visible:ring-offset-2 ${
                 isMyCrop
                   ? 'bg-emerald-50 dark:bg-emerald-950/70 text-emerald-950 dark:text-emerald-100 border border-emerald-300 dark:border-emerald-700 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
                   : 'bg-emerald-700 hover:bg-emerald-800 text-white hover:shadow-md'
@@ -326,7 +351,15 @@ export const PlantCard: React.FC<Props> = ({
               {isMyCrop ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-700 dark:text-emerald-400 stroke-[2.5]" />
-                  <span>{language === 'en' ? 'In your crops' : 'W Twoich uprawach'}</span>
+                  <span>
+                    {language === 'en'
+                      ? cropCount > 1
+                        ? `In crops (${cropCount}x)`
+                        : 'In crops (added)'
+                      : cropCount > 1
+                      ? `W uprawach (${cropCount}x)`
+                      : 'W uprawach (dodano)'}
+                  </span>
                 </>
               ) : (
                 <>

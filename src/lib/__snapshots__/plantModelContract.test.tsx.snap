@@ -46,7 +46,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     />
   </div>
   <div
-    class="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
+    class="p-4 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
   >
     <div
       class="space-y-2"
@@ -63,7 +63,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         </span>
       </div>
       <h3
-        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 min-h-[1.75rem]"
         data-plant-id="truskawka-wisząca"
         data-testid="plant-title-truskawka-wisząca"
         title="Truskawka wisząca powtarzająca owocowanie"
@@ -71,9 +71,15 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         Truskawka wisząca powtarzająca owocowanie
       </h3>
       <div
-        class="flex items-center gap-2 flex-wrap pt-0.5"
+        class="flex flex-wrap items-center gap-2 pt-0.5"
         data-testid="plant-key-attributes-truskawka-wisząca"
       >
+        <span
+          class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-2xs inline-flex items-center gap-1"
+          data-testid="plant-badge-match-truskawka-wisząca"
+        >
+          88% dopasowania
+        </span>
         <div
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
           data-testid="plant-attr-pot-truskawka-wisząca"
@@ -105,7 +111,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         class="relative pt-0.5"
       >
         <p
-          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-2 leading-relaxed"
           data-plant-id="truskawka-wisząca"
           data-testid="plant-description-truskawka-wisząca"
           title="Absolutny faworyt balkonowy! Odmiany powtarzające kwitną i owocują nieprzerwanie od czerwca aż do pierwszych przymrozków w październiku. Wspaniale prezentują się w wiszących donicach i skrzynkach."
@@ -121,7 +127,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       </div>
     </div>
     <div
-      class="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+      class="mt-auto pt-2 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-1.5"
       data-testid="plant-action-area-truskawka-wisząca"
     >
       <button
@@ -204,7 +210,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     />
   </div>
   <div
-    class="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
+    class="p-4 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
   >
     <div
       class="space-y-2"
@@ -221,7 +227,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         </span>
       </div>
       <h3
-        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 min-h-[1.75rem]"
         data-plant-id="szczypiorek-ziola"
         data-testid="plant-title-szczypiorek-ziola"
         title="Szczypiorek ogrodowy"
@@ -229,9 +235,15 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         Szczypiorek ogrodowy
       </h3>
       <div
-        class="flex items-center gap-2 flex-wrap pt-0.5"
+        class="flex flex-wrap items-center gap-2 pt-0.5"
         data-testid="plant-key-attributes-szczypiorek-ziola"
       >
+        <span
+          class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-2xs inline-flex items-center gap-1"
+          data-testid="plant-badge-match-szczypiorek-ziola"
+        >
+          88% dopasowania
+        </span>
         <div
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
           data-testid="plant-attr-pot-szczypiorek-ziola"
@@ -263,7 +275,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         class="relative pt-0.5"
       >
         <p
-          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-2 leading-relaxed"
           data-plant-id="szczypiorek-ziola"
           data-testid="plant-description-szczypiorek-ziola"
           title="Pancerna roślina balkonowa. Szczypiorek może rosnąć na balkonie w tej samej donicy przez wiele lat. Nie marznie zimą, a wczesną wiosną (już w marcu) jako pierwszy wypuszcza soczyście zielone rurki."
@@ -279,7 +291,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       </div>
     </div>
     <div
-      class="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+      class="mt-auto pt-2 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-1.5"
       data-testid="plant-action-area-szczypiorek-ziola"
     >
       <button
@@ -362,7 +374,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
     />
   </div>
   <div
-    class="p-4 sm:p-5 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
+    class="p-4 flex flex-col justify-between flex-1 gap-3 bg-white dark:bg-stone-900"
   >
     <div
       class="space-y-2"
@@ -379,7 +391,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         </span>
       </div>
       <h3
-        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-1 min-h-[1.75rem]"
+        class="text-lg sm:text-xl font-bold text-stone-900 dark:text-stone-100 tracking-tight leading-snug group-hover:text-emerald-800 dark:group-hover:text-emerald-400 transition-colors line-clamp-2 min-h-[1.75rem]"
         data-plant-id="pomidor-karlowy"
         data-testid="plant-title-pomidor-karlowy"
         title="Pomidor karłowy koktajlowy"
@@ -387,9 +399,15 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         Pomidor karłowy koktajlowy
       </h3>
       <div
-        class="flex items-center gap-2 flex-wrap pt-0.5"
+        class="flex flex-wrap items-center gap-2 pt-0.5"
         data-testid="plant-key-attributes-pomidor-karlowy"
       >
+        <span
+          class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-100 dark:border-emerald-800/80 shadow-2xs inline-flex items-center gap-1"
+          data-testid="plant-badge-match-pomidor-karlowy"
+        >
+          88% dopasowania
+        </span>
         <div
           class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700"
           data-testid="plant-attr-pot-pomidor-karlowy"
@@ -421,7 +439,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
         class="relative pt-0.5"
       >
         <p
-          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-1 leading-relaxed"
+          class="text-xs text-stone-700 dark:text-stone-300 line-clamp-2 leading-relaxed"
           data-plant-id="pomidor-karlowy"
           data-testid="plant-description-pomidor-karlowy"
           title="Niekwestionowany król balkonu. Odmiany samokończące (karłowe) nie wymagają ogławiania ani skomplikowanego cięcia, a owocują obficie aż do jesieni."
@@ -437,7 +455,7 @@ exports[`Plant Model Contract, Zod Runtime Validation & Consistency Suite > Visu
       </div>
     </div>
     <div
-      class="mt-auto pt-3 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-2"
+      class="mt-auto pt-2 border-t border-stone-200 dark:border-stone-800 flex flex-col gap-1.5"
       data-testid="plant-action-area-pomidor-karlowy"
     >
       <button

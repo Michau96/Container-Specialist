@@ -316,7 +316,7 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
 
   // --- SEKCJA 3: SUWAKI WYMIARÓW ---
   const renderDimensionSliders = () => (
-    <div className="bg-stone-50 dark:bg-stone-800/90 p-4 sm:p-5 rounded-2xl border border-stone-300 dark:border-stone-700 space-y-4">
+    <div className="bg-stone-50 dark:bg-stone-800/90 p-4 sm:p-5 rounded-2xl border border-stone-300 dark:border-stone-700 space-y-3">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <span className="text-xs font-bold text-stone-900 dark:text-stone-100 uppercase tracking-wider">
           {isEn ? '3. Dimensions (in cm):' : '3. Wymiary donicy (w cm):'}
@@ -338,17 +338,33 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
       </div>
 
       {shape === 'rectangular' ? (
-        <>
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs font-semibold">
-              <label htmlFor="pot-slider-length" className="text-stone-800 dark:text-stone-200">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          {/* DŁUGOŚĆ (LENGTH) */}
+          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="flex justify-between items-center text-xs font-semibold gap-2">
+              <label htmlFor="pot-slider-length" className="text-stone-800 dark:text-stone-200 truncate">
                 {isEn ? 'Box length (L):' : 'Długość skrzynki (L):'}
               </label>
-              <span className="font-bold text-sm text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2 py-0.5 rounded-md border border-stone-300 dark:border-stone-600">
-                {lengthCm} cm
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  id="pot-slider-length-number"
+                  name="pot-length-number"
+                  type="number"
+                  min="0"
+                  max="120"
+                  step="5"
+                  value={lengthCm}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (!isNaN(val)) setLengthCm(Math.max(0, Math.min(120, val)));
+                  }}
+                  aria-label={isEn ? 'Box length in cm' : 'Długość skrzynki w cm'}
+                  className="w-16 py-1.5 px-3 rounded-lg text-sm font-bold text-center bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+                <span className="text-xs text-stone-500 font-medium">cm</span>
+              </div>
             </div>
-            <div className="py-1">
+            <div className="py-0.5">
               <input
                 id="pot-slider-length"
                 name="pot-length"
@@ -364,21 +380,37 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 aria-valuetext={`${lengthCm} cm`}
                 aria-label={isEn ? 'Box length in centimeters' : 'Długość skrzynki w centymetrach'}
                 onChange={(e) => setLengthCm(Number(e.target.value))}
-                className="w-full accent-emerald-700 dark:accent-emerald-400"
+                className="w-full accent-emerald-700 dark:accent-emerald-400 cursor-pointer"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs font-semibold">
-              <label htmlFor="pot-slider-width" className="text-stone-800 dark:text-stone-200">
+          {/* SZEROKOŚĆ (WIDTH) */}
+          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="flex justify-between items-center text-xs font-semibold gap-2">
+              <label htmlFor="pot-slider-width" className="text-stone-800 dark:text-stone-200 truncate">
                 {isEn ? 'Width / Depth (W):' : 'Szerokość / głębokość (W):'}
               </label>
-              <span className="font-bold text-sm text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2 py-0.5 rounded-md border border-stone-300 dark:border-stone-600">
-                {widthCm} cm
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  id="pot-slider-width-number"
+                  name="pot-width-number"
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="2"
+                  value={widthCm}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (!isNaN(val)) setWidthCm(Math.max(0, Math.min(50, val)));
+                  }}
+                  aria-label={isEn ? 'Box width in cm' : 'Szerokość skrzynki w cm'}
+                  className="w-16 py-1.5 px-3 rounded-lg text-sm font-bold text-center bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+                <span className="text-xs text-stone-500 font-medium">cm</span>
+              </div>
             </div>
-            <div className="py-1">
+            <div className="py-0.5">
               <input
                 id="pot-slider-width"
                 name="pot-width"
@@ -394,21 +426,37 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 aria-valuetext={`${widthCm} cm`}
                 aria-label={isEn ? 'Box width in centimeters' : 'Szerokość skrzynki w centymetrach'}
                 onChange={(e) => setWidthCm(Number(e.target.value))}
-                className="w-full accent-emerald-700 dark:accent-emerald-400"
+                className="w-full accent-emerald-700 dark:accent-emerald-400 cursor-pointer"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs font-semibold">
-              <label htmlFor="pot-slider-rect-height" className="text-stone-800 dark:text-stone-200">
+          {/* GŁĘBOKOŚĆ / WYSOKOŚĆ (DEPTH / HEIGHT) */}
+          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="flex justify-between items-center text-xs font-semibold gap-2">
+              <label htmlFor="pot-slider-rect-height" className="text-stone-800 dark:text-stone-200 truncate">
                 {isEn ? 'Height (H):' : 'Wysokość donicy (H):'}
               </label>
-              <span className="font-bold text-sm text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2 py-0.5 rounded-md border border-stone-300 dark:border-stone-600">
-                {rectHeightCm} cm
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  id="pot-slider-rect-height-number"
+                  name="pot-rect-height-number"
+                  type="number"
+                  min="0"
+                  max="50"
+                  step="1"
+                  value={rectHeightCm}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (!isNaN(val)) setRectHeightCm(Math.max(0, Math.min(50, val)));
+                  }}
+                  aria-label={isEn ? 'Box height in cm' : 'Wysokość skrzynki w cm'}
+                  className="w-16 py-1.5 px-3 rounded-lg text-sm font-bold text-center bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+                <span className="text-xs text-stone-500 font-medium">cm</span>
+              </div>
             </div>
-            <div className="py-1">
+            <div className="py-0.5">
               <input
                 id="pot-slider-rect-height"
                 name="pot-rect-height"
@@ -424,23 +472,38 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 aria-valuetext={`${rectHeightCm} cm`}
                 aria-label={isEn ? 'Box height in centimeters' : 'Wysokość skrzynki w centymetrach'}
                 onChange={(e) => setRectHeightCm(Number(e.target.value))}
-                className="w-full accent-emerald-700 dark:accent-emerald-400"
+                className="w-full accent-emerald-700 dark:accent-emerald-400 cursor-pointer"
               />
             </div>
           </div>
-        </>
+        </div>
       ) : (
-        <>
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs font-semibold">
-              <label htmlFor="pot-slider-diameter" className="text-stone-800 dark:text-stone-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="flex justify-between items-center text-xs font-semibold gap-2">
+              <label htmlFor="pot-slider-diameter" className="text-stone-800 dark:text-stone-200 truncate">
                 {isEn ? 'Top diameter (⌀):' : 'Średnica górna (⌀):'}
               </label>
-              <span className="font-bold text-sm text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2 py-0.5 rounded-md border border-stone-300 dark:border-stone-600">
-                {diameterCm} cm
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  id="pot-slider-diameter-number"
+                  name="pot-diameter-number"
+                  type="number"
+                  min="15"
+                  max="65"
+                  step="1"
+                  value={diameterCm}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (!isNaN(val)) setDiameterCm(Math.max(15, Math.min(65, val)));
+                  }}
+                  aria-label={isEn ? 'Pot diameter in cm' : 'Średnica donicy w cm'}
+                  className="w-16 py-1.5 px-3 rounded-lg text-sm font-bold text-center bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+                <span className="text-xs text-stone-500 font-medium">cm</span>
+              </div>
             </div>
-            <div className="py-1">
+            <div className="py-0.5">
               <input
                 id="pot-slider-diameter"
                 name="pot-diameter"
@@ -456,21 +519,36 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 aria-valuetext={`${diameterCm} cm`}
                 aria-label={isEn ? 'Pot diameter in centimeters' : 'Średnica donicy w centymetrach'}
                 onChange={(e) => setDiameterCm(Number(e.target.value))}
-                className="w-full accent-emerald-700 dark:accent-emerald-400"
+                className="w-full accent-emerald-700 dark:accent-emerald-400 cursor-pointer"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center text-xs font-semibold">
-              <label htmlFor="pot-slider-round-height" className="text-stone-800 dark:text-stone-200">
+          <div className="space-y-1.5 p-3 rounded-xl bg-white dark:bg-stone-800 border border-stone-200 dark:border-stone-700 shadow-2xs">
+            <div className="flex justify-between items-center text-xs font-semibold gap-2">
+              <label htmlFor="pot-slider-round-height" className="text-stone-800 dark:text-stone-200 truncate">
                 {isEn ? 'Height (H):' : 'Wysokość donicy (H):'}
               </label>
-              <span className="font-bold text-sm text-stone-900 dark:text-stone-100 bg-white dark:bg-stone-800 px-2 py-0.5 rounded-md border border-stone-300 dark:border-stone-600">
-                {roundHeightCm} cm
-              </span>
+              <div className="flex items-center gap-1 shrink-0">
+                <input
+                  id="pot-slider-round-height-number"
+                  name="pot-round-height-number"
+                  type="number"
+                  min="12"
+                  max="50"
+                  step="1"
+                  value={roundHeightCm}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (!isNaN(val)) setRoundHeightCm(Math.max(12, Math.min(50, val)));
+                  }}
+                  aria-label={isEn ? 'Pot height in cm' : 'Wysokość donicy w cm'}
+                  className="w-16 py-1.5 px-3 rounded-lg text-sm font-bold text-center bg-stone-50 dark:bg-stone-900 border border-stone-300 dark:border-stone-600 text-stone-900 dark:text-stone-100 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+                <span className="text-xs text-stone-500 font-medium">cm</span>
+              </div>
             </div>
-            <div className="py-1">
+            <div className="py-0.5">
               <input
                 id="pot-slider-round-height"
                 name="pot-round-height"
@@ -486,24 +564,45 @@ export const PotConfigStep: React.FC<PotConfigStepProps> = ({
                 aria-valuetext={`${roundHeightCm} cm`}
                 aria-label={isEn ? 'Pot height in centimeters' : 'Wysokość donicy w centymetrach'}
                 onChange={(e) => setRoundHeightCm(Number(e.target.value))}
-                className="w-full accent-emerald-700 dark:accent-emerald-400"
+                className="w-full accent-emerald-700 dark:accent-emerald-400 cursor-pointer"
               />
             </div>
           </div>
-        </>
-      )}
-
-      {/* Live calculation badge right below dimension input fields */}
-      {volumeLiters > 0 && (
-        <div
-          data-testid="pot-volume-live-badge"
-          className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 text-sm font-medium border border-emerald-200"
-        >
-          <span>
-            🪴 Szacowana objętość: <strong>{volumeLiters} L</strong> podłoża
-          </span>
         </div>
       )}
+
+      {/* Real-time result banner & agrotechnical depth warning */}
+      <div className="p-3 rounded-xl bg-stone-100/90 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {volumeLiters > 0 && (
+          <div
+            data-testid="pot-volume-live-badge"
+            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-200 text-sm font-medium border border-emerald-200 dark:border-emerald-800"
+          >
+            <span>
+              🪴 {isEn ? 'Estimated volume:' : 'Szacowana objętość:'} <strong>{volumeLiters} L</strong> {isEn ? 'substrate' : 'podłoża'}
+            </span>
+          </div>
+        )}
+
+        {currentHeightCm < minDepth ? (
+          <div
+            data-testid="pot-agrotechnical-depth-warning"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/80 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 text-xs font-semibold"
+          >
+            <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              {isEn
+                ? `Depth warning: ${currentHeightCm} cm < min. ${minDepth} cm for ${currentPlant.name}`
+                : `Ostrzeżenie agrotechniczne: głębokość ${currentHeightCm} cm < min. ${minDepth} cm (${currentPlant.name})`}
+            </span>
+          </div>
+        ) : (
+          <div className="inline-flex items-center gap-1 text-xs text-emerald-700 dark:text-emerald-400 font-semibold px-2 py-1">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+            <span>{isEn ? `Depth requirement met (≥ ${minDepth} cm)` : `Wymóg głębokości spełniony (≥ ${minDepth} cm)`}</span>
+          </div>
+        )}
+      </div>
 
       {/* Sub-requirement 7: Do not hide validation errors inside collapsed sections */}
       {!isDimensionsValid && (

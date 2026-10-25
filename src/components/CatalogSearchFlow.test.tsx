@@ -158,7 +158,7 @@ const CatalogSearchFlowHarness: React.FC<{
               </button>
             ) : (
               <button data-testid="go-to-my-crops-btn">
-                Moje uprawy ({myCrops.length})
+                Przejdź do Moich upraw ({myCrops.length})
               </button>
             )}
             <button data-testid="close-feedback-btn" onClick={() => setAddFeedback(null)}>

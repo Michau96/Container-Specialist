@@ -8,6 +8,7 @@ import {
   RotateCcw,
   Loader2,
   AlertCircle,
+  AlertTriangle,
 } from 'lucide-react';
 import { Plant, PotShape, LegacyPotMaterial, SupportType } from '../types';
 import { PotConfigStep } from './PotConfigStep';
@@ -982,6 +983,19 @@ export const PotCalculator: React.FC<PotCalculatorProps> = ({
             <span className="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
               {volumeLiters} L
             </span>
+            {!isDepthOk && (
+              <span
+                data-testid="pot-footer-depth-warning"
+                className="text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 rounded-md border border-amber-300 dark:border-amber-700 font-semibold flex items-center gap-1 text-[11px]"
+              >
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>
+                  {isEn
+                    ? `Depth: ${heightCm} cm < min. ${minDepth} cm`
+                    : `Zbyt płytka: ${heightCm} cm < min. ${minDepth} cm`}
+                </span>
+              </span>
+            )}
           </div>
 
           {/* Przyciski nawigacyjne oraz GŁÓWNY PRZYCISK CTA (Wymaganie 1, 3, 4, 5, 8) */}

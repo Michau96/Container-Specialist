@@ -317,9 +317,9 @@ describe('Catalog Information Density & Responsive Breakpoints', () => {
       </LanguageProvider>
     );
 
-    // Visually clamped description has line-clamp-1
+    // Visually clamped description has line-clamp-2
     const descEl = screen.getByTestId(`plant-description-${tomato.id}`);
-    expect(descEl).toHaveClass('line-clamp-1');
+    expect(descEl).toHaveClass('line-clamp-2');
     expect(descEl).toHaveAttribute('title', tomato.summary);
 
     // Screen reader accessible element has full untruncated text

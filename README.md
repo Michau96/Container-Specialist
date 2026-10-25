@@ -58,10 +58,16 @@ Container gardening in an apartment setting is governed by physical constraints 
 ### 5. 🚨 Rescue Flow (Emergency Plant Diagnostics)
 * **Symptom-Driven Triage:** Diagnoses overwatering, underwatering, pests (aphids, spider mites, thrips, whiteflies), fungal pathogens (powdery mildew, botrytis, blight), and nutrient deficiencies (calcium blossom-end rot, iron chlorosis).
 * **Automated Watering Suspension:** Imposes an automatic cooldown timer halting scheduled watering when root over-saturation is diagnosed.
+* **Sticky Action Footer:** Independently scrollable symptom list (`max-h-[85vh] md:max-h-[750px]`) with a persistent bottom footer keeping the emergency CTA (*"Aktywuj tryb ratunkowy i zawieś podlewanie"*) permanently visible above the fold.
 * **Eco-Friendly Treatment Recipes:** Organic solutions (potassium horticultural soap, garlic extract, baking soda spray, diluted milk spray).
 
-### 6. 🪴 Container & Soil Layer Calculator
-* **Geometry Engine:** Precise liter calculations for cylindrical, rectangular, square, and hanging planter shapes.
+### 6. 🪴 Container & Soil Layer Calculator (`"Kalkulator donic i rozstawy"`)
+* **Above-the-Fold 4-Step Architecture:** Streamlined wizard ensuring live metrics and navigation CTAs remain accessible without unnecessary scrolling.
+* **Compact Step 2 Layout:**
+  * Refactored dimension sliders into a 3-column responsive grid (`grid grid-cols-1 md:grid-cols-3 gap-4 mb-4`) with compact track spacing and paired input number fields (`py-1.5 px-3 rounded-lg text-sm`).
+  * Live result banner prominently displays calculated substrate volume (e.g. `24 L`) directly alongside immediate agrotechnical depth warnings when container depth is below crop minimums.
+  * Primary action buttons (`"Oblicz"` and `"Dalej: Materiał"`) remain visible in the default viewport.
+* **Geometry Engine:** Precise liter calculations for rectangular troughs and round planter pots.
 * **Canvas Soil Cross-Section Diagram (`SoilCrossSection.tsx`):**
   * Layer 1 (10–15%): Expanded clay aggregate (LECA / *keramzyt*) drainage.
   * Layer 2: Permeable geotextile filter fabric.
@@ -98,7 +104,7 @@ Container gardening in an apartment setting is governed by physical constraints 
 * **Backend:** Express.js 4.21 (Node.js runtime), Vite SSR/Dev middleware, esbuild
 * **Database & Auth:** Firebase Firestore, Firebase Authentication
 * **Graphics & Processing:** HTML5 Canvas (2D soil stratification & client-side photo compression)
-* **Testing:** Vitest 5.0, React Testing Library, jsdom, axe-core (32 test suites, 276 tests passing)
+* **Testing:** Vitest 5.0, React Testing Library, jsdom, axe-core (33 test suites, 280 tests passing)
 
 ---
 

@@ -1063,9 +1063,9 @@ export default function App() {
                     <button
                       data-testid="go-to-my-crops-btn"
                       onClick={() => setActiveTab('my_crops')}
-                      className="px-3 py-1.5 bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1"
+                      className="px-3.5 py-2 min-h-[44px] bg-emerald-800 hover:bg-emerald-900 text-white rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-xs"
                     >
-                      <span>{isEn ? `My Crops (${myCrops.length})` : `Moje uprawy (${myCrops.length})`}</span>
+                      <span>{isEn ? `Go to My Crops (${myCrops.length})` : `Przejdź do Moich upraw (${myCrops.length})`}</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   )}

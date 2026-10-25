@@ -15,6 +15,8 @@ export interface PotConfigurationStepProps {
   onBack?: () => void;
   title?: string;
   isEn?: boolean;
+  minDepth?: number;
+  plantName?: string;
 }
 
 export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
@@ -26,6 +28,8 @@ export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
   onBack,
   title = 'Wymiary donicy',
   isEn = false,
+  minDepth,
+  plantName,
 }) => {
   const [length, setLength] = useState<string>(String(initialLength));
   const [width, setWidth] = useState<string>(String(initialWidth));
@@ -73,7 +77,7 @@ export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
       </p>
 
       {/* Dimension Input Fields */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         {/* Długość (cm) */}
         <div>
           <label
@@ -92,7 +96,7 @@ export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
             step="1"
             value={length}
             onChange={(e) => setLength(e.target.value)}
-            className="w-full min-h-[44px] px-3.5 py-2 text-sm font-semibold rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-2xs"
+            className="w-full min-h-[44px] py-1.5 px-3 rounded-lg text-sm font-semibold border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-2xs"
             placeholder="np. 60"
           />
         </div>
@@ -115,7 +119,7 @@ export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
             step="1"
             value={width}
             onChange={(e) => setWidth(e.target.value)}
-            className="w-full min-h-[44px] px-3.5 py-2 text-sm font-semibold rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-2xs"
+            className="w-full min-h-[44px] py-1.5 px-3 rounded-lg text-sm font-semibold border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-2xs"
             placeholder="np. 20"
           />
         </div>
@@ -138,7 +142,7 @@ export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
             step="1"
             value={depth}
             onChange={(e) => setDepth(e.target.value)}
-            className="w-full min-h-[44px] px-3.5 py-2 text-sm font-semibold rounded-xl border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-2xs"
+            className="w-full min-h-[44px] py-1.5 px-3 rounded-lg text-sm font-semibold border border-slate-300 dark:border-stone-700 bg-white dark:bg-stone-800 text-slate-900 dark:text-stone-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 shadow-2xs"
             placeholder="np. 18"
           />
         </div>
@@ -149,6 +153,21 @@ export const PotConfigurationStep: React.FC<PotConfigurationStepProps> = ({
         <div className="flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400 font-medium">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>Wymiary powinny mieścić się w przedziale od 5 do 300 cm.</span>
+        </div>
+      )}
+
+      {/* Agrotechnical depth warning if depth is below recommended minimum */}
+      {depth && parseFloat(depth) > 0 && parseFloat(depth) < (minDepth || 18) && (
+        <div
+          data-testid="pot-config-depth-warning"
+          className="flex items-center gap-2 text-xs text-amber-800 dark:text-amber-300 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-300 dark:border-amber-700 font-semibold"
+        >
+          <AlertCircle className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+          <span>
+            {isEn
+              ? `Agrotechnical depth warning: Depth (${depth} cm) is below minimum recommendation (${minDepth || 18} cm)${plantName ? ` for ${plantName}` : ''}.`
+              : `Ostrzeżenie agrotechniczne: Głębokość donicy (${depth} cm) jest poniżej zalecanego minimum (${minDepth || 18} cm)${plantName ? ` dla ${plantName}` : ''}.`}
+          </span>
         </div>
       )}
 

@@ -277,30 +277,42 @@ export const PlantCatalogView: React.FC<PlantCatalogViewProps> = ({
                     fallbackSrc="/assets/plants/default-cultivation.webp"
                     className="w-full h-40 object-cover rounded-t-2xl"
                   />
-                  <div className="p-4 flex-1 flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs uppercase font-bold text-stone-500 dark:text-stone-400">
+                  <div className="p-4 flex-1 flex flex-col justify-between gap-3">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs uppercase font-bold text-emerald-800 dark:text-emerald-400">
                           {plant.category}
                         </span>
-                        <PlantMatchBadge matchPercentage={plant.matchPercentage} />
                       </div>
-                      <h4 className="text-base font-bold text-stone-900 dark:text-stone-100 mb-1">
+
+                      <h4 className="text-base font-bold text-stone-900 dark:text-stone-100 line-clamp-2">
                         {plant.name}
                       </h4>
-                      <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2">
+
+                      {/* Horizontal container for compatibility badge and pot requirements */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <PlantMatchBadge matchPercentage={plant.matchPercentage} />
+                        {plant.pot?.min_volume_l && (
+                          <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-800 dark:text-stone-200 text-xs font-semibold border border-stone-300 dark:border-stone-700">
+                            <span aria-hidden="true">🪴</span>
+                            <span>Donica: min. {plant.pot.min_volume_l}L</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-stone-600 dark:text-stone-400 line-clamp-2 leading-relaxed">
                         {plant.summary}
                       </p>
                     </div>
 
-                    <div className="mt-4 pt-3 border-t border-stone-100 dark:border-stone-800">
+                    <div className="mt-auto pt-2 border-t border-stone-100 dark:border-stone-800">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
                           onAddPlantToBalcony?.(plant);
                         }}
-                        className="w-full min-h-[44px] py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full mt-2 min-h-[44px] py-2.5 px-4 rounded-xl font-medium transition-all hover:brightness-105 active:scale-[0.98] bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                       >
                         + Dodaj do balkonu
                       </button>
